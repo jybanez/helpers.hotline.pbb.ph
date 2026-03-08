@@ -6,20 +6,20 @@ export function createBottomDrawer(options = {}) {
   const animationMs = Math.max(0, Number(options.animationMs) || 220);
   const position = normalizePosition(options.position);
   const backdrop = createElement("div", {
-    className: options.backdropClass || "ui-drawer-backdrop",
+    className: joinClassNames("ui-drawer-backdrop", options.backdropClass),
   });
   const panel = createElement("aside", {
-    className: `${options.panelClass || "ui-drawer"} ui-drawer-pos-${position}`.trim(),
+    className: joinClassNames("ui-drawer", options.panelClass, `ui-drawer-pos-${position}`),
   });
   const header = createElement("div", {
-    className: options.headerClass || "ui-drawer-header",
+    className: joinClassNames("ui-drawer-header", options.headerClass),
   });
   const title = createElement("h4", {
-    className: options.titleClass || "ui-title",
+    className: joinClassNames("ui-title", options.titleClass),
     text: options.title || "",
   });
   const closeButton = createElement("button", {
-    className: options.closeClass || "ui-drawer-close",
+    className: joinClassNames("ui-drawer-close", options.closeClass),
     html: '<span aria-hidden="true">\u2715</span>',
     attrs: {
       type: "button",
@@ -27,7 +27,7 @@ export function createBottomDrawer(options = {}) {
     },
   });
   const body = createElement("div", {
-    className: options.bodyClass || "ui-drawer-body",
+    className: joinClassNames("ui-drawer-body", options.bodyClass),
   });
 
   header.append(title, closeButton);
@@ -122,4 +122,11 @@ function normalizePosition(value) {
     return next;
   }
   return "bottom";
+}
+
+function joinClassNames(...parts) {
+  return parts
+    .filter((value) => value != null && String(value).trim() !== "")
+    .map((value) => String(value).trim())
+    .join(" ");
 }

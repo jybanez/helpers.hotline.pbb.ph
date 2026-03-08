@@ -95,6 +95,13 @@ Shared UI layer:
 - `js/ui/ui.tabs.js`
 - `js/ui/ui.strips.js`
 - `js/ui/ui.media.strip.js`
+- `js/ui/ui.grid.js`
+- `js/ui/ui.menu.js`
+- `js/ui/ui.dropdown.js`
+- `js/ui/ui.dropup.js`
+- `js/ui/ui.navbar.js`
+- `js/ui/ui.sidebar.js`
+- `js/ui/ui.breadcrumbs.js`
 - `js/ui/ui.audio.player.js`
 - `js/ui/ui.audio.audiograph.js`
 - `js/ui/ui.audio.callSession.js`
@@ -107,6 +114,8 @@ Shared CSS:
 - `css/ui/ui.tabs.css`
 - `css/ui/ui.strips.css`
 - `css/ui/ui.media.strip.css`
+- `css/ui/ui.grid.css`
+- `css/ui/ui.nav.css`
 - `css/ui/ui.audio.css`
 
 Rule: add generic behavior to `ui/*`; keep incident domain logic in `incident/*`.

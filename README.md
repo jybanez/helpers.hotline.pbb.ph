@@ -30,6 +30,8 @@ css/
     ui.strips.css
     ui.media.strip.css
     ui.audio.css
+    ui.grid.css
+    ui.nav.css
   incident/
     incident.css
     incident.base.css
@@ -49,6 +51,13 @@ js/
     ui.tabs.js
     ui.strips.js
     ui.media.strip.js
+    ui.grid.js
+    ui.menu.js
+    ui.dropdown.js
+    ui.dropup.js
+    ui.navbar.js
+    ui.sidebar.js
+    ui.breadcrumbs.js
     ui.audio.player.js
     ui.audio.audiograph.js
     ui.audio.callSession.js
@@ -65,6 +74,7 @@ demo.team.assignments.html
 demo.incident.types.html
 demo.ui.html
 demo.audio.html
+demo.nav.html
 sampledata.json
 sampledata_*.json
 boot.*.json
@@ -107,6 +117,26 @@ Reusable shared UI utilities live under `js/ui`:
 - `ui.media.strip.js`
   - `createMediaStrip(container, items, options)` media thumbnails strip (image/video) with modal viewer/player + in-modal prev/next navigation
   - options include `layout: "scroll" | "wrap"` and `animationMs` (default `300`)
+- `ui.grid.js`
+  - `createGrid(container, rows, options)` data grid/table with local/remote modes and optional sort/search/pagination
+- `ui.menu.js`
+  - `createMenu(triggerEl, items, options)` anchored popover menu primitive
+  - item icon contract: `icon` (SVG/HTML string), `iconPosition: "start" | "end"`, `iconOnly: boolean`
+- `ui.dropdown.js`
+  - `createDropdown(triggerEl, items, options)` preset wrapper for bottom placement
+  - uses `ui.menu` item icon contract
+- `ui.dropup.js`
+  - `createDropup(triggerEl, items, options)` preset wrapper for top placement
+  - uses `ui.menu` item icon contract
+- `ui.navbar.js`
+  - `createNavbar(container, data, options)` top navigation bar
+  - item/action icon contract: `icon` (SVG/HTML string), `iconPosition: "start" | "end"`, `iconOnly: boolean`
+- `ui.sidebar.js`
+  - `createSidebar(container, data, options)` side navigation panel
+  - item icon contract: `icon` (SVG/HTML string), `iconPosition: "start" | "end"`, `iconOnly: boolean`
+- `ui.breadcrumbs.js`
+  - `createBreadcrumbs(container, data, options)` breadcrumb navigation
+  - crumb icon contract: `icon` (SVG/HTML string), `iconPosition: "start" | "end"`, `iconOnly: boolean`
 - `ui.audio.player.js`
   - `createAudioPlayer(container, data, options)` reusable transport UI (play/pause, time, seek)
 - `ui.audio.audiograph.js`
@@ -123,6 +153,8 @@ Reusable UI styles live under `css/ui`:
 - `ui.strips.css` strip/chip selector styles
 - `ui.media.strip.css` media strip, thumbnail, and media viewer styles
 - `ui.audio.css` audio player, audiograph, and call session styles
+- `ui.grid.css` data-grid/table styles
+- `ui.nav.css` navigation/menu styles
 
 Current usage:
 
@@ -426,6 +458,204 @@ Methods:
 - `seek(nextMs)`
 - `getState()`
 
+### Navigation/Menu Utilities
+
+#### `createMenu(triggerEl, items, options)`
+
+Purpose:
+
+- Reusable anchored popover menu used by dropdown/dropup wrappers.
+
+Menu item icon contract:
+
+- `icon`: SVG/HTML string
+- `iconPosition`: `"start"` or `"end"` (optional, per-item override)
+- `iconOnly`: `true|false` (optional, per-item override)
+
+Example item:
+
+```js
+{
+  id: "archive",
+  label: "Archive",
+  icon: '<svg viewBox="0 0 24 24"><path d="M20 6H4v14h16V6Zm-2 4v2H6v-2h12ZM21 2H3v2h18V2Z"/></svg>',
+  iconPosition: "start",
+  iconOnly: false
+}
+```
+
+Useful options:
+
+- `placement`: `"bottom-start" | "bottom-end" | "top-start" | "top-end"`
+- `align`: `"left" | "right"` (overrides horizontal side while keeping top/bottom from placement)
+- `offset`: number
+- `closeOnSelect`: boolean
+- `closeOnOutsideClick`: boolean
+- `closeOnEscape`: boolean
+- `matchTriggerWidth`: boolean
+- `onSelect(item, meta)`
+- `onOpenChange(open)`
+
+Methods:
+
+- `open()`
+- `close()`
+- `toggle()`
+- `update(items?, options?)`
+- `destroy()`
+- `getState()`
+
+#### `createDropdown(triggerEl, items, options)`
+
+- Wrapper over `createMenu` with default `placement: "bottom-start"`.
+- Supports the same item icon contract and options/methods.
+- Supports `align: "left" | "right"` shortcut:
+  - `left` -> `bottom-start`
+  - `right` -> `bottom-end`
+
+#### `createDropup(triggerEl, items, options)`
+
+- Wrapper over `createMenu` with default `placement: "top-start"`.
+- Supports the same item icon contract and options/methods.
+- Supports `align: "left" | "right"` shortcut:
+  - `left` -> `top-start`
+  - `right` -> `top-end`
+
+#### `createNavbar(container, data, options)`
+
+- Top navigation with `items[]` and `actions[]`.
+- `items[]` and `actions[]` support the same icon contract (`icon`, `iconPosition`, `iconOnly`).
+- `actions[]` can render dropdown menus by providing:
+  - `menuItems: []`
+  - optional `menuOptions: {}`
+- menu callbacks:
+  - `onActionMenuSelect(action, item, meta)`
+  - `onActionMenuOpenChange(action, open)`
+- Global defaults:
+  - `iconPosition` (default `"start"`)
+  - `iconOnly` (default `false`)
+
+#### `createSidebar(container, data, options)`
+
+- Side navigation with `items[]`.
+- `items[]` support the same icon contract (`icon`, `iconPosition`, `iconOnly`).
+- Global defaults:
+  - `iconPosition` (default `"start"`)
+  - `iconOnly` (default `false`)
+
+#### `createBreadcrumbs(container, data, options)`
+
+- Breadcrumb trail with optional stateful helpers (`setItems`, `addCrumb`, `getItems`, `reset`).
+- `items[]` support the same icon contract (`icon`, `iconPosition`, `iconOnly`).
+- Global defaults:
+  - `iconPosition` (default `"start"`)
+  - `iconOnly` (default `false`)
+
+### Navigation/Menu Quickstart
+
+Copy-paste snippets (all are ES module usage):
+
+#### 1) `createMenu`
+
+```js
+import { createMenu } from "./js/ui/ui.menu.js";
+
+const trigger = document.getElementById("menuBtn");
+const menu = createMenu(trigger, [
+  { id: "new", label: "New", icon: "<svg viewBox='0 0 24 24'><path d='M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6Z'/></svg>" },
+  { id: "delete", label: "Delete", danger: true },
+], {
+  placement: "bottom-start",
+  onSelect(item) { console.log("menu.select", item); },
+});
+
+trigger.addEventListener("click", () => menu.toggle());
+```
+
+#### 2) `createDropdown`
+
+```js
+import { createDropdown } from "./js/ui/ui.dropdown.js";
+
+const dd = createDropdown(document.getElementById("dropdownBtn"), [
+  { id: "caller", label: "Caller View" },
+  { id: "operator", label: "Operator View" },
+], {
+  onSelect(item) { console.log("dropdown.select", item.id); },
+});
+```
+
+#### 3) `createDropup`
+
+```js
+import { createDropup } from "./js/ui/ui.dropup.js";
+
+const du = createDropup(document.getElementById("dropupBtn"), [
+  { id: "today", label: "Today" },
+  { id: "week", label: "This Week" },
+], {
+  onSelect(item) { console.log("dropup.select", item.id); },
+});
+```
+
+#### 4) `createNavbar`
+
+```js
+import { createNavbar } from "./js/ui/ui.navbar.js";
+
+createNavbar(document.getElementById("navbarHost"), {}, {
+  brandText: "Hotline UI",
+  activeId: "incidents",
+  items: [
+    { id: "dashboard", label: "Dashboard" },
+    { id: "incidents", label: "Incidents" },
+  ],
+  actions: [
+    { id: "help", label: "Help", icon: "<svg viewBox='0 0 24 24'><path d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z'/></svg>" },
+  ],
+  onNavigate(item) { console.log("navbar.navigate", item); },
+  onAction(action) { console.log("navbar.action", action); },
+});
+```
+
+#### 5) `createSidebar`
+
+```js
+import { createSidebar } from "./js/ui/ui.sidebar.js";
+
+createSidebar(document.getElementById("sidebarHost"), {}, {
+  title: "Sections",
+  activeId: "calls",
+  items: [
+    { id: "calls", label: "Calls" },
+    { id: "dispatch", label: "Dispatch" },
+  ],
+  onNavigate(item) { console.log("sidebar.navigate", item); },
+  onToggleCollapsed(collapsed) { console.log("sidebar.collapsed", collapsed); },
+});
+```
+
+#### 6) `createBreadcrumbs`
+
+```js
+import { createBreadcrumbs } from "./js/ui/ui.breadcrumbs.js";
+
+const bc = createBreadcrumbs(document.getElementById("crumbHost"), {}, {
+  autoTruncateOnNavigate: true,
+  items: [
+    { id: "home", label: "Home" },
+    { id: "incidents", label: "Incidents" },
+    { id: "details", label: "Details" },
+  ],
+  onNavigate(item, index, nextItems) {
+    console.log("breadcrumbs.navigate", item, index, nextItems);
+  },
+});
+
+bc.addCrumb({ id: "photos", label: "Photos" });
+console.log(bc.getItems());
+```
+
 ## Demo Usage
 
 Open from a local server (Apache/WAMP/Nginx):
@@ -440,12 +670,14 @@ Open from a local server (Apache/WAMP/Nginx):
   - right: viewer list helper
   - right column mirrors left via `setList(items[])`
 - `demo.ui.html` -> UI utilities playground
-  - dialog, drawer, search, tabs, strips, media strip
+  - dialog, drawer, search, tabs, strips, media strip, grid
 - `demo.audio.html` -> audio player + stacked role audiographs
   - sample selector for available `sampledata_*.json`
   - graph style selector
   - sensitivity slider
   - theme toggle
+- `demo.nav.html` -> navigation/menu utilities playground
+  - navbar, sidebar, breadcrumbs, dropdown, dropup
 
 Demo pages load:
 
@@ -705,6 +937,84 @@ const drawer = createBottomDrawer({
 drawer.open(document.body);
 ```
 
+### `createGrid(container, rows, options)` (`js/ui/ui.grid.js`)
+
+Purpose:
+
+- Reusable data grid/table for local and remote data flows.
+
+Modes:
+
+- `mode: "local"`: grid applies search/sort/pagination in component.
+- `mode: "remote"`: grid emits query changes; parent fetches and updates rows.
+
+Core options:
+
+- `columns`: array of column definitions
+  - `key`, `label`
+  - optional: `width`, `align`, `sortable`
+  - optional render hooks: `format(value, row)`, `renderCell({ row, value, key, column })`
+- `rowKey`: string key or function `(row, index) => key`
+- `selectable`: `"none" | "single" | "multi"`
+- `selectedKeys`: initial selected row keys
+- capability toggles:
+  - `enableSort`
+  - `enableSearch`
+  - `enablePagination`
+  - `enableColumnResize`
+- column resize options:
+  - `minColumnWidth` (default `72`)
+  - `columnWidths` (object map by `column.key`, e.g. `{ status: 160 }`)
+- content wrapping options:
+  - `wrapCellContent` (default `true`) global cell wrapping behavior
+  - per-column override: `column.wrap` (`true|false`)
+- search options:
+  - `search`, `searchPlaceholder`
+- paging options:
+  - `page`, `pageSize`, `pageSizeOptions`, `totalRows` (remote)
+- state display:
+  - `loading`, `errorText`, `emptyText`
+
+Events:
+
+- `onRowClick(row, meta)`
+- `onSelectionChange(selectedRows, selectedKeys)`
+- `onQueryChange(query)` (remote mode)
+- `onColumnResize({ key, width, columnWidths })`
+
+Methods:
+
+- `destroy()`
+- `update(nextRows, nextOptions?)`
+- `setRows(rows[])`
+- `setQuery(query)`
+- `getQuery()`
+- `getSelectedRows()`
+- `clearSelection()`
+- `getState()`
+
+Example (remote mode with optional features enabled):
+
+```js
+import { createGrid } from "./js/ui/ui.grid.js";
+
+const grid = createGrid(container, [], {
+  mode: "remote",
+  columns,
+  enableSort: true,
+  enableSearch: true,
+  enablePagination: true,
+  page: 1,
+  pageSize: 20,
+  totalRows: 0,
+  onQueryChange(query) {
+    // fetch from API using query, then:
+    // grid.setRows(apiRows);
+    // grid.update(apiRows, { totalRows: apiTotal });
+  },
+});
+```
+
 ### `createMediaStrip(container, items, options)` (`js/ui/ui.media.strip.js`)
 
 Purpose:
@@ -771,3 +1081,18 @@ Recommended integration flow:
   - `neon`, `particle`, `shockwave`, `tsunami`, `plasma`, `burst`, `heartbeat`
 - Added silence-gate + attack/release + freeze-on-pause visualization behavior
 - Added overlay-header mode for audiographs to maximize graph area
+
+### v0.3.0
+
+- Added `ui.grid` component with local/remote modes
+- Added optional sorting/search/pagination capabilities (especially for remote data)
+- Added row selection (`single`/`multi`) and query/state APIs
+- Added grid demo section in `demo.ui.html`
+
+### v0.4.0
+
+- Added navigation/menu utility layer:
+  - `ui.menu`, `ui.dropdown`, `ui.dropup`
+  - `ui.navbar`, `ui.sidebar`, `ui.breadcrumbs`
+- Added `ui.nav.css` styles
+- Added `demo.nav.html` for interactive navigation demos

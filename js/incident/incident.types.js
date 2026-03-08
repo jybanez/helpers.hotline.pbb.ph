@@ -100,7 +100,11 @@ export function incidentTypes(container, data, options = {}) {
   }
 
   function ensureDrawer() {
-    if (drawerApi || !currentOptions.editable) {
+    if (!currentOptions.editable) {
+      return;
+    }
+    if (drawerApi) {
+      drawerApi.open(document.body);
       return;
     }
 
