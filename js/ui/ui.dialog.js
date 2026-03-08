@@ -1,26 +1,29 @@
 import { createElement } from "./ui.dom.js";
-import { createModal } from "./ui.modal.js";
-
-function createButton(label, className = "ui-button", attrs = {}) {
-  return createElement("button", {
-    className,
-    text: label,
-    attrs: { type: "button", ...attrs },
-  });
-}
+import { createActionModal } from "./ui.modal.js";
 
 export function uiAlert(message, options = {}) {
   return new Promise((resolve) => {
     let settled = false;
     const messageEl = createElement("p", { className: "ui-dialog-message", text: String(message || "") });
-    const ok = createButton(options.okText || "OK", "ui-button ui-button-primary");
-    const footer = createElement("div", { className: "ui-dialog-footer-actions" });
-    footer.appendChild(ok);
 
-    const modal = createModal({
+    const modal = createActionModal({
       title: options.title || "Notice",
       content: messageEl,
-      footer,
+      actions: [
+        {
+          id: "ok",
+          label: options.okText || "OK",
+          variant: "primary",
+          autoFocus: true,
+          onClick() {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            resolve(true);
+          },
+        },
+      ],
       size: options.size || "sm",
       closeOnBackdrop: Boolean(options.allowBackdropClose),
       closeOnEscape: options.allowEscClose !== false,
@@ -29,6 +32,7 @@ export function uiAlert(message, options = {}) {
       showCloseButton: options.showCloseButton !== false,
       onClose() {
         if (settled) {
+          modal.destroy();
           return;
         }
         settled = true;
@@ -36,19 +40,7 @@ export function uiAlert(message, options = {}) {
         modal.destroy();
       },
     });
-
-    function close(result) {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      resolve(result);
-      modal.close({ result }).then(() => modal.destroy());
-    }
-
-    ok.addEventListener("click", () => close(true), { once: true });
     modal.open();
-    ok.focus();
   });
 }
 
@@ -56,15 +48,37 @@ export function uiConfirm(message, options = {}) {
   return new Promise((resolve) => {
     let settled = false;
     const messageEl = createElement("p", { className: "ui-dialog-message", text: String(message || "") });
-    const cancel = createButton(options.cancelText || "Cancel", "ui-button");
-    const confirm = createButton(options.confirmText || "Confirm", "ui-button ui-button-primary");
-    const footer = createElement("div", { className: "ui-dialog-footer-actions" });
-    footer.append(cancel, confirm);
 
-    const modal = createModal({
+    const modal = createActionModal({
       title: options.title || "Confirm",
       content: messageEl,
-      footer,
+      actions: [
+        {
+          id: "cancel",
+          label: options.cancelText || "Cancel",
+          variant: "default",
+          onClick() {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            resolve(false);
+          },
+        },
+        {
+          id: "confirm",
+          label: options.confirmText || "Confirm",
+          variant: "primary",
+          autoFocus: true,
+          onClick() {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            resolve(true);
+          },
+        },
+      ],
       size: options.size || "sm",
       closeOnBackdrop: Boolean(options.allowBackdropClose),
       closeOnEscape: options.allowEscClose !== false,
@@ -73,6 +87,7 @@ export function uiConfirm(message, options = {}) {
       showCloseButton: options.showCloseButton !== false,
       onClose() {
         if (settled) {
+          modal.destroy();
           return;
         }
         settled = true;
@@ -80,20 +95,7 @@ export function uiConfirm(message, options = {}) {
         modal.destroy();
       },
     });
-
-    function close(result) {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      resolve(Boolean(result));
-      modal.close({ result }).then(() => modal.destroy());
-    }
-
-    cancel.addEventListener("click", () => close(false), { once: true });
-    confirm.addEventListener("click", () => close(true), { once: true });
     modal.open();
-    confirm.focus();
   });
 }
 
@@ -106,25 +108,48 @@ export function uiPrompt(message, options = {}) {
       attrs: { type: "text", placeholder: options.placeholder || "" },
     });
     input.value = String(options.defaultValue || "");
-    const cancel = createButton(options.cancelText || "Cancel", "ui-button");
-    const submit = createButton(options.submitText || "Submit", "ui-button ui-button-primary");
     const content = createElement("div", { className: "ui-dialog-prompt-body" });
     content.append(messageEl, input);
-    const footer = createElement("div", { className: "ui-dialog-footer-actions" });
-    footer.append(cancel, submit);
 
-    const modal = createModal({
+    const modal = createActionModal({
       title: options.title || "Input",
       content,
-      footer,
+      actions: [
+        {
+          id: "cancel",
+          label: options.cancelText || "Cancel",
+          variant: "default",
+          onClick() {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            resolve(null);
+          },
+        },
+        {
+          id: "submit",
+          label: options.submitText || "Submit",
+          variant: "primary",
+          onClick() {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            resolve(input.value);
+          },
+        },
+      ],
       size: options.size || "sm",
       closeOnBackdrop: Boolean(options.allowBackdropClose),
       closeOnEscape: options.allowEscClose !== false,
       parent: options.parent || document.body,
       className: options.className || "",
       showCloseButton: options.showCloseButton !== false,
+      initialFocus: input,
       onClose() {
         if (settled) {
+          modal.destroy();
           return;
         }
         settled = true;
@@ -132,22 +157,15 @@ export function uiPrompt(message, options = {}) {
         modal.destroy();
       },
     });
-
-    function close(result) {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      resolve(result);
-      modal.close({ result }).then(() => modal.destroy());
-    }
-
-    cancel.addEventListener("click", () => close(null), { once: true });
-    submit.addEventListener("click", () => close(input.value), { once: true });
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
-        close(input.value);
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve(input.value);
+        modal.close({ reason: "prompt-enter", result: input.value }).then(() => modal.destroy());
       }
     });
     modal.open();

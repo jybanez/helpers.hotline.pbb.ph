@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timeline Demo</title>
+  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
+  <link rel="stylesheet" href="./css/ui/ui.components.css">
+  <link rel="stylesheet" href="./css/ui/ui.timeline.css">
+  <link rel="stylesheet" href="./css/ui/ui.timeline.scrubber.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #0c1017;
+      color: #d7e0f4;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+    .panel {
+      border: 1px solid #263146;
+      border-radius: 10px;
+      background: #111826;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .back {
+      color: #b2c2e5;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    #timelineHostVertical,
+    #timelineHostHorizontal,
+    #timelineScrubberHost {
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      padding: 10px;
+      background: #0b1220;
+    }
+    .log {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #b2c2e5;
+      font-family: Consolas, "Courier New", monospace;
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 10px;
+      height: 220px;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+    .ui-timeline-item.is-active .ui-timeline-body {
+      border-color: #7bb5ff;
+      box-shadow: 0 0 0 1px rgba(123, 181, 255, 0.35), 0 0 14px rgba(89, 144, 224, 0.18);
+    }
+    .ui-timeline--horizontal .ui-timeline-item.is-active {
+      border-color: #7bb5ff;
+      box-shadow: 0 0 0 1px rgba(123, 181, 255, 0.35), 0 0 14px rgba(89, 144, 224, 0.18);
+    }
+  </style>
+</head>
+<body>
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Timeline Demo</h1>
+      <p>Dedicated demo for timeline + scrubber integration.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Scrubber</h2>
+      <div id="timelineScrubberHost"></div>
+      <p class="muted">Seek updates active timeline event. Horizontal view auto-scrolls to active card.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Vertical (Grouped)</h2>
+      <div id="timelineHostVertical"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Horizontal</h2>
+      <div id="timelineHostHorizontal"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Event Log</h2>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createTimeline } from "./js/ui/ui.timeline.js";
+    import { createTimelineScrubber } from "./js/ui/ui.timeline.scrubber.js";
+
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    const verticalHost = document.getElementById("timelineHostVertical");
+    const horizontalHost = document.getElementById("timelineHostHorizontal");
+
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+
+    const timelineItems = [
+      {
+        id: 1,
+        timestamp: "2026-03-09T08:04:00+08:00",
+        title: "Call Received",
+        subtitle: "Caller connected to hotline",
+        description: "Initial intake completed by operator level 1.",
+        status: "accepted",
+        meta: ["Hotline", "Inbound"],
+      },
+      {
+        id: 2,
+        timestamp: "2026-03-09T08:07:00+08:00",
+        title: "Dispatch Requested",
+        subtitle: "Fire team assignment created",
+        description: "Team marked as requested and awaiting acceptance.",
+        status: "requested",
+        meta: ["Dispatch", "Team Alpha"],
+        actions: [{ id: "open", label: "Open" }],
+      },
+      {
+        id: 3,
+        timestamp: "2026-03-09T08:13:00+08:00",
+        title: "Team On Scene",
+        subtitle: "Responder arrived at location",
+        description: "Situation stable; collecting additional details.",
+        status: "on_scene",
+        meta: ["On Scene"],
+      },
+      {
+        id: 4,
+        timestamp: "2026-03-07T21:50:00+08:00",
+        title: "Prior Incident Linked",
+        subtitle: "Historical record attached",
+        description: "Previous report was associated for reference.",
+        status: "completed",
+        meta: ["Linked"],
+      },
+    ];
+
+    const vertical = createTimeline(verticalHost, timelineItems, {
+      orientation: "vertical",
+      groupByDate: true,
+      onItemClick(item) {
+        writeLog("timeline.vertical.item.click", { id: item.id, title: item.title });
+      },
+      onActionClick(action, item) {
+        writeLog("timeline.vertical.action.click", { actionId: action.id, itemId: item.id });
+      },
+    });
+
+    const horizontal = createTimeline(horizontalHost, timelineItems, {
+      orientation: "horizontal",
+      groupByDate: false,
+      density: "compact",
+      onItemClick(item) {
+        writeLog("timeline.horizontal.item.click", { id: item.id, title: item.title });
+      },
+    });
+
+    const times = timelineItems
+      .map((item) => new Date(item.timestamp).getTime())
+      .filter((value) => Number.isFinite(value))
+      .sort((a, b) => a - b);
+    const minTime = times[0];
+    const maxTime = times[times.length - 1];
+    const durationMs = Math.max(1, maxTime - minTime);
+    let filteredItems = timelineItems.slice();
+
+    function toRelativeMs(item) {
+      return new Date(item.timestamp).getTime() - minTime;
+    }
+
+    function updateTimelinesByRange(range) {
+      const startMs = Math.max(0, Number(range?.startMs) || 0);
+      const endMs = Math.min(durationMs, Number(range?.endMs) || durationMs);
+      filteredItems = timelineItems.filter((item) => {
+        const relative = toRelativeMs(item);
+        return relative >= startMs && relative <= endMs;
+      });
+      vertical.update(filteredItems);
+      horizontal.update(filteredItems);
+      writeLog("timeline.range.filtered", {
+        startMs,
+        endMs,
+        totalItems: timelineItems.length,
+        visibleItems: filteredItems.length,
+      });
+    }
+
+    function nearestItemAt(ms) {
+      const list = filteredItems.length ? filteredItems : timelineItems;
+      const absolute = minTime + Math.max(0, Math.min(durationMs, ms));
+      let winner = list[0];
+      let bestDistance = Infinity;
+      list.forEach((item) => {
+        const t = new Date(item.timestamp).getTime();
+        const d = Math.abs(t - absolute);
+        if (d < bestDistance) {
+          bestDistance = d;
+          winner = item;
+        }
+      });
+      return winner;
+    }
+
+    function setActiveItem(itemId) {
+      document.querySelectorAll(".ui-timeline-item.is-active").forEach((node) => {
+        node.classList.remove("is-active");
+      });
+      const targets = document.querySelectorAll(`.ui-timeline-item[data-item-id="${String(itemId)}"]`);
+      if (!targets.length) {
+        return;
+      }
+      targets.forEach((node) => node.classList.add("is-active"));
+
+      const horizontalNode = horizontalHost.querySelector(`.ui-timeline-item[data-item-id="${String(itemId)}"]`);
+      horizontalNode?.scrollIntoView?.({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+
+    const scrubber = createTimelineScrubber(document.getElementById("timelineScrubberHost"), {
+      durationMs,
+      valueMs: durationMs,
+      enableRange: true,
+      range: { startMs: 0, endMs: durationMs },
+      zoomLevels: [1, 2, 5],
+      zoom: 1,
+      onSeek(valueMs) {
+        if (!filteredItems.length) {
+          writeLog("timeline.scrubber.seek", { valueMs, activeItemId: null });
+          return;
+        }
+        const active = nearestItemAt(valueMs);
+        setActiveItem(active.id);
+        writeLog("timeline.scrubber.seek", { valueMs, activeItemId: active.id, activeTitle: active.title });
+      },
+      onRangeChange(range) {
+        updateTimelinesByRange(range);
+        if (filteredItems.length) {
+          const active = nearestItemAt(scrubber.getValue());
+          setActiveItem(active.id);
+        } else {
+          setActiveItem(null);
+        }
+        writeLog("timeline.scrubber.range", range);
+      },
+      onZoomChange(nextZoom) {
+        writeLog("timeline.scrubber.zoom", { zoom: nextZoom });
+      },
+    });
+
+    // initialize filtered timelines from initial range and highlight active item
+    const initialRange = scrubber.getState().range || { startMs: 0, endMs: durationMs };
+    updateTimelinesByRange(initialRange);
+    if (filteredItems.length) {
+      setActiveItem(nearestItemAt(scrubber.getValue()).id);
+    }
+
+    // keep refs alive for debugging in console
+    window.timelineDemo = { vertical, horizontal, scrubber };
+  </script>
+</body>
+</html>

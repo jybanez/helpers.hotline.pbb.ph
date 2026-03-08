@@ -100,6 +100,14 @@ Shared UI layer:
 - `js/ui/ui.search.js`
 - `js/ui/ui.modal.js`
 - `js/ui/ui.dialog.js`
+- `js/ui/ui.toast.js`
+- `js/ui/ui.select.js`
+- `js/ui/ui.datepicker.js`
+- `js/ui/ui.timeline.js`
+- `js/ui/ui.timeline.scrubber.js`
+- `js/ui/ui.command.palette.js`
+- `js/ui/ui.tree.js`
+- `js/ui/ui.kanban.js`
 - `js/ui/ui.tabs.js`
 - `js/ui/ui.strips.js`
 - `js/ui/ui.media.strip.js`
@@ -121,6 +129,14 @@ Shared CSS:
 - `css/ui/ui.components.css`
 - `css/ui/ui.modal.css`
 - `css/ui/ui.dialog.css`
+- `css/ui/ui.toast.css`
+- `css/ui/ui.select.css`
+- `css/ui/ui.datepicker.css`
+- `css/ui/ui.timeline.css`
+- `css/ui/ui.timeline.scrubber.css`
+- `css/ui/ui.command.palette.css`
+- `css/ui/ui.tree.css`
+- `css/ui/ui.kanban.css`
 - `css/ui/ui.tabs.css`
 - `css/ui/ui.strips.css`
 - `css/ui/ui.media.strip.css`
@@ -141,6 +157,7 @@ Run this checklist:
    - `demo.incident.types.html`
    - `demo.grid.html`
    - `demo.progress.html`
+   - `demo.timeline.html`
    - `demo.ui.html`
    - `demo.audio.html`
    - `demo.nav.html`
@@ -187,6 +204,26 @@ If changing callback signatures or removing methods, plan a major version.
   - column resizing
   - remote mode query events
 
+### 11.4 Timeline + Scrubber (`ui.timeline`, `ui.timeline.scrubber`)
+
+- `createTimeline(container, items, options)` supports vertical/horizontal orientation and grouped rendering.
+- `createTimelineScrubber(container, options)` supports seek, range handles, and zoom levels.
+- In demo/reference integrations:
+  - scrubber range may filter visible timeline items
+  - seek should keep active item highlight behavior stable
+
+### 11.5 Command Palette / Tree / Kanban
+
+- `ui.command.palette`:
+  - global quick actions with shortcut handling
+  - preserve keyboard navigation and command filtering behavior
+- `ui.tree`:
+  - expandable/selectable/checkable hierarchy
+  - preserve stable selection/check callbacks
+- `ui.kanban`:
+  - lane/card rendering with drag-drop card moves
+  - preserve move callback payload shape (`card`, `fromLaneId`, `toLaneId`, `lanes`)
+
 ## 12) Demo Ownership Split
 
 - `demo.ui.html` is for general UI playground and should avoid heavy domain/data-grid scenarios.
@@ -194,6 +231,9 @@ If changing callback signatures or removing methods, plan a major version.
   - local
   - remote
   - large virtualized fixed-height list
+- Timeline-focused behavior belongs in `demo.timeline.html`:
+  - vertical/horizontal timeline
+  - scrubber interaction (seek/range/zoom)
 - Navigation-focused behavior belongs in `demo.nav.html`.
 
 When introducing a substantial UI module, prefer a dedicated demo page and link it from `index.html`.

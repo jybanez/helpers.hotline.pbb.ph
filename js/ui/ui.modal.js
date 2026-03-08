@@ -407,6 +407,85 @@ export function createModal(options = {}) {
   };
 }
 
+export function createActionModal(options = {}) {
+  const actionOptions = normalizeActionModalOptions(options);
+  let modal = null;
+
+  function buildFooter(actions) {
+    if (!actions.length) {
+      return null;
+    }
+    const footer = createElement("div", { className: "ui-dialog-footer-actions" });
+    actions.forEach((action) => {
+      const button = createElement("button", {
+        className: getActionButtonClass(action),
+        text: action.label,
+        attrs: {
+          type: "button",
+          ...(action.disabled ? { disabled: "disabled" } : {}),
+        },
+      });
+      if (action.autoFocus) {
+        button.setAttribute("data-action-autofocus", "true");
+      }
+      button.addEventListener("click", async (event) => {
+        const context = { action, modal, event };
+        let result;
+        if (typeof action.onClick === "function") {
+          result = await action.onClick(context);
+        }
+        if (action.closeOnClick !== false && result !== false) {
+          await modal?.close({
+            reason: "action",
+            actionId: action.id,
+            actionLabel: action.label,
+            result,
+          });
+        }
+      });
+      footer.appendChild(button);
+    });
+    return footer;
+  }
+
+  function getInitialFocus() {
+    if (typeof actionOptions.initialFocus !== "undefined" && actionOptions.initialFocus !== null) {
+      return actionOptions.initialFocus;
+    }
+    return (panel) => panel.querySelector("[data-action-autofocus='true']");
+  }
+
+  modal = createModal({
+    ...actionOptions,
+    initialFocus: getInitialFocus(),
+    footer: buildFooter(actionOptions.actions),
+  });
+
+  function setActions(nextActions = []) {
+    const normalized = normalizeActions(nextActions);
+    actionOptions.actions = normalized;
+    modal.setFooter(buildFooter(normalized));
+    return normalized;
+  }
+
+  const originalUpdate = modal.update;
+  modal.update = (nextOptions = {}) => {
+    if (nextOptions && Object.prototype.hasOwnProperty.call(nextOptions, "actions")) {
+      setActions(nextOptions.actions);
+      const copy = { ...(nextOptions || {}) };
+      delete copy.actions;
+      originalUpdate(copy);
+      return;
+    }
+    originalUpdate(nextOptions);
+  };
+
+  return {
+    ...modal,
+    setActions,
+  };
+}
+
 function normalizeSize(size) {
   const value = String(size || "md").toLowerCase();
   if (value === "sm" || value === "md" || value === "lg" || value === "xl" || value === "full") {
@@ -418,4 +497,60 @@ function normalizeSize(size) {
 function normalizePosition(position) {
   const value = String(position || "center").toLowerCase();
   return value === "top" ? "top" : "center";
+}
+
+function normalizeActionModalOptions(options = {}) {
+  const next = { ...(options || {}) };
+  next.actions = normalizeActions(options.actions);
+  return next;
+}
+
+function normalizeActions(actions) {
+  if (!Array.isArray(actions)) {
+    return [];
+  }
+  return actions
+    .map((action, index) => {
+      if (!action || typeof action !== "object") {
+        return null;
+      }
+      const label = String(action.label ?? "").trim();
+      if (!label) {
+        return null;
+      }
+      return {
+        id: String(action.id ?? `action-${index}`),
+        label,
+        variant: normalizeActionVariant(action.variant),
+        className: String(action.className || "").trim(),
+        onClick: typeof action.onClick === "function" ? action.onClick : null,
+        closeOnClick: action.closeOnClick !== false,
+        disabled: Boolean(action.disabled),
+        autoFocus: Boolean(action.autoFocus),
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeActionVariant(variant) {
+  const value = String(variant || "default").toLowerCase();
+  if (value === "primary" || value === "danger" || value === "ghost" || value === "default") {
+    return value;
+  }
+  return "default";
+}
+
+function getActionButtonClass(action) {
+  const classes = ["ui-button", "ui-action-modal-button"];
+  if (action.variant === "primary") {
+    classes.push("ui-button-primary");
+  } else if (action.variant === "danger") {
+    classes.push("ui-button-danger");
+  } else if (action.variant === "ghost") {
+    classes.push("ui-button-ghost");
+  }
+  if (action.className) {
+    classes.push(action.className);
+  }
+  return classes.join(" ");
 }

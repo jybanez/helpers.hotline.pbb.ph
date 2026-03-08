@@ -27,6 +27,14 @@ css/
     ui.components.css
     ui.modal.css
     ui.dialog.css
+    ui.toast.css
+    ui.select.css
+    ui.datepicker.css
+    ui.timeline.css
+    ui.timeline.scrubber.css
+    ui.command.palette.css
+    ui.tree.css
+    ui.kanban.css
     ui.tabs.css
     ui.strips.css
     ui.media.strip.css
@@ -51,6 +59,14 @@ js/
     ui.search.js
     ui.modal.js
     ui.dialog.js
+    ui.toast.js
+    ui.select.js
+    ui.datepicker.js
+    ui.timeline.js
+    ui.timeline.scrubber.js
+    ui.command.palette.js
+    ui.tree.js
+    ui.kanban.js
     ui.tabs.js
     ui.strips.js
     ui.media.strip.js
@@ -78,6 +94,7 @@ demo.team.assignments.html
 demo.incident.types.html
 demo.grid.html
 demo.progress.html
+demo.timeline.html
 demo.ui.html
 demo.audio.html
 demo.nav.html
@@ -116,10 +133,30 @@ Reusable shared UI utilities live under `js/ui`:
   - `createSearchField(options)` reusable search field with clear + `Esc`-to-clear behavior
 - `ui.modal.js`
   - `createModal(options)` general-purpose modal shell (content/header/footer, sizing, focus trap, backdrop/escape close)
+  - `createActionModal(options)` modal wrapper with declarative footer actions (`actions[]`)
 - `ui.dialog.js`
   - `uiAlert(message, options)` promise-based alert modal
   - `uiConfirm(message, options)` promise-based confirm modal
   - `uiPrompt(message, options)` promise-based prompt modal
+- `ui.toast.js`
+  - `createToastStack(options)` global toast notifications (info/success/warn/error), optional speech synthesis (`speak`, `speakTypes`, `speakRate`, `speakPitch`, `speakVolume`, `voiceName`, `speakFormatter`, `speakCooldownMs`)
+  - speech is opt-in (`speak: false` by default); can be overridden per-toast via `show(message, { speak: true | false })`
+  - when speech is enabled, auto-dismiss countdown can start after speech ends via `waitForSpeechBeforeDismiss` (default `true`)
+  - `getVoices()` returns available speech voices so UI can render a voice selector; per-toast `voiceName` override is supported in `show(message, { voiceName })`
+- `ui.select.js`
+  - `createSelect(container, items, options)` single/multi select with optional search and keyboard navigation (`ArrowUp/ArrowDown/Home/End/Enter/Escape`, optional `selectOnTab`)
+- `ui.datepicker.js`
+  - `createDatepicker(container, options)` single/range date picker with optional time controls, min/max bounds, disabled-date callback, and `setValue/getValue`
+- `ui.timeline.js`
+  - `createTimeline(container, items, options)` event timeline with `vertical`/`horizontal` orientation, optional date grouping, and item/action click hooks
+- `ui.timeline.scrubber.js`
+  - `createTimelineScrubber(container, options)` timeline scrubber/playhead with optional range handles and zoom levels
+- `ui.command.palette.js`
+  - `createCommandPalette(options)` global command launcher with keyboard shortcut, search, and action execution
+- `ui.tree.js`
+  - `createTree(container, data, options)` expandable/selectable tree view with optional checkboxes
+- `ui.kanban.js`
+  - `createKanban(container, lanes, options)` lane-based board with draggable cards and move callbacks
 - `ui.tabs.js`
   - `createTabs(container, options)` accessible tablist + panel component
 - `ui.strips.js`
@@ -162,6 +199,14 @@ Reusable UI styles live under `css/ui`:
 - `ui.components.css` shared primitives (`.ui-button`, `.ui-input`, `.ui-drawer*`)
 - `ui.modal.css` shared modal shell styles
 - `ui.dialog.css` dialog-specific styles on top of modal shell
+- `ui.toast.css` toast notification styles
+- `ui.select.css` select/dropdown styles
+- `ui.datepicker.css` datepicker styles
+- `ui.timeline.css` timeline styles
+- `ui.timeline.scrubber.css` timeline scrubber styles
+- `ui.command.palette.css` command palette styles
+- `ui.tree.css` tree view styles
+- `ui.kanban.css` kanban board styles
 - `ui.tabs.css` tab UI styles
 - `ui.strips.css` strip/chip selector styles
 - `ui.media.strip.css` media strip, thumbnail, and media viewer styles
@@ -691,7 +736,12 @@ Open from a local server (Apache/WAMP/Nginx):
   - live configurable progress
   - style gallery for all rendering variants
 - `demo.ui.html` -> UI utilities playground
-  - modal, dialog, drawer, search, tabs, strips, media strip
+  - modal, dialog, toast, select, datepicker, command palette, tree, kanban, drawer, search, tabs, strips, media strip
+- `demo.timeline.html` -> dedicated timeline playground
+  - vertical grouped timeline
+  - horizontal timeline
+  - timeline scrubber with seek/range/zoom
+  - scrubber updates active timeline item (highlight + horizontal auto-scroll)
 - `demo.audio.html` -> audio player + stacked role audiographs
   - sample selector for available `sampledata_*.json`
   - graph style selector
@@ -1006,6 +1056,54 @@ modal.open();
 modal.close({ reason: "done" });
 ```
 
+### `createActionModal(options)` (`js/ui/ui.modal.js`)
+
+Purpose:
+
+- Faster modal setup when footer buttons are known up front.
+
+Key options:
+
+- all `createModal(...)` options
+- `actions`: array of button actions
+  - `id`
+  - `label` (required)
+  - `variant`: `"default" | "primary" | "danger" | "ghost"`
+  - `closeOnClick` (default `true`)
+  - `disabled`
+  - `autoFocus`
+  - `onClick({ action, modal, event })` (can return `false` to prevent close)
+
+Methods:
+
+- all `createModal(...)` methods
+- `setActions(actions[])`
+
+Example:
+
+```js
+import { createActionModal } from "./js/ui/ui.modal.js";
+
+const modal = createActionModal({
+  title: "Delete Record",
+  content: "This action cannot be undone.",
+  actions: [
+    { id: "cancel", label: "Cancel", variant: "ghost" },
+    {
+      id: "delete",
+      label: "Delete",
+      variant: "danger",
+      autoFocus: true,
+      async onClick() {
+        await apiDeleteRecord();
+      },
+    },
+  ],
+});
+
+modal.open();
+```
+
 ### `createGrid(container, rows, options)` (`js/ui/ui.grid.js`)
 
 Purpose:
@@ -1139,6 +1237,219 @@ const progress = createProgress(container, {
 progress.setValue(70);
 ```
 
+### `createDatepicker(container, options)` (`js/ui/ui.datepicker.js`)
+
+Purpose:
+
+- Render a reusable date picker for single or range selection with optional time inputs.
+
+Options:
+
+- `mode`: `single | range`
+- `value`: single date (`Date|string|null`) or range (`{ start, end } | [start, end]`)
+- `showTime`: `boolean`
+- `closeOnSelect`: `boolean`
+- `weekStartsOn`: `0-6`
+- `yearRangePast`, `yearRangeFuture`: year jump range around current view year
+- `min`, `max`: date bounds
+- `disabledDates(date)`: callback to disable custom dates
+- `locale`, `placeholder`, `className`
+- `onChange(value, state)`
+
+Methods:
+
+- `update(nextOptions?)`
+- `setValue(nextValue)`
+- `getValue()`
+- `getState()`
+- `destroy()`
+
+Example:
+
+```js
+import { createDatepicker } from "./js/ui/ui.datepicker.js";
+
+const single = createDatepicker(container, {
+  mode: "single",
+  placeholder: "Pick date",
+  onChange(value) {
+    console.log("single", value);
+  },
+});
+
+const range = createDatepicker(rangeContainer, {
+  mode: "range",
+  showTime: true,
+  closeOnSelect: false,
+});
+```
+
+### `createTimeline(container, items, options)` (`js/ui/ui.timeline.js`)
+
+Purpose:
+
+- Render incident/activity events in vertical log mode or horizontal milestone mode.
+
+Item shape (recommended):
+
+- `id`, `timestamp`, `title`
+- optional `subtitle`, `description`, `status`
+- `status` recommended values: `assigned | requested | accepted | en_route | on_scene | completed | cancelled`
+- optional `meta[]` tag strings
+- optional `actions[]` with `{ id, label, className? }`
+
+Options:
+
+- `orientation`: `vertical | horizontal`
+- `density`: `compact | comfortable`
+- `groupByDate`: `boolean` (vertical only)
+- `showConnector`: `boolean`
+- `emptyText`, `className`
+- `locale`, `timeZone`
+- `onItemClick(item)`
+- `onActionClick(action, item)`
+
+Methods:
+
+- `update(nextItems, nextOptions?)`
+- `append(items)`
+- `prepend(items)`
+- `destroy()`
+- `getState()`
+
+Example:
+
+```js
+import { createTimeline } from "./js/ui/ui.timeline.js";
+
+const timeline = createTimeline(container, events, {
+  orientation: "vertical",
+  groupByDate: true,
+  onItemClick(item) {
+    console.log("timeline item", item.id);
+  },
+});
+```
+
+### `createTimelineScrubber(container, options)` (`js/ui/ui.timeline.scrubber.js`)
+
+Purpose:
+
+- Add an interactive timeline seek bar with optional range selection and zoom.
+- Time labels auto-scale by duration:
+  - `< 1h` -> `mm:ss`
+  - `>= 1h` -> `hh:mm:ss`
+  - `>= 1 day` -> `dd:hh:mm:ss`
+
+Options:
+
+- `durationMs`, `valueMs`
+- `enableRange`
+- `range`: `{ startMs, endMs }`
+- `zoom`, `zoomLevels`
+- `showZoomControls`
+- `onSeek(valueMs, state)`
+- `onRangeChange({ startMs, endMs }, state)`
+- `onZoomChange(zoom, state)`
+
+Methods:
+
+- `update(nextOptions?)`
+- `setTime(ms)`
+- `setRange(startMs, endMs)`
+- `setDuration(ms)`
+- `setZoom(zoom)`
+- `getValue()`
+- `getState()`
+- `destroy()`
+
+Example:
+
+```js
+import { createTimelineScrubber } from "./js/ui/ui.timeline.scrubber.js";
+
+const scrubber = createTimelineScrubber(container, {
+  durationMs: 600000,
+  valueMs: 65000,
+  enableRange: true,
+  range: { startMs: 40000, endMs: 210000 },
+  zoomLevels: [1, 2, 5],
+  onSeek(valueMs) {
+    console.log("seek", valueMs);
+  },
+});
+```
+
+### `createCommandPalette(options)` (`js/ui/ui.command.palette.js`)
+
+Purpose:
+
+- Global quick-action launcher (`Ctrl/Cmd + K`) with search and keyboard navigation.
+
+Options:
+
+- `commands[]`: `{ id, label, section?, keywords?, shortcut?, icon?, disabled?, run? }`
+- `title`, `placeholder`, `emptyText`
+- `shortcut` (default `"k"`), `metaKey`, `ctrlKey`
+- `onRun(command)`
+
+Methods:
+
+- `open()`, `close()`
+- `update(nextOptions?)`
+- `setQuery(text)`
+- `getState()`
+- `destroy()`
+
+### `createTree(container, data, options)` (`js/ui/ui.tree.js`)
+
+Purpose:
+
+- Expandable/selectable hierarchical view with optional checkboxes.
+
+Options:
+
+- `expandAll`, `selectable`, `checkable`, `className`
+- `onToggle(node, isExpanded)`
+- `onSelect(node)`
+- `onCheck(node, checked, checkedIds)`
+
+Methods:
+
+- `update(nextData, nextOptions?)`
+- `expandAll()`
+- `collapseAll()`
+- `setSelected(nodeId)`
+- `getState()`
+- `destroy()`
+
+### `createKanban(container, lanes, options)` (`js/ui/ui.kanban.js`)
+
+Purpose:
+
+- Lane/card board for dispatch/incident workflow with drag-and-drop card moves.
+
+Data shape:
+
+- `lanes[]`: `{ id, title, cards[] }`
+- `cards[]`: `{ id, title, meta? }`
+
+Options:
+
+- `draggable`, `className`
+- key mapping options:
+  - `laneIdKey`, `laneTitleKey`
+  - `cardIdKey`, `cardTitleKey`, `cardMetaKey`
+- `onCardClick(card, laneId)`
+- `onCardMove({ card, fromLaneId, toLaneId, lanes })`
+
+Methods:
+
+- `update(nextLanes, nextOptions?)`
+- `moveCard(cardId, fromLaneId, toLaneId)`
+- `getState()`
+- `destroy()`
+
 ### `createMediaStrip(container, items, options)` (`js/ui/ui.media.strip.js`)
 
 Purpose:
@@ -1184,6 +1495,46 @@ Recommended integration flow:
 - This is a scaffold/prototype for testing flow.
 - You can extend this with additional incident component helpers later while keeping the same API pattern.
 - For maintainers integrating into any `*.pbb.ph` project, follow `docs/pbb-refactor-playbook.md` before refactoring contracts.
+
+## Roadmap
+
+### v0.12 (Current)
+
+- Command/Productivity:
+  - `ui.command.palette` (quick actions + shortcut search)
+- Information Architecture:
+  - `ui.tree` (expand/select/check hierarchy)
+- Workflow Board:
+  - `ui.kanban` (lane/card drag-drop)
+- Demo/Docs:
+  - added live demos in `demo.ui.html`
+  - added usage docs and contracts
+
+### v0.13
+
+- Timeline polishing:
+  - stabilize scrubber interactions across browsers/devices
+  - optional linked-range filtering mode in component API (not just demo wiring)
+- Kanban v2:
+  - intra-lane reorder
+  - lane WIP limits + validation callbacks
+  - keyboard-accessible card moves
+
+### v0.14
+
+- Command palette v2:
+  - async providers
+  - grouped sections + pinned/recent commands
+  - command history and telemetry hooks
+- Tree v2:
+  - async/lazy children loading
+  - virtualized rendering for very large hierarchies
+
+### v0.15
+
+- Scheduler/calendar primitives
+- File uploader with resumable/chunk hooks
+- Virtual list primitive for non-grid components
 
 ## Release Notes
 
@@ -1268,3 +1619,70 @@ Recommended integration flow:
   - `ui.progress.css`
   - styles: `linear`, `striped`, `gradient`, `segmented`, `steps`, `radial`, `ring`, `indeterminate`
 - Added `demo.progress.html` and linked it from `index.html`
+
+### v0.8.0
+
+- Added toast notifications utility:
+  - `ui.toast.js`
+  - `ui.toast.css`
+- Added select component utility:
+  - `ui.select.js`
+  - `ui.select.css`
+- Updated `demo.ui.html`:
+  - new Toast section (info/success/warn/error actions)
+  - new Select section (single + multi searchable select)
+
+### v0.9.0
+
+- Added datepicker utility:
+  - `ui.datepicker.js`
+  - `ui.datepicker.css`
+  - supports `single` and `range` modes with optional time inputs
+- Added action modal wrapper:
+  - `createActionModal(...)` in `ui.modal.js` for declarative footer actions
+- Refactored dialog helpers to use action modal internals:
+  - `uiAlert`, `uiConfirm`, `uiPrompt`
+- Updated `demo.ui.html`:
+  - new Datepicker section (single + range/time examples)
+- Enhanced toast speech controls:
+  - optional delayed dismiss until speech ends (`waitForSpeechBeforeDismiss`)
+  - voice selection support (`voiceName`, `getVoices()`)
+
+### v0.10.0
+
+- Added timeline utility:
+  - `ui.timeline.js`
+  - `ui.timeline.css`
+  - supports `vertical` and `horizontal` orientations
+  - supports optional vertical date grouping and item/action callbacks
+- Updated `demo.ui.html`:
+  - new Timeline section with vertical + horizontal examples
+
+### v0.11.0
+
+- Added timeline scrubber utility:
+  - `ui.timeline.scrubber.js`
+  - `ui.timeline.scrubber.css`
+  - seek/playhead, optional range handles, zoom levels
+- Added dedicated timeline demo:
+  - `demo.timeline.html`
+  - scrubber-driven active item highlighting + horizontal auto-scroll
+- Updated `demo.ui.html`:
+  - timeline/scrubber moved out to dedicated page for clearer utility coverage
+
+### v0.12.0
+
+- Added command palette utility:
+  - `ui.command.palette.js`
+  - `ui.command.palette.css`
+  - shortcut-driven quick actions (`Ctrl/Cmd + K`)
+- Added tree utility:
+  - `ui.tree.js`
+  - `ui.tree.css`
+  - expandable/selectable/checkable hierarchy
+- Added kanban utility:
+  - `ui.kanban.js`
+  - `ui.kanban.css`
+  - drag-drop lane card movement with callbacks
+- Updated `demo.ui.html`:
+  - new sections for command palette, tree, and kanban

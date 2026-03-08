@@ -8,6 +8,12 @@
   <link rel="stylesheet" href="./css/ui/ui.components.css">
   <link rel="stylesheet" href="./css/ui/ui.modal.css">
   <link rel="stylesheet" href="./css/ui/ui.dialog.css">
+  <link rel="stylesheet" href="./css/ui/ui.toast.css">
+  <link rel="stylesheet" href="./css/ui/ui.select.css">
+  <link rel="stylesheet" href="./css/ui/ui.datepicker.css">
+  <link rel="stylesheet" href="./css/ui/ui.command.palette.css">
+  <link rel="stylesheet" href="./css/ui/ui.tree.css">
+  <link rel="stylesheet" href="./css/ui/ui.kanban.css">
   <link rel="stylesheet" href="./css/ui/ui.tabs.css">
   <link rel="stylesheet" href="./css/ui/ui.strips.css">
   <link rel="stylesheet" href="./css/ui/ui.media.strip.css">
@@ -56,8 +62,15 @@
       padding: 10px;
       min-height: 90px;
     }
+    #log {
+      height: 220px;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
     #tabsHost,
     #stripHost,
+    #treeHost,
+    #kanbanHost,
     #mediaStripHostScroll,
     #mediaStripHostWrap {
       border: 1px solid #2b3750;
@@ -104,10 +117,79 @@
     </section>
 
     <section class="panel">
+      <h2 class="ui-title">Toast</h2>
+      <div class="row">
+        <button id="toastInfoBtn" class="ui-button" type="button">Info Toast</button>
+        <button id="toastSuccessBtn" class="ui-button" type="button">Success Toast</button>
+        <button id="toastWarnBtn" class="ui-button" type="button">Warn Toast</button>
+        <button id="toastErrorBtn" class="ui-button" type="button">Error Toast</button>
+        <label>
+          <input id="toastSpeakToggle" type="checkbox">
+          Speak Toasts
+        </label>
+        <label>
+          Voice
+          <select id="toastVoiceSelect" class="ui-input" style="min-width: 220px;">
+            <option value="">Default Voice</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Select</h2>
+      <div class="row">
+        <div>
+          <p>Single Select</p>
+          <div id="selectHostSingle"></div>
+        </div>
+        <div>
+          <p>Multi Select</p>
+          <div id="selectHostMulti"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Datepicker</h2>
+      <div class="row">
+        <div>
+          <p>Single Date</p>
+          <div id="datePickerHostSingle"></div>
+        </div>
+        <div>
+          <p>Range + Time</p>
+          <div id="datePickerHostRange"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Command Palette</h2>
+      <div class="row">
+        <button id="openCommandPaletteBtn" class="ui-button" type="button">Open Palette</button>
+        <span>Shortcut: <code>Ctrl/Cmd + K</code></span>
+      </div>
+    </section>
+
+    <section class="panel">
       <h2 class="ui-title">Modal</h2>
       <div class="row">
         <button id="modalBtn" class="ui-button" type="button">Open Modal</button>
+        <button id="actionModalBtn" class="ui-button" type="button">Open Action Modal</button>
       </div>
+      <pre class="log"><code>import { createActionModal } from "./js/ui/ui.modal.js";
+
+const modal = createActionModal({
+  title: "Delete Record",
+  content: "This action cannot be undone.",
+  actions: [
+    { id: "cancel", label: "Cancel", variant: "ghost" },
+    { id: "delete", label: "Delete", variant: "danger", autoFocus: true },
+  ],
+});
+
+modal.open();</code></pre>
     </section>
 
     <section class="panel">
@@ -128,6 +210,20 @@
     <section class="panel">
       <h2 class="ui-title">Strips</h2>
       <div id="stripHost"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Tree</h2>
+      <div class="row">
+        <button id="expandTreeBtn" class="ui-button" type="button">Expand All</button>
+        <button id="collapseTreeBtn" class="ui-button" type="button">Collapse All</button>
+      </div>
+      <div id="treeHost"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Kanban</h2>
+      <div id="kanbanHost"></div>
     </section>
 
     <section class="panel">
@@ -154,7 +250,13 @@
     import { createSearchField } from "./js/ui/ui.search.js";
     import { createEventBag } from "./js/ui/ui.events.js";
     import { createElement } from "./js/ui/ui.dom.js";
-    import { createModal } from "./js/ui/ui.modal.js";
+    import { createModal, createActionModal } from "./js/ui/ui.modal.js";
+    import { createToastStack } from "./js/ui/ui.toast.js";
+    import { createSelect } from "./js/ui/ui.select.js";
+    import { createDatepicker } from "./js/ui/ui.datepicker.js";
+    import { createCommandPalette } from "./js/ui/ui.command.palette.js";
+    import { createTree } from "./js/ui/ui.tree.js";
+    import { createKanban } from "./js/ui/ui.kanban.js";
     import { uiAlert, uiConfirm, uiPrompt } from "./js/ui/ui.dialog.js";
     import { createTabs } from "./js/ui/ui.tabs.js";
     import { createStrip } from "./js/ui/ui.strips.js";
@@ -220,6 +322,276 @@
       }, { once: true });
       modal.open();
       writeLog("modal.open", { size: "md" });
+    });
+
+    document.getElementById("actionModalBtn").addEventListener("click", () => {
+      const content = createElement("div");
+      content.append(
+        createElement("p", { text: "Use createActionModal for declarative footer buttons." }),
+        createElement("p", { text: "Delete this sample record?" })
+      );
+
+      const modal = createActionModal({
+        title: "Action Modal Example",
+        size: "sm",
+        content,
+        actions: [
+          {
+            id: "cancel",
+            label: "Cancel",
+            variant: "ghost",
+            onClick() {
+              writeLog("actionModal.cancel", { ok: true });
+            },
+          },
+          {
+            id: "delete",
+            label: "Delete",
+            variant: "danger",
+            autoFocus: true,
+            onClick() {
+              writeLog("actionModal.delete", { ok: true });
+            },
+          },
+        ],
+        onClose(meta) {
+          writeLog("actionModal.close", meta || {});
+          modal.destroy();
+        },
+      });
+      modal.open();
+      writeLog("actionModal.open", { size: "sm" });
+    });
+
+    const toastSpeakToggle = document.getElementById("toastSpeakToggle");
+    const toastVoiceSelect = document.getElementById("toastVoiceSelect");
+    let toaster = null;
+
+    function populateToastVoiceSelect() {
+      if (!toastVoiceSelect || !toaster || typeof toaster.getVoices !== "function") {
+        return;
+      }
+      const selected = String(toastVoiceSelect.value || "");
+      const voices = toaster.getVoices();
+      toastVoiceSelect.innerHTML = "";
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Default Voice";
+      toastVoiceSelect.appendChild(defaultOption);
+      voices.forEach((voice) => {
+        const option = document.createElement("option");
+        option.value = voice.name;
+        option.textContent = voice.lang ? `${voice.name} (${voice.lang})` : voice.name;
+        toastVoiceSelect.appendChild(option);
+      });
+      toastVoiceSelect.value = voices.some((voice) => voice.name === selected) ? selected : "";
+    }
+
+    function mountToaster() {
+      if (toaster) {
+        toaster.destroy();
+      }
+      toaster = createToastStack({
+        position: "top-right",
+        defaultDuration: 2600,
+        max: 4,
+        speak: Boolean(toastSpeakToggle?.checked),
+        speakTypes: ["warn", "error"],
+        voiceName: String(toastVoiceSelect?.value || ""),
+      });
+      populateToastVoiceSelect();
+    }
+    mountToaster();
+    toastSpeakToggle?.addEventListener("change", () => {
+      mountToaster();
+      writeLog("toast.speak.toggle", { enabled: Boolean(toastSpeakToggle.checked) });
+    });
+    toastVoiceSelect?.addEventListener("change", () => {
+      mountToaster();
+      writeLog("toast.voice.change", { voiceName: toastVoiceSelect.value || "default" });
+    });
+    if (typeof window !== "undefined" && window.speechSynthesis && typeof window.speechSynthesis.addEventListener === "function") {
+      window.speechSynthesis.addEventListener("voiceschanged", () => {
+        populateToastVoiceSelect();
+      });
+    }
+    document.getElementById("toastInfoBtn").addEventListener("click", () => {
+      toaster.info("Data refresh started.", { title: "Info" });
+      writeLog("toast.info", { ok: true });
+    });
+    document.getElementById("toastSuccessBtn").addEventListener("click", () => {
+      toaster.success("Incident saved successfully.", { title: "Success" });
+      writeLog("toast.success", { ok: true });
+    });
+    document.getElementById("toastWarnBtn").addEventListener("click", () => {
+      toaster.warn("Network is unstable.", { title: "Warning" });
+      writeLog("toast.warn", { ok: true });
+    });
+    document.getElementById("toastErrorBtn").addEventListener("click", () => {
+      toaster.error("Failed to load dispatch resources.", { title: "Error" });
+      writeLog("toast.error", { ok: true });
+    });
+
+    const selectItems = [
+      { value: "medical", label: "Medical & Rescue" },
+      { value: "fire", label: "Fire & Hazard" },
+      { value: "crime", label: "Crime & Security" },
+      { value: "weather", label: "Disaster & Weather" },
+      { value: "infra", label: "Infrastructure & Utilities" },
+    ];
+    createSelect(document.getElementById("selectHostSingle"), selectItems, {
+      placeholder: "Choose a category",
+      searchable: true,
+      multiple: false,
+      selected: "medical",
+      onChange(value, item) {
+        writeLog("select.single.change", { value, item });
+      },
+    });
+    createSelect(document.getElementById("selectHostMulti"), selectItems, {
+      placeholder: "Select categories",
+      searchable: true,
+      multiple: true,
+      selected: ["fire", "crime"],
+      onChange(values, selectedItems) {
+        writeLog("select.multi.change", { values, selectedItems });
+      },
+    });
+
+    createDatepicker(document.getElementById("datePickerHostSingle"), {
+      placeholder: "Pick incident date",
+      mode: "single",
+      onChange(value, state) {
+        writeLog("datepicker.single.change", { value, state });
+      },
+    });
+    createDatepicker(document.getElementById("datePickerHostRange"), {
+      placeholder: "Pick active range",
+      mode: "range",
+      showTime: true,
+      closeOnSelect: false,
+      onChange(value, state) {
+        writeLog("datepicker.range.change", { value, state });
+      },
+    });
+
+    const commandPalette = createCommandPalette({
+      title: "Quick Actions",
+      commands: [
+        {
+          id: "open-timeline",
+          label: "Open Timeline Demo",
+          section: "Navigation",
+          shortcut: "Ctrl+K",
+          keywords: ["timeline", "demo"],
+          run() {
+            window.location.href = "./demo.timeline.html";
+          },
+        },
+        {
+          id: "toggle-theme",
+          label: "Toggle Theme",
+          section: "UI",
+          keywords: ["dark", "light"],
+          run() {
+            const next = page.dataset.theme === "dark" ? "light" : "dark";
+            page.dataset.theme = next;
+            writeLog("theme.toggle", { theme: next, via: "command-palette" });
+          },
+        },
+        {
+          id: "show-alert",
+          label: "Show Alert Dialog",
+          section: "Dialogs",
+          keywords: ["alert", "dialog"],
+          run() {
+            uiAlert("Triggered from command palette.", { title: "Palette Alert" });
+          },
+        },
+      ],
+      onRun(command) {
+        writeLog("commandPalette.run", { id: command.id, label: command.label });
+      },
+    });
+    document.getElementById("openCommandPaletteBtn").addEventListener("click", () => {
+      commandPalette.open();
+    });
+
+    const tree = createTree(document.getElementById("treeHost"), [
+      {
+        id: "calls",
+        label: "Calls",
+        children: [
+          { id: "incoming", label: "Incoming" },
+          { id: "dropped", label: "Dropped" },
+        ],
+      },
+      {
+        id: "dispatch",
+        label: "Dispatch",
+        children: [
+          { id: "team-assignment", label: "Team Assignment" },
+          { id: "resource-allocation", label: "Resource Allocation" },
+        ],
+      },
+      {
+        id: "reports",
+        label: "Reports",
+        children: [
+          { id: "incident-summary", label: "Incident Summary" },
+          { id: "response-time", label: "Response Time" },
+        ],
+      },
+    ], {
+      selectable: true,
+      checkable: true,
+      onSelect(node) {
+        writeLog("tree.select", { id: node.id, label: node.label });
+      },
+      onToggle(node, isExpanded) {
+        writeLog("tree.toggle", { id: node.id, isExpanded });
+      },
+      onCheck(node, checked, checkedIds) {
+        writeLog("tree.check", { id: node.id, checked, checkedIds });
+      },
+    });
+    document.getElementById("expandTreeBtn").addEventListener("click", () => tree.expandAll());
+    document.getElementById("collapseTreeBtn").addEventListener("click", () => tree.collapseAll());
+
+    createKanban(document.getElementById("kanbanHost"), [
+      {
+        id: "queued",
+        title: "Queued",
+        cards: [
+          { id: "i-101", title: "Incident #101", meta: "Caller: Maria Santos" },
+          { id: "i-102", title: "Incident #102", meta: "Caller: Juan Dela Cruz" },
+        ],
+      },
+      {
+        id: "active",
+        title: "Active",
+        cards: [
+          { id: "i-103", title: "Incident #103", meta: "Team: Alpha" },
+        ],
+      },
+      {
+        id: "resolved",
+        title: "Resolved",
+        cards: [
+          { id: "i-100", title: "Incident #100", meta: "Closed 5m ago" },
+        ],
+      },
+    ], {
+      onCardClick(card, laneId) {
+        writeLog("kanban.card.click", { cardId: card.id, laneId });
+      },
+      onCardMove(payload) {
+        writeLog("kanban.card.move", {
+          cardId: payload.card.id,
+          fromLaneId: payload.fromLaneId,
+          toLaneId: payload.toLaneId,
+        });
+      },
     });
 
     function openDrawer(position) {
