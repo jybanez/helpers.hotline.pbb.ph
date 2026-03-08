@@ -1,0 +1,127 @@
+.ui-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.ui-modal-root.is-mounted {
+  pointer-events: auto;
+}
+
+.ui-modal-root.is-open {
+  opacity: 1;
+}
+
+.ui-modal-root.is-closing {
+  pointer-events: none;
+}
+
+.ui-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.52);
+}
+
+.ui-modal {
+  position: relative;
+  width: min(92vw, 560px);
+  max-height: min(88vh, 920px);
+  overflow: auto;
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: var(--ui-radius-md, 10px);
+  background: var(--ui-bg, #0d1523);
+  color: var(--ui-text, #d7e0f4);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4);
+  transform: translateY(8px) scale(0.98);
+  opacity: 0;
+  transition: transform 180ms ease, opacity 160ms ease;
+}
+
+.ui-modal-root.is-open .ui-modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.ui-modal.is-pos-top {
+  margin-top: 24px;
+}
+
+.ui-modal.is-size-sm {
+  width: min(92vw, 380px);
+}
+
+.ui-modal.is-size-md {
+  width: min(92vw, 560px);
+}
+
+.ui-modal.is-size-lg {
+  width: min(94vw, 760px);
+}
+
+.ui-modal.is-size-xl {
+  width: min(96vw, 1024px);
+}
+
+.ui-modal.is-size-full {
+  width: min(98vw, 1400px);
+  height: min(94vh, 1200px);
+  max-height: min(94vh, 1200px);
+}
+
+.ui-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2, 8px);
+  padding: var(--ui-space-3, 12px) var(--ui-space-4, 16px) var(--ui-space-2, 8px);
+  border-bottom: 1px solid var(--ui-border, #2b3750);
+}
+
+.ui-modal-header.is-empty {
+  display: none;
+}
+
+.ui-modal-title {
+  margin: 0;
+}
+
+.ui-modal-close {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.ui-modal-close svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ui-modal-body {
+  padding: var(--ui-space-3, 12px) var(--ui-space-4, 16px);
+  display: grid;
+  gap: var(--ui-space-2, 8px);
+}
+
+.ui-modal-footer {
+  padding: var(--ui-space-2, 8px) var(--ui-space-4, 16px) var(--ui-space-3, 12px);
+  border-top: 1px solid var(--ui-border, #2b3750);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-space-2, 8px);
+}

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Progress Demo</title>
+  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
+  <link rel="stylesheet" href="./css/ui/ui.components.css">
+  <link rel="stylesheet" href="./css/ui/ui.progress.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #0c1017;
+      color: #d7e0f4;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+    .panel {
+      border: 1px solid #263146;
+      border-radius: 10px;
+      background: #111826;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .back {
+      color: #b2c2e5;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .controls {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    }
+    .control {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: #9fb2d8;
+    }
+    .control input[type="range"] {
+      width: 100%;
+    }
+    .control select,
+    .control input[type="color"] {
+      border-radius: 8px;
+      border: 1px solid #344769;
+      background: #101c31;
+      color: #d7e0f4;
+      padding: 6px 8px;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .card h4 {
+      margin: 0;
+      font-size: 12px;
+      color: #9fb2d8;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Progress Demo</h1>
+      <p>General-purpose progress UI with multiple styles.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Live Progress</h2>
+      <div class="controls">
+        <label class="control">
+          Value
+          <input id="valueRange" type="range" min="0" max="100" value="56">
+        </label>
+        <label class="control">
+          Style
+          <select id="styleSelect">
+            <option value="linear">linear</option>
+            <option value="striped">striped</option>
+            <option value="gradient">gradient</option>
+            <option value="segmented">segmented</option>
+            <option value="steps">steps</option>
+            <option value="radial">radial</option>
+            <option value="ring">ring</option>
+            <option value="indeterminate">indeterminate</option>
+          </select>
+        </label>
+        <label class="control">
+          Size
+          <select id="sizeSelect">
+            <option value="sm">sm</option>
+            <option value="md" selected>md</option>
+            <option value="lg">lg</option>
+          </select>
+        </label>
+        <label class="control">
+          Color
+          <input id="colorInput" type="color" value="#4f89ff">
+        </label>
+      </div>
+      <div id="progressLive"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Style Gallery</h2>
+      <div id="progressGallery" class="gallery"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createProgress } from "./js/ui/ui.progress.js";
+
+    const page = document.querySelector("main.page");
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      page.dataset.theme = page.dataset.theme === "dark" ? "light" : "dark";
+    });
+
+    const valueRange = document.getElementById("valueRange");
+    const styleSelect = document.getElementById("styleSelect");
+    const sizeSelect = document.getElementById("sizeSelect");
+    const colorInput = document.getElementById("colorInput");
+
+    const liveApi = createProgress(document.getElementById("progressLive"), {
+      label: "Live upload",
+      value: Number(valueRange.value),
+      currentStep: 3,
+      totalSteps: 8,
+    }, {
+      style: styleSelect.value,
+      size: sizeSelect.value,
+      color: colorInput.value,
+      showPercent: true,
+      showLabel: true,
+      animate: true,
+      rounded: true,
+      glow: true,
+    });
+
+    function refreshLive() {
+      const value = Number(valueRange.value) || 0;
+      const step = Math.max(0, Math.round((value / 100) * 8));
+      liveApi.update({
+        value,
+        currentStep: step,
+        totalSteps: 8,
+      }, {
+        style: styleSelect.value,
+        size: sizeSelect.value,
+        color: colorInput.value,
+        indeterminate: styleSelect.value === "indeterminate",
+      });
+    }
+
+    [valueRange, styleSelect, sizeSelect, colorInput].forEach((el) => {
+      el.addEventListener("input", refreshLive);
+      el.addEventListener("change", refreshLive);
+    });
+
+    const galleryHost = document.getElementById("progressGallery");
+    const styles = ["linear", "striped", "gradient", "segmented", "steps", "radial", "ring", "indeterminate"];
+    const galleryApis = [];
+
+    styles.forEach((style, index) => {
+      const card = document.createElement("article");
+      card.className = "card";
+      const title = document.createElement("h4");
+      title.textContent = style;
+      const host = document.createElement("div");
+      card.append(title, host);
+      galleryHost.appendChild(card);
+      const value = 18 + (index * 11);
+      const api = createProgress(host, {
+        label: `Sample ${style}`,
+        value: Math.min(100, value),
+        currentStep: Math.max(1, Math.round((value / 100) * 6)),
+        totalSteps: 6,
+      }, {
+        style,
+        showLabel: false,
+        indeterminate: style === "indeterminate",
+        animate: true,
+      });
+      galleryApis.push(api);
+    });
+  </script>
+</body>
+</html>

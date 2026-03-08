@@ -6,6 +6,7 @@
   <title>UI Utilities Demo</title>
   <link rel="stylesheet" href="./css/ui/ui.tokens.css">
   <link rel="stylesheet" href="./css/ui/ui.components.css">
+  <link rel="stylesheet" href="./css/ui/ui.modal.css">
   <link rel="stylesheet" href="./css/ui/ui.dialog.css">
   <link rel="stylesheet" href="./css/ui/ui.tabs.css">
   <link rel="stylesheet" href="./css/ui/ui.strips.css">
@@ -90,7 +91,7 @@
         <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
       </div>
       <h1 class="ui-title">UI Utilities Demo</h1>
-      <p>Playground for reusable `ui` modules: drawer, search, dialog, tabs, strips.</p>
+      <p>Playground for reusable `ui` modules: modal, dialog, drawer, search, tabs, strips.</p>
     </section>
 
     <section class="panel">
@@ -99,6 +100,13 @@
         <button id="alertBtn" class="ui-button" type="button">Alert</button>
         <button id="confirmBtn" class="ui-button" type="button">Confirm</button>
         <button id="promptBtn" class="ui-button" type="button">Prompt</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Modal</h2>
+      <div class="row">
+        <button id="modalBtn" class="ui-button" type="button">Open Modal</button>
       </div>
     </section>
 
@@ -146,6 +154,7 @@
     import { createSearchField } from "./js/ui/ui.search.js";
     import { createEventBag } from "./js/ui/ui.events.js";
     import { createElement } from "./js/ui/ui.dom.js";
+    import { createModal } from "./js/ui/ui.modal.js";
     import { uiAlert, uiConfirm, uiPrompt } from "./js/ui/ui.dialog.js";
     import { createTabs } from "./js/ui/ui.tabs.js";
     import { createStrip } from "./js/ui/ui.strips.js";
@@ -180,6 +189,37 @@
     document.getElementById("promptBtn").addEventListener("click", async () => {
       const value = await uiPrompt("Enter a value:", { title: "Prompt Input", placeholder: "Type here..." });
       writeLog("dialog.prompt", { value });
+    });
+
+    document.getElementById("modalBtn").addEventListener("click", () => {
+      const body = createElement("div");
+      body.append(
+        createElement("p", { text: "General-purpose modal content can be any HTMLElement." }),
+        createElement("p", { text: "Use createModal() for custom forms, details, or action sheets." })
+      );
+      const closeBtn = createElement("button", {
+        className: "ui-button ui-button-primary",
+        text: "Close",
+        attrs: { type: "button" },
+      });
+      const footer = createElement("div", { className: "ui-dialog-footer-actions" });
+      footer.appendChild(closeBtn);
+
+      const modal = createModal({
+        title: "Reusable Modal",
+        size: "md",
+        content: body,
+        footer,
+        onClose(meta) {
+          writeLog("modal.close", meta || {});
+          modal.destroy();
+        },
+      });
+      closeBtn.addEventListener("click", () => {
+        modal.close({ reason: "button" });
+      }, { once: true });
+      modal.open();
+      writeLog("modal.open", { size: "md" });
     });
 
     function openDrawer(position) {

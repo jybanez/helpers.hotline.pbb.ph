@@ -1,48 +1,5 @@
 import { createElement } from "./ui.dom.js";
-import { createEventBag } from "./ui.events.js";
-
-function createDialogShell(options = {}) {
-  const events = createEventBag();
-  const backdrop = createElement("div", {
-    className: options.backdropClass || "ui-dialog-backdrop",
-  });
-  const panel = createElement("div", {
-    className: options.panelClass || "ui-dialog",
-    attrs: { role: "dialog", "aria-modal": "true" },
-  });
-  const header = createElement("div", { className: options.headerClass || "ui-dialog-header" });
-  const title = createElement("h4", {
-    className: options.titleClass || "ui-title",
-    text: options.title || "",
-  });
-  const body = createElement("div", { className: options.bodyClass || "ui-dialog-body" });
-  const footer = createElement("div", { className: options.footerClass || "ui-dialog-footer" });
-  header.appendChild(title);
-  panel.append(header, body, footer);
-
-  let mounted = false;
-
-  function mount(parent = document.body) {
-    if (mounted) {
-      return;
-    }
-    parent.append(backdrop, panel);
-    mounted = true;
-  }
-
-  function destroy() {
-    events.clear();
-    if (backdrop.parentNode) {
-      backdrop.parentNode.removeChild(backdrop);
-    }
-    if (panel.parentNode) {
-      panel.parentNode.removeChild(panel);
-    }
-    mounted = false;
-  }
-
-  return { events, backdrop, panel, header, title, body, footer, mount, destroy };
-}
+import { createModal } from "./ui.modal.js";
 
 function createButton(label, className = "ui-button", attrs = {}) {
   return createElement("button", {
@@ -54,80 +11,95 @@ function createButton(label, className = "ui-button", attrs = {}) {
 
 export function uiAlert(message, options = {}) {
   return new Promise((resolve) => {
-    const shell = createDialogShell({
-      title: options.title || "Notice",
-      ...options,
-    });
+    let settled = false;
     const messageEl = createElement("p", { className: "ui-dialog-message", text: String(message || "") });
     const ok = createButton(options.okText || "OK", "ui-button ui-button-primary");
-    shell.body.appendChild(messageEl);
-    shell.footer.appendChild(ok);
+    const footer = createElement("div", { className: "ui-dialog-footer-actions" });
+    footer.appendChild(ok);
+
+    const modal = createModal({
+      title: options.title || "Notice",
+      content: messageEl,
+      footer,
+      size: options.size || "sm",
+      closeOnBackdrop: Boolean(options.allowBackdropClose),
+      closeOnEscape: options.allowEscClose !== false,
+      parent: options.parent || document.body,
+      className: options.className || "",
+      showCloseButton: options.showCloseButton !== false,
+      onClose() {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve(true);
+        modal.destroy();
+      },
+    });
 
     function close(result) {
-      shell.destroy();
+      if (settled) {
+        return;
+      }
+      settled = true;
       resolve(result);
+      modal.close({ result }).then(() => modal.destroy());
     }
 
-    shell.events.on(ok, "click", () => close(true));
-    shell.events.on(shell.backdrop, "click", () => {
-      if (options.allowBackdropClose) {
-        close(true);
-      }
-    });
-    shell.events.on(document, "keydown", (event) => {
-      if (event.key === "Escape" && options.allowEscClose !== false) {
-        event.preventDefault();
-        close(true);
-      }
-    });
-
-    shell.mount(options.parent || document.body);
+    ok.addEventListener("click", () => close(true), { once: true });
+    modal.open();
     ok.focus();
   });
 }
 
 export function uiConfirm(message, options = {}) {
   return new Promise((resolve) => {
-    const shell = createDialogShell({
-      title: options.title || "Confirm",
-      ...options,
-    });
+    let settled = false;
     const messageEl = createElement("p", { className: "ui-dialog-message", text: String(message || "") });
     const cancel = createButton(options.cancelText || "Cancel", "ui-button");
     const confirm = createButton(options.confirmText || "Confirm", "ui-button ui-button-primary");
-    shell.body.appendChild(messageEl);
-    shell.footer.append(cancel, confirm);
+    const footer = createElement("div", { className: "ui-dialog-footer-actions" });
+    footer.append(cancel, confirm);
+
+    const modal = createModal({
+      title: options.title || "Confirm",
+      content: messageEl,
+      footer,
+      size: options.size || "sm",
+      closeOnBackdrop: Boolean(options.allowBackdropClose),
+      closeOnEscape: options.allowEscClose !== false,
+      parent: options.parent || document.body,
+      className: options.className || "",
+      showCloseButton: options.showCloseButton !== false,
+      onClose() {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve(false);
+        modal.destroy();
+      },
+    });
 
     function close(result) {
-      shell.destroy();
+      if (settled) {
+        return;
+      }
+      settled = true;
       resolve(Boolean(result));
+      modal.close({ result }).then(() => modal.destroy());
     }
 
-    shell.events.on(cancel, "click", () => close(false));
-    shell.events.on(confirm, "click", () => close(true));
-    shell.events.on(shell.backdrop, "click", () => {
-      if (options.allowBackdropClose) {
-        close(false);
-      }
-    });
-    shell.events.on(document, "keydown", (event) => {
-      if (event.key === "Escape" && options.allowEscClose !== false) {
-        event.preventDefault();
-        close(false);
-      }
-    });
-
-    shell.mount(options.parent || document.body);
+    cancel.addEventListener("click", () => close(false), { once: true });
+    confirm.addEventListener("click", () => close(true), { once: true });
+    modal.open();
     confirm.focus();
   });
 }
 
 export function uiPrompt(message, options = {}) {
   return new Promise((resolve) => {
-    const shell = createDialogShell({
-      title: options.title || "Input",
-      ...options,
-    });
+    let settled = false;
     const messageEl = createElement("p", { className: "ui-dialog-message", text: String(message || "") });
     const input = createElement("input", {
       className: "ui-input",
@@ -136,35 +108,49 @@ export function uiPrompt(message, options = {}) {
     input.value = String(options.defaultValue || "");
     const cancel = createButton(options.cancelText || "Cancel", "ui-button");
     const submit = createButton(options.submitText || "Submit", "ui-button ui-button-primary");
-    shell.body.append(messageEl, input);
-    shell.footer.append(cancel, submit);
+    const content = createElement("div", { className: "ui-dialog-prompt-body" });
+    content.append(messageEl, input);
+    const footer = createElement("div", { className: "ui-dialog-footer-actions" });
+    footer.append(cancel, submit);
+
+    const modal = createModal({
+      title: options.title || "Input",
+      content,
+      footer,
+      size: options.size || "sm",
+      closeOnBackdrop: Boolean(options.allowBackdropClose),
+      closeOnEscape: options.allowEscClose !== false,
+      parent: options.parent || document.body,
+      className: options.className || "",
+      showCloseButton: options.showCloseButton !== false,
+      onClose() {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve(null);
+        modal.destroy();
+      },
+    });
 
     function close(result) {
-      shell.destroy();
+      if (settled) {
+        return;
+      }
+      settled = true;
       resolve(result);
+      modal.close({ result }).then(() => modal.destroy());
     }
 
-    shell.events.on(cancel, "click", () => close(null));
-    shell.events.on(submit, "click", () => close(input.value));
-    shell.events.on(input, "keydown", (event) => {
+    cancel.addEventListener("click", () => close(null), { once: true });
+    submit.addEventListener("click", () => close(input.value), { once: true });
+    input.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
         close(input.value);
       }
     });
-    shell.events.on(shell.backdrop, "click", () => {
-      if (options.allowBackdropClose) {
-        close(null);
-      }
-    });
-    shell.events.on(document, "keydown", (event) => {
-      if (event.key === "Escape" && options.allowEscClose !== false) {
-        event.preventDefault();
-        close(null);
-      }
-    });
-
-    shell.mount(options.parent || document.body);
+    modal.open();
     input.focus();
     input.select();
   });

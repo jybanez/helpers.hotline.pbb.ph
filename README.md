@@ -25,12 +25,14 @@ css/
   ui/
     ui.tokens.css
     ui.components.css
+    ui.modal.css
     ui.dialog.css
     ui.tabs.css
     ui.strips.css
     ui.media.strip.css
     ui.audio.css
     ui.grid.css
+    ui.progress.css
     ui.nav.css
   incident/
     incident.css
@@ -47,11 +49,13 @@ js/
     ui.events.js
     ui.drawer.js
     ui.search.js
+    ui.modal.js
     ui.dialog.js
     ui.tabs.js
     ui.strips.js
     ui.media.strip.js
     ui.grid.js
+    ui.progress.js
     ui.menu.js
     ui.dropdown.js
     ui.dropup.js
@@ -73,6 +77,7 @@ index.html
 demo.team.assignments.html
 demo.incident.types.html
 demo.grid.html
+demo.progress.html
 demo.ui.html
 demo.audio.html
 demo.nav.html
@@ -107,6 +112,8 @@ Reusable shared UI utilities live under `js/ui`:
   - `createBottomDrawer(options)` reusable bottom drawer shell
 - `ui.search.js`
   - `createSearchField(options)` reusable search field with clear + `Esc`-to-clear behavior
+- `ui.modal.js`
+  - `createModal(options)` general-purpose modal shell (content/header/footer, sizing, focus trap, backdrop/escape close)
 - `ui.dialog.js`
   - `uiAlert(message, options)` promise-based alert modal
   - `uiConfirm(message, options)` promise-based confirm modal
@@ -120,6 +127,8 @@ Reusable shared UI utilities live under `js/ui`:
   - options include `layout: "scroll" | "wrap"` and `animationMs` (default `300`)
 - `ui.grid.js`
   - `createGrid(container, rows, options)` data grid/table with local/remote modes, optional sort/search/pagination, and optional row virtualization
+- `ui.progress.js`
+  - `createProgress(container, data, options)` progress indicator with multiple styles (linear, segmented, steps, radial, ring, etc.)
 - `ui.menu.js`
   - `createMenu(triggerEl, items, options)` anchored popover menu primitive
   - item icon contract: `icon` (SVG/HTML string), `iconPosition: "start" | "end"`, `iconOnly: boolean`
@@ -149,12 +158,14 @@ Reusable UI styles live under `css/ui`:
 
 - `ui.tokens.css` shared spacing/color/typography tokens
 - `ui.components.css` shared primitives (`.ui-button`, `.ui-input`, `.ui-drawer*`)
-- `ui.dialog.css` shared dialog/modal styles
+- `ui.modal.css` shared modal shell styles
+- `ui.dialog.css` dialog-specific styles on top of modal shell
 - `ui.tabs.css` tab UI styles
 - `ui.strips.css` strip/chip selector styles
 - `ui.media.strip.css` media strip, thumbnail, and media viewer styles
 - `ui.audio.css` audio player, audiograph, and call session styles
 - `ui.grid.css` data-grid/table styles
+- `ui.progress.css` progress styles
 - `ui.nav.css` navigation/menu styles
 
 Current usage:
@@ -674,8 +685,11 @@ Open from a local server (Apache/WAMP/Nginx):
   - local grid (client search/sort/pagination)
   - remote grid (query-driven updates)
   - large virtualized grid with fixed-height scrolling
+- `demo.progress.html` -> progress styles demo
+  - live configurable progress
+  - style gallery for all rendering variants
 - `demo.ui.html` -> UI utilities playground
-  - dialog, drawer, search, tabs, strips, media strip
+  - modal, dialog, drawer, search, tabs, strips, media strip
 - `demo.audio.html` -> audio player + stacked role audiographs
   - sample selector for available `sampledata_*.json`
   - graph style selector
@@ -942,6 +956,53 @@ const drawer = createBottomDrawer({
 drawer.open(document.body);
 ```
 
+### `createModal(options)` (`js/ui/ui.modal.js`)
+
+Purpose:
+
+- General-purpose modal shell for custom content, forms, media, and reusable overlays.
+
+Key options:
+
+- `title`
+- `content` (`string | HTMLElement | () => HTMLElement`)
+- `footer` (`string | HTMLElement | () => HTMLElement`)
+- `size`: `"sm" | "md" | "lg" | "xl" | "full"`
+- `position`: `"center" | "top"`
+- `showHeader`, `showCloseButton`
+- `closeOnBackdrop`, `closeOnEscape`
+- `trapFocus`, `lockScroll`
+- `initialFocus` (`selector | HTMLElement | (panel) => HTMLElement`)
+- `className`
+- `onOpen(ctx)`, `onBeforeClose(meta)`, `onClose(meta)`
+
+Methods:
+
+- `open(content?, nextOptions?)`
+- `close(meta?)`
+- `update(nextOptions?)`
+- `setContent(content)`
+- `setFooter(footer)`
+- `setTitle(title)`
+- `destroy()`
+- `getState()`
+
+Example:
+
+```js
+import { createModal } from "./js/ui/ui.modal.js";
+
+const modal = createModal({
+  title: "Reusable Modal",
+  size: "md",
+  content: "Hello from modal body",
+});
+
+modal.open();
+// later
+modal.close({ reason: "done" });
+```
+
 ### `createGrid(container, rows, options)` (`js/ui/ui.grid.js`)
 
 Purpose:
@@ -1023,6 +1084,56 @@ const grid = createGrid(container, [], {
     // grid.update(apiRows, { totalRows: apiTotal });
   },
 });
+```
+
+### `createProgress(container, data, options)` (`js/ui/ui.progress.js`)
+
+Purpose:
+
+- General-purpose progress indicator with multiple rendering styles.
+
+Data:
+
+- `value`
+- `label`
+- `currentStep` (for `steps`)
+- `totalSteps` (for `steps`)
+
+Options:
+
+- `style`: `linear | striped | gradient | segmented | steps | radial | ring | indeterminate`
+- `size`: `sm | md | lg`
+- `showLabel`, `showPercent`
+- `animate`, `rounded`, `glow`
+- `indeterminate`
+- `min`, `max`
+- `segments` (for `segmented`)
+- `totalSteps` (default for `steps`)
+- `color`, `trackColor`
+- `ariaLabel`, `className`
+
+Methods:
+
+- `destroy()`
+- `update(nextData, nextOptions?)`
+- `setValue(value)`
+- `getState()`
+
+Example:
+
+```js
+import { createProgress } from "./js/ui/ui.progress.js";
+
+const progress = createProgress(container, {
+  label: "Upload",
+  value: 42,
+}, {
+  style: "gradient",
+  showPercent: true,
+  animate: true,
+});
+
+progress.setValue(70);
 ```
 
 ### `createMediaStrip(container, items, options)` (`js/ui/ui.media.strip.js`)
