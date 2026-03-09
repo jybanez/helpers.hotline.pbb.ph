@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Audio Session Demo</title>
-  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
-  <link rel="stylesheet" href="./css/ui/ui.components.css">
-  <link rel="stylesheet" href="./css/ui/ui.audio.css">
   <style>
     body {
       margin: 0;
@@ -50,6 +47,10 @@
       margin: 0;
     }
   </style>
+  <script type="module">
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.audio.callSession"]);
+  </script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -99,7 +100,9 @@
   </main>
 
   <script type="module">
-    import { createAudioCallSession } from "./js/ui/ui.audio.callSession.js";
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const { createAudioCallSession } = await uiLoader.import("ui.audio.callSession");
 
     const page = document.querySelector("main.page");
     const sampleSelect = document.getElementById("sampleSelect");

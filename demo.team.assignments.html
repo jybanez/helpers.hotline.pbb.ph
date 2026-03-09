@@ -4,14 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Team Assignments Demo</title>
-  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
-  <link rel="stylesheet" href="./css/ui/ui.components.css">
-  <link rel="stylesheet" href="./css/ui/ui.dialog.css">
-  <link rel="stylesheet" href="./css/incident/incident.css">
-  <link rel="stylesheet" href="./css/incident/incident.base.css">
-  <link rel="stylesheet" href="./css/incident/incident.teams.assignments.css">
-  <link rel="stylesheet" href="./css/incident/incident.teams.assignments.editor.css">
-  <link rel="stylesheet" href="./css/incident/incident.teams.assignments.viewer.css">
   <style>
     body {
       margin: 0;
@@ -70,6 +62,10 @@
       font-size: 13px;
     }
   </style>
+  <script type="module">
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["incident.base", "incident.teams.assignments"]);
+  </script>
 </head>
 <body>
   <main class="page">
@@ -111,8 +107,10 @@
   </main>
 
   <script type="module">
-    import { incidentBase } from "./js/incident/incident.base.js";
-    import { incidentTeamsAssignments } from "./js/incident/incident.teams.assignments.js";
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const { incidentBase } = await uiLoader.import("incident.base");
+    const { incidentTeamsAssignments } = await uiLoader.import("incident.teams.assignments");
 
     const sampleSelect = document.getElementById("sampleSelect");
     const themeSelect = document.getElementById("themeSelect");

@@ -190,6 +190,19 @@ If changing callback signatures or removing methods, plan a major version.
 
 ## 11) New Utilities (Recent Additions)
 
+### 11.0 Registry Loader (`ui.loader`)
+
+- `js/ui/ui.loader.js` is now the preferred integration entry point for browser projects that want CSS + JS loading managed together.
+- Preferred usage:
+  - `await uiLoader.load("ui.modal")` to ensure styles are present
+  - `const { createModal } = await uiLoader.import("ui.modal")` to ensure styles + module are ready
+- Keep registry keys stable once documented because app integrations may reference them directly.
+- Loader behavior to preserve:
+  - deduplicated stylesheet injection
+  - dynamic import by registry key
+  - support for both `ui.*` and `incident.*` component namespaces
+- Demo pages should prefer `uiLoader` as well, so working demos remain the reference implementation for project integrations.
+
 ### 11.1 Modal Foundation (`ui.modal`)
 
 - `createModal(options)` is now the base shell for overlay/dialog rendering.

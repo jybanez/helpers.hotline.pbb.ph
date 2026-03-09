@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Empty State Demo</title>
-  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
-  <link rel="stylesheet" href="./css/ui/ui.components.css">
-  <link rel="stylesheet" href="./css/ui/ui.empty.state.css">
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; }
@@ -21,6 +18,10 @@
     .incident-list-item { border: 1px solid #2b3750; border-radius: 8px; padding: 10px; background: #111b2f; display: grid; gap: 4px; }
     .incident-list-meta { color: #9fb2d8; font-size: 12px; }
   </style>
+  <script type="module">
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.empty.state", "ui.dom"]);
+  </script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -40,8 +41,10 @@
     </section>
   </main>
   <script type="module">
-    import { createEmptyState } from "./js/ui/ui.empty.state.js";
-    import { clearNode, createElement } from "./js/ui/ui.dom.js";
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const { createEmptyState } = await uiLoader.import("ui.empty.state");
+    const { clearNode, createElement } = await uiLoader.import("ui.dom");
 
     const page = document.querySelector("main.page");
     const host = document.getElementById("host");

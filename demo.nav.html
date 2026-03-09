@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Navigation Demo</title>
-  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
-  <link rel="stylesheet" href="./css/ui/ui.components.css">
-  <link rel="stylesheet" href="./css/ui/ui.nav.css">
   <style>
     body {
       margin: 0;
@@ -66,6 +63,10 @@
       overflow-x: auto;
     }
   </style>
+  <script type="module">
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.navbar", "ui.sidebar", "ui.breadcrumbs", "ui.dropdown", "ui.dropup"]);
+  </script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -107,11 +108,13 @@
   </main>
 
   <script type="module">
-    import { createNavbar } from "./js/ui/ui.navbar.js";
-    import { createSidebar } from "./js/ui/ui.sidebar.js";
-    import { createBreadcrumbs } from "./js/ui/ui.breadcrumbs.js";
-    import { createDropdown } from "./js/ui/ui.dropdown.js";
-    import { createDropup } from "./js/ui/ui.dropup.js";
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const { createNavbar } = await uiLoader.import("ui.navbar");
+    const { createSidebar } = await uiLoader.import("ui.sidebar");
+    const { createBreadcrumbs } = await uiLoader.import("ui.breadcrumbs");
+    const { createDropdown } = await uiLoader.import("ui.dropdown");
+    const { createDropup } = await uiLoader.import("ui.dropup");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");

@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stepper Demo</title>
-  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
-  <link rel="stylesheet" href="./css/ui/ui.components.css">
-  <link rel="stylesheet" href="./css/ui/ui.stepper.css">
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; }
@@ -16,6 +13,10 @@
     #host { border: 1px solid #2b3750; border-radius: 8px; padding: 10px; background: #0b1220; }
     .log { margin: 0; white-space: pre-wrap; font-size: 12px; color: #b2c2e5; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; height: 220px; overflow: auto; }
   </style>
+  <script type="module">
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.stepper"]);
+  </script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -40,7 +41,9 @@
     </section>
   </main>
   <script type="module">
-    import { createStepper } from "./js/ui/ui.stepper.js";
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const { createStepper } = await uiLoader.import("ui.stepper");
 
     const page = document.querySelector("main.page");
     const host = document.getElementById("host");
@@ -98,4 +101,3 @@
   </script>
 </body>
 </html>
-

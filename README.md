@@ -63,6 +63,7 @@ js/
   ui/
     ui.dom.js
     ui.events.js
+    ui.loader.js
     ui.drawer.js
     ui.search.js
     ui.modal.js
@@ -150,6 +151,10 @@ Reusable shared UI utilities live under `js/ui`:
   - `clearNode(node)`
 - `ui.events.js`
   - `createEventBag()` for safe event binding/unbinding
+- `ui.loader.js`
+  - `uiLoader.load(name)` ensures component CSS is injected once
+  - `uiLoader.import(name)` injects CSS and dynamically imports the component module
+  - `uiLoader.loadMany(names)` batch-loads multiple registry entries
 - `ui.drawer.js`
   - `createBottomDrawer(options)` reusable bottom drawer shell
 - `ui.search.js`
@@ -268,6 +273,61 @@ Current usage:
 - `incident.teams.assignments` now uses `createEventBag` and `createBottomDrawer`.
 - `incident.types` and `incident.teams.assignments` now share `createSearchField` for drawer search UX.
 - Editor/viewer helpers now apply shared `ui-*` primitives (`ui-title`, `ui-input`, `ui-button`) alongside existing `hh-*` classes for non-breaking style migration.
+
+## Component Loading
+
+The library now supports two loading styles:
+
+- Manual loading:
+  - engineers add `<link>` tags for CSS and direct `import` statements for JS modules
+- Registry-based loading:
+  - engineers import `uiLoader` from `js/ui/ui.loader.js`
+  - the loader injects CSS once and dynamically imports JS modules by component key
+
+Recommended keys:
+
+- UI utilities:
+  - `ui.modal`
+  - `ui.dialog`
+  - `ui.toast`
+  - `ui.grid`
+  - `ui.timeline`
+  - `ui.file.uploader`
+- Incident helpers:
+  - `incident.base`
+  - `incident.teams.assignments`
+  - `incident.teams.assignments.editor`
+  - `incident.teams.assignments.viewer`
+  - `incident.types`
+  - `incident.types.details.editor`
+  - `incident.types.details.viewer`
+
+Loader example:
+
+```js
+import { uiLoader } from "./js/ui/ui.loader.js";
+
+const { createModal } = await uiLoader.import("ui.modal");
+
+const modal = createModal({
+  title: "Registry Loaded Modal",
+  content: "CSS and JS were loaded through uiLoader.",
+});
+
+modal.open();
+```
+
+Batch loading example:
+
+```js
+import { uiLoader } from "./js/ui/ui.loader.js";
+
+await uiLoader.loadMany([
+  "ui.modal",
+  "ui.dialog",
+  "ui.toast",
+]);
+```
 
 ## Common Options
 
@@ -1805,15 +1865,15 @@ Recommended integration flow:
 
 ## Roadmap
 
-### Current Stable Line: `v0.15.x`
+### Current Stable Line: `v0.16.x`
 
-- Latest documented release: `v0.15.2`
+- Latest documented release: `v0.16.1`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`
   - fixes/docs/internal cleanup -> `patch`
 
-### Next Planned Line: `v0.16.x` (Unreleased)
+### Next Planned Line: `v0.17.x` (Unreleased)
 
 - Dedicated accessibility hardening pass across all UI utilities
 - Additional data-entry primitives (mask/format helpers, richer validation wrappers)
@@ -2080,3 +2140,24 @@ Recommended integration flow:
   - `onUploadChunk`, `onPersistResumeState`
   - `onFinalizeUpload`, `onClearResumeState`
 - Updated `demo.ui.html` uploader demo to exercise chunk upload + localStorage resume-state flow
+
+### v0.16.0
+
+- Added registry-based component loader:
+  - `js/ui/ui.loader.js`
+  - `uiLoader.load(name)`
+  - `uiLoader.loadMany(names)`
+  - `uiLoader.import(name)`
+- Added explicit loader registry coverage for:
+  - `ui.*` browser utilities
+  - `incident.*` helper modules
+- Added deduplicated stylesheet injection so engineers can load CSS and JS through one API instead of manual asset wiring
+- Updated README and playbook to document `uiLoader` as the preferred shared loading path for project integrations
+
+### v0.16.1
+
+- Converted all `demo*.html` pages to use `uiLoader` instead of manual component stylesheet tags and direct component module imports
+- Standardized demo boot flow:
+  - head bootstrap uses `window.__demoLoaderReady = uiLoader.loadMany([...])`
+  - page scripts await loader readiness and import modules via `uiLoader.import(...)`
+- Demos now serve as the canonical reference for loader-based integration across the library

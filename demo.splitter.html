@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Splitter Demo</title>
-  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
-  <link rel="stylesheet" href="./css/ui/ui.components.css">
-  <link rel="stylesheet" href="./css/ui/ui.splitter.css">
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
@@ -17,6 +14,10 @@
     #hostVertical .ui-splitter { min-height: 340px; }
     .log { margin: 0; white-space: pre-wrap; font-size: 12px; color: #b2c2e5; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; height: 220px; overflow: auto; }
   </style>
+  <script type="module">
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.splitter", "ui.dom"]);
+  </script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -41,8 +42,10 @@
     </section>
   </main>
   <script type="module">
-    import { createSplitter } from "./js/ui/ui.splitter.js";
-    import { createElement } from "./js/ui/ui.dom.js";
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const { createSplitter } = await uiLoader.import("ui.splitter");
+    const { createElement } = await uiLoader.import("ui.dom");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");
@@ -81,4 +84,3 @@
   </script>
 </body>
 </html>
-

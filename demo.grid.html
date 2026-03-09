@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grid Demo</title>
-  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
-  <link rel="stylesheet" href="./css/ui/ui.components.css">
-  <link rel="stylesheet" href="./css/ui/ui.grid.css">
   <style>
     body {
       margin: 0;
@@ -64,6 +61,10 @@
       overflow-x: auto;
     }
   </style>
+  <script type="module">
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.grid"]);
+  </script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -101,7 +102,9 @@
   </main>
 
   <script type="module">
-    import { createGrid } from "./js/ui/ui.grid.js";
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const { createGrid } = await uiLoader.import("ui.grid");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");

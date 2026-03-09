@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Timeline Demo</title>
-  <link rel="stylesheet" href="./css/ui/ui.tokens.css">
-  <link rel="stylesheet" href="./css/ui/ui.components.css">
-  <link rel="stylesheet" href="./css/ui/ui.timeline.css">
-  <link rel="stylesheet" href="./css/ui/ui.timeline.scrubber.css">
   <style>
     body {
       margin: 0;
@@ -72,6 +68,10 @@
       box-shadow: 0 0 0 1px rgba(123, 181, 255, 0.35), 0 0 14px rgba(89, 144, 224, 0.18);
     }
   </style>
+  <script type="module">
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.timeline", "ui.timeline.scrubber"]);
+  </script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -107,8 +107,10 @@
   </main>
 
   <script type="module">
-    import { createTimeline } from "./js/ui/ui.timeline.js";
-    import { createTimelineScrubber } from "./js/ui/ui.timeline.scrubber.js";
+    import { uiLoader } from "./js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const { createTimeline } = await uiLoader.import("ui.timeline");
+    const { createTimelineScrubber } = await uiLoader.import("ui.timeline.scrubber");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");
