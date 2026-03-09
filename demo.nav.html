@@ -110,11 +110,11 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createNavbar } = await uiLoader.import("ui.navbar");
-    const { createSidebar } = await uiLoader.import("ui.sidebar");
-    const { createBreadcrumbs } = await uiLoader.import("ui.breadcrumbs");
-    const { createDropdown } = await uiLoader.import("ui.dropdown");
-    const { createDropup } = await uiLoader.import("ui.dropup");
+    const createNavbar = await uiLoader.get("ui.navbar");
+    const createSidebar = await uiLoader.get("ui.sidebar");
+    const createBreadcrumbs = await uiLoader.get("ui.breadcrumbs");
+    const createDropdown = await uiLoader.get("ui.dropdown");
+    const createDropup = await uiLoader.get("ui.dropup");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");

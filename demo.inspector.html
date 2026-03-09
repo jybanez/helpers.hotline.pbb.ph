@@ -40,7 +40,7 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createDataInspector } = await uiLoader.import("ui.data.inspector");
+    const createDataInspector = await uiLoader.get("ui.data.inspector");
 
     const page = document.querySelector("main.page");
     const host = document.getElementById("host");

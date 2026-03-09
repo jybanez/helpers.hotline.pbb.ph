@@ -109,8 +109,8 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { incidentBase } = await uiLoader.import("incident.base");
-    const { incidentTypes } = await uiLoader.import("incident.types");
+    const incidentBase = await uiLoader.get("incident.base");
+    const incidentTypes = await uiLoader.get("incident.types");
 
     const sampleSelect = document.getElementById("sampleSelect");
     const themeSelect = document.getElementById("themeSelect");

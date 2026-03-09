@@ -43,8 +43,9 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createEmptyState } = await uiLoader.import("ui.empty.state");
-    const { clearNode, createElement } = await uiLoader.import("ui.dom");
+    const createEmptyState = await uiLoader.get("ui.empty.state");
+    const clearNode = await uiLoader.get("ui.dom.clearNode");
+    const createElement = await uiLoader.get("ui.dom.createElement");
 
     const page = document.querySelector("main.page");
     const host = document.getElementById("host");

@@ -141,7 +141,7 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createProgress } = await uiLoader.import("ui.progress");
+    const createProgress = await uiLoader.get("ui.progress");
 
     const page = document.querySelector("main.page");
     document.getElementById("themeToggle").addEventListener("click", () => {

@@ -41,7 +41,7 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createScheduler } = await uiLoader.import("ui.scheduler");
+    const createScheduler = await uiLoader.get("ui.scheduler");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");

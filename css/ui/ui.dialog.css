@@ -14,9 +14,3 @@
   gap: var(--ui-space-2, 8px);
   width: 100%;
 }
-
-.ui-button-primary {
-  border-color: #4567a5;
-  background: #213454;
-  color: #e6efff;
-}

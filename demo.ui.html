@@ -189,7 +189,7 @@
       </div>
       <pre class="log"><code>import { uiLoader } from "./js/ui/ui.loader.js";
 
-const { createActionModal } = await uiLoader.import("ui.modal");
+const createActionModal = await uiLoader.get("ui.action.modal");
 
 const modal = createActionModal({
   title: "Delete Record",
@@ -264,22 +264,25 @@ modal.open();</code></pre>
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createBottomDrawer } = await uiLoader.import("ui.drawer");
-    const { createSearchField } = await uiLoader.import("ui.search");
-    const { createEventBag } = await uiLoader.import("ui.events");
-    const { createElement } = await uiLoader.import("ui.dom");
-    const { createModal, createActionModal } = await uiLoader.import("ui.modal");
-    const { createToastStack } = await uiLoader.import("ui.toast");
-    const { createSelect } = await uiLoader.import("ui.select");
-    const { createDatepicker } = await uiLoader.import("ui.datepicker");
-    const { createCommandPalette } = await uiLoader.import("ui.command.palette");
-    const { createTree } = await uiLoader.import("ui.tree");
-    const { createKanban } = await uiLoader.import("ui.kanban");
-    const { createFileUploader } = await uiLoader.import("ui.file.uploader");
-    const { uiAlert, uiConfirm, uiPrompt } = await uiLoader.import("ui.dialog");
-    const { createTabs } = await uiLoader.import("ui.tabs");
-    const { createStrip } = await uiLoader.import("ui.strips");
-    const { createMediaStrip } = await uiLoader.import("ui.media.strip");
+    const createBottomDrawer = await uiLoader.get("ui.drawer");
+    const createSearchField = await uiLoader.get("ui.search");
+    const createEventBag = await uiLoader.get("ui.events.createEventBag");
+    const createElement = await uiLoader.get("ui.dom.createElement");
+    const createModal = await uiLoader.get("ui.modal");
+    const createActionModal = await uiLoader.get("ui.action.modal");
+    const createToastStack = await uiLoader.get("ui.toast");
+    const createSelect = await uiLoader.get("ui.select");
+    const createDatepicker = await uiLoader.get("ui.datepicker");
+    const createCommandPalette = await uiLoader.get("ui.command.palette");
+    const createTree = await uiLoader.get("ui.tree");
+    const createKanban = await uiLoader.get("ui.kanban");
+    const createFileUploader = await uiLoader.get("ui.file.uploader");
+    const uiAlert = await uiLoader.get("ui.dialog.alert");
+    const uiConfirm = await uiLoader.get("ui.dialog.confirm");
+    const uiPrompt = await uiLoader.get("ui.dialog.prompt");
+    const createTabs = await uiLoader.get("ui.tabs");
+    const createStrip = await uiLoader.get("ui.strips");
+    const createMediaStrip = await uiLoader.get("ui.media.strip");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");

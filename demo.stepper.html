@@ -43,7 +43,7 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createStepper } = await uiLoader.import("ui.stepper");
+    const createStepper = await uiLoader.get("ui.stepper");
 
     const page = document.querySelector("main.page");
     const host = document.getElementById("host");

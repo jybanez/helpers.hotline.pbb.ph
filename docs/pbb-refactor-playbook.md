@@ -51,6 +51,8 @@ Use adapter functions between helper callbacks and backend APIs.
 
 - Keep helpers UI-focused.
 - Keep API payload mapping outside helpers.
+- App integrations should use `uiLoader` by registry key.
+- Direct path imports from `js/ui/*` and `js/incident/*` are internal-library usage, not app integration usage.
 
 Example adapter boundary:
 
@@ -185,6 +187,7 @@ Run this checklist:
 - Minor (`x.Y.z`): new optional APIs/utilities/components.
 - Major (`X.y.z`): contract or behavior-breaking changes.
 - Keep `README.md` release notes as the canonical component-version history; avoid per-component ad-hoc version labels.
+- If a change reshapes app integration expectations, treat it as contract-sensitive even if it is additive.
 
 If changing callback signatures or removing methods, plan a major version.
 
@@ -195,13 +198,18 @@ If changing callback signatures or removing methods, plan a major version.
 - `js/ui/ui.loader.js` is now the preferred integration entry point for browser projects that want CSS + JS loading managed together.
 - Preferred usage:
   - `await uiLoader.load("ui.modal")` to ensure styles are present
-  - `const { createModal } = await uiLoader.import("ui.modal")` to ensure styles + module are ready
+  - `const createModal = await uiLoader.get("ui.modal")` to resolve the exported factory
+  - `const modal = await uiLoader.create("ui.modal", options)` when direct instantiation is preferred
 - Keep registry keys stable once documented because app integrations may reference them directly.
 - Loader behavior to preserve:
   - deduplicated stylesheet injection
   - dynamic import by registry key
+  - export-aware resolution by registry key
+  - grouped loading support
+  - failure diagnostics for CSS/module loading
   - support for both `ui.*` and `incident.*` component namespaces
 - Demo pages should prefer `uiLoader` as well, so working demos remain the reference implementation for project integrations.
+- Registry changes should ship with a contract test update in `tests/registry.contract.mjs`.
 
 ### 11.1 Modal Foundation (`ui.modal`)
 

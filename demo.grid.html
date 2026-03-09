@@ -104,7 +104,7 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createGrid } = await uiLoader.import("ui.grid");
+    const createGrid = await uiLoader.get("ui.grid");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");

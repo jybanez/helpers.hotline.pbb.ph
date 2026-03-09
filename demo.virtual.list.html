@@ -46,8 +46,8 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createVirtualList } = await uiLoader.import("ui.virtual.list");
-    const { createElement } = await uiLoader.import("ui.dom");
+    const createVirtualList = await uiLoader.get("ui.virtual.list");
+    const createElement = await uiLoader.get("ui.dom.createElement");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");

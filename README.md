@@ -154,7 +154,11 @@ Reusable shared UI utilities live under `js/ui`:
 - `ui.loader.js`
   - `uiLoader.load(name)` ensures component CSS is injected once
   - `uiLoader.import(name)` injects CSS and dynamically imports the component module
+  - `uiLoader.get(name)` resolves the registry export directly
+  - `uiLoader.create(name, ...args)` invokes factory-style exports by registry key
   - `uiLoader.loadMany(names)` batch-loads multiple registry entries
+  - `uiLoader.loadManyGroup(names)` loads named registry groups like `core-shell`, `forms`, `data`, `media`
+  - diagnostics: `getRegistry()`, `getGroups()`, `getLoadedCss()`, `getLoadedModules()`, `getFailedCss()`, `getFailedModules()`, `getDiagnostics()`
 - `ui.drawer.js`
   - `createBottomDrawer(options)` reusable bottom drawer shell
 - `ui.search.js`
@@ -240,7 +244,7 @@ Reusable shared UI utilities live under `js/ui`:
 Reusable UI styles live under `css/ui`:
 
 - `ui.tokens.css` shared spacing/color/typography tokens
-- `ui.components.css` shared primitives (`.ui-button`, `.ui-input`, `.ui-drawer*`)
+- `ui.components.css` shared primitives (`.ui-button`, `.ui-input`, `.ui-panel`, `.ui-surface`, `.ui-field`, `.ui-label`, `.ui-badge`, `.ui-eyebrow`, `.ui-shell-header`, `.ui-shell-search`)
 - `ui.modal.css` shared modal shell styles
 - `ui.dialog.css` dialog-specific styles on top of modal shell
 - `ui.toast.css` toast notification styles
@@ -276,13 +280,11 @@ Current usage:
 
 ## Component Loading
 
-The library now supports two loading styles:
+Application integrations should use the registry loader.
 
-- Manual loading:
-  - engineers add `<link>` tags for CSS and direct `import` statements for JS modules
-- Registry-based loading:
-  - engineers import `uiLoader` from `js/ui/ui.loader.js`
-  - the loader injects CSS once and dynamically imports JS modules by component key
+- `uiLoader` is the public app-loading contract.
+- App code should call components by registry key.
+- Direct path imports are for internal library work only and should be avoided in consuming apps.
 
 Recommended keys:
 
@@ -307,9 +309,7 @@ Loader example:
 ```js
 import { uiLoader } from "./js/ui/ui.loader.js";
 
-const { createModal } = await uiLoader.import("ui.modal");
-
-const modal = createModal({
+const modal = await uiLoader.create("ui.modal", {
   title: "Registry Loaded Modal",
   content: "CSS and JS were loaded through uiLoader.",
 });
@@ -327,6 +327,29 @@ await uiLoader.loadMany([
   "ui.dialog",
   "ui.toast",
 ]);
+```
+
+Group loading example:
+
+```js
+import { uiLoader } from "./js/ui/ui.loader.js";
+
+await uiLoader.loadManyGroup(["core-shell", "forms"]);
+```
+
+Diagnostics example:
+
+```js
+import { uiLoader } from "./js/ui/ui.loader.js";
+
+uiLoader.setDebug(true);
+console.log(uiLoader.getDiagnostics());
+```
+
+Registry contract test:
+
+```sh
+node tests/registry.contract.mjs
 ```
 
 ## Common Options
@@ -1867,7 +1890,7 @@ Recommended integration flow:
 
 ### Current Stable Line: `v0.16.x`
 
-- Latest documented release: `v0.16.1`
+- Latest documented release: `v0.16.2`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`
@@ -2161,3 +2184,31 @@ Recommended integration flow:
   - head bootstrap uses `window.__demoLoaderReady = uiLoader.loadMany([...])`
   - page scripts await loader readiness and import modules via `uiLoader.import(...)`
 - Demos now serve as the canonical reference for loader-based integration across the library
+
+### v0.16.2
+
+- Strengthened `uiLoader` contract:
+  - export-aware registry entries via `export`
+  - `uiLoader.get(name)` for resolved exports
+  - `uiLoader.create(name, ...args)` for factory-style creation by registry key
+  - grouped loading via `loadGroup(name)` and `loadManyGroup(names)`
+  - loader diagnostics via `getFailedCss()`, `getFailedModules()`, `getDiagnostics()`, `setDebug(...)`
+- Added alias registry keys for common utility exports:
+  - `ui.action.modal`
+  - `ui.dialog.alert`
+  - `ui.dialog.confirm`
+  - `ui.dialog.prompt`
+  - `ui.dom.createElement`
+  - `ui.dom.clearNode`
+  - `ui.events.createEventBag`
+- Expanded shared primitive CSS in `ui.components.css`:
+  - `ui-surface`, `ui-panel`
+  - `ui-field`, `ui-label`
+  - `ui-badge`, `ui-eyebrow`
+  - `ui-shell-header`, `ui-shell-search`
+  - normalized button variants (`ui-button-primary`, `ui-button-ghost`, `ui-button-danger`)
+- Added registry contract test:
+  - `node tests/registry.contract.mjs`
+- Tightened integration guidance in README and playbook:
+  - app integrations should use `uiLoader` by registry key
+  - direct path imports are treated as internal-library usage

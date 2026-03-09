@@ -102,7 +102,7 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createAudioCallSession } = await uiLoader.import("ui.audio.callSession");
+    const createAudioCallSession = await uiLoader.get("ui.audio.callSession");
 
     const page = document.querySelector("main.page");
     const sampleSelect = document.getElementById("sampleSelect");

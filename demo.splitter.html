@@ -44,8 +44,8 @@
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
     await window.__demoLoaderReady;
-    const { createSplitter } = await uiLoader.import("ui.splitter");
-    const { createElement } = await uiLoader.import("ui.dom");
+    const createSplitter = await uiLoader.get("ui.splitter");
+    const createElement = await uiLoader.get("ui.dom.createElement");
 
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");

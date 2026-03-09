@@ -1,6 +1,8 @@
 .ui-timeline {
   display: grid;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .ui-timeline-empty {
@@ -116,12 +118,15 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
 
 .ui-timeline-title {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .ui-timeline-time {
@@ -137,6 +142,8 @@
   margin: 0;
   color: var(--ui-text, #dce9ff);
   font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .ui-timeline-subtitle {
@@ -156,6 +163,7 @@
   padding: 2px 8px;
   font-size: 11px;
   color: var(--ui-text-muted, #9fb1cf);
+  overflow-wrap: anywhere;
 }
 
 .ui-timeline-actions {
@@ -201,7 +209,17 @@
 
 .ui-timeline--horizontal {
   overflow-x: auto;
+  overflow-y: hidden;
   padding-bottom: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ui-timeline--horizontal .ui-timeline-group {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .ui-timeline--horizontal .ui-timeline-group-label {
@@ -212,7 +230,9 @@
   display: flex;
   align-items: stretch;
   gap: 14px;
-  min-width: max-content;
+  min-width: 100%;
+  width: max-content;
+  max-width: none;
   position: relative;
   padding-top: 16px;
 }
@@ -229,7 +249,10 @@
 }
 
 .ui-timeline--horizontal .ui-timeline-item {
+  flex: 0 0 320px;
   width: 320px;
+  max-width: min(320px, calc(100vw - 96px));
+  min-width: 0;
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: auto;
@@ -260,6 +283,7 @@
 .ui-timeline--horizontal .ui-timeline-body {
   padding-left: 0;
   margin-top: 6px;
+  min-width: 0;
 }
 
 .ui-timeline--horizontal .ui-timeline-header,
