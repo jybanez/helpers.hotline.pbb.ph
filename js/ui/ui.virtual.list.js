@@ -3,6 +3,8 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  chrome: true,
+  ariaLabel: "Virtual list",
   height: 320,
   rowHeight: 36,
   overscan: 6,
@@ -31,7 +33,11 @@ export function createVirtualList(container, items = [], options = {}) {
     clearNode(container);
 
     root = createElement("section", {
-      className: `ui-virtual-list ${currentOptions.className || ""}`.trim(),
+      className: `ui-virtual-list${currentOptions.chrome ? "" : " is-chrome-less"} ${currentOptions.className || ""}`.trim(),
+      attrs: {
+        role: "region",
+        "aria-label": currentOptions.ariaLabel,
+      },
     });
 
     if (!currentItems.length) {
@@ -44,6 +50,8 @@ export function createVirtualList(container, items = [], options = {}) {
     }
 
     viewport = createElement("div", { className: "ui-virtual-list-viewport" });
+    viewport.setAttribute("role", "list");
+    viewport.setAttribute("aria-label", currentOptions.ariaLabel);
     viewport.style.height = `${Math.max(120, currentOptions.height)}px`;
     layer = createElement("div", { className: "ui-virtual-list-layer" });
     viewport.appendChild(layer);
@@ -77,7 +85,7 @@ export function createVirtualList(container, items = [], options = {}) {
       const item = currentItems[index];
       const row = createElement("article", {
         className: "ui-virtual-list-row",
-        attrs: { "data-index": String(index) },
+        attrs: { "data-index": String(index), role: "listitem" },
       });
       row.style.top = `${index * rowHeight}px`;
       row.style.height = `${rowHeight}px`;
@@ -152,6 +160,8 @@ export function createVirtualList(container, items = [], options = {}) {
 
 function normalizeOptions(options) {
   const next = { ...DEFAULT_OPTIONS, ...(options || {}) };
+  next.chrome = next.chrome !== false;
+  next.ariaLabel = String(next.ariaLabel || "Virtual list");
   next.height = Math.max(120, Number(next.height) || 320);
   next.rowHeight = Math.max(20, Number(next.rowHeight) || 36);
   next.overscan = Math.max(0, Number(next.overscan) || 6);

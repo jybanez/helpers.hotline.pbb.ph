@@ -9,6 +9,13 @@
   overflow: auto;
 }
 
+.ui-data-inspector.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
 .ui-data-inspector-empty {
   margin: 0;
   color: var(--ui-muted, #9fb2d8);
@@ -74,4 +81,3 @@
   font-size: 12px;
   color: #cfe0ff;
 }
-

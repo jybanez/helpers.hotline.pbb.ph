@@ -3,6 +3,8 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  chrome: true,
+  ariaLabel: "Empty state",
   title: "Nothing here yet",
   description: "",
   iconHtml: "",
@@ -23,7 +25,11 @@ export function createEmptyState(container, data = {}, options = {}) {
     clearNode(container);
 
     const root = createElement("section", {
-      className: `ui-empty-state ${currentOptions.className || ""}`.trim(),
+      className: `ui-empty-state${currentOptions.chrome ? "" : " is-chrome-less"} ${currentOptions.className || ""}`.trim(),
+      attrs: {
+        role: "region",
+        "aria-label": currentOptions.ariaLabel,
+      },
     });
 
     if (currentData.iconHtml) {
@@ -87,10 +93,13 @@ export function createEmptyState(container, data = {}, options = {}) {
 }
 
 function normalizeOptions(options) {
-  return {
+  const next = {
     ...DEFAULT_OPTIONS,
     ...(options || {}),
   };
+  next.chrome = next.chrome !== false;
+  next.ariaLabel = String(next.ariaLabel || "Empty state");
+  return next;
 }
 
 function normalizeData(data) {
@@ -120,4 +129,3 @@ function normalizeActions(actions) {
     })
     .filter(Boolean);
 }
-

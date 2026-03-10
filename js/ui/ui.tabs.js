@@ -6,6 +6,7 @@ export function createTabs(container, options = {}) {
   const tabs = Array.isArray(options.tabs) ? options.tabs : [];
   const onChange = typeof options.onChange === "function" ? options.onChange : null;
   let activeId = String(options.activeId ?? tabs[0]?.id ?? "");
+  const tabsetId = `ui-tabs-${Math.random().toString(36).slice(2, 10)}`;
   let root = null;
   let tablist = null;
   let panel = null;
@@ -55,7 +56,7 @@ export function createTabs(container, options = {}) {
     });
     panel = createElement("div", {
       className: "ui-tabpanel",
-      attrs: { role: "tabpanel" },
+      attrs: { role: "tabpanel", tabindex: "0" },
     });
 
     tabs.forEach((tab, index) => {
@@ -67,6 +68,8 @@ export function createTabs(container, options = {}) {
         attrs: {
           type: "button",
           role: "tab",
+          id: `${tabsetId}-tab-${id}`,
+          "aria-controls": `${tabsetId}-panel-${id}`,
           "aria-selected": isActive ? "true" : "false",
           tabindex: isActive ? "0" : "-1",
         },
@@ -97,6 +100,12 @@ export function createTabs(container, options = {}) {
     });
 
     const active = getActiveTab();
+    if (active) {
+      panel.id = `${tabsetId}-panel-${String(active.id)}`;
+      panel.setAttribute("aria-labelledby", `${tabsetId}-tab-${String(active.id)}`);
+    } else {
+      panel.removeAttribute("aria-labelledby");
+    }
     if (active && typeof active.render === "function") {
       active.render(panel, active);
     } else if (active) {

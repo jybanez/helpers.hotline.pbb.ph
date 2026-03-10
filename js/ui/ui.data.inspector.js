@@ -3,6 +3,8 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  chrome: true,
+  ariaLabel: "Data inspector",
   expandDepth: 1,
   emptyText: "No data.",
   onCopyPath: null,
@@ -21,7 +23,11 @@ export function createDataInspector(container, data = null, options = {}) {
     clearNode(container);
 
     const root = createElement("section", {
-      className: `ui-data-inspector ${currentOptions.className || ""}`.trim(),
+      className: `ui-data-inspector${currentOptions.chrome ? "" : " is-chrome-less"} ${currentOptions.className || ""}`.trim(),
+      attrs: {
+        role: "region",
+        "aria-label": currentOptions.ariaLabel,
+      },
     });
     if (currentData == null) {
       root.appendChild(createElement("p", { className: "ui-data-inspector-empty", text: currentOptions.emptyText }));
@@ -108,6 +114,8 @@ export function createDataInspector(container, data = null, options = {}) {
 
 function normalizeOptions(options) {
   const next = { ...DEFAULT_OPTIONS, ...(options || {}) };
+  next.chrome = next.chrome !== false;
+  next.ariaLabel = String(next.ariaLabel || "Data inspector");
   next.expandDepth = Math.max(0, Number(next.expandDepth) || 0);
   return next;
 }
@@ -135,4 +143,3 @@ function stringifyValue(value) {
     return String(value);
   }
 }
-

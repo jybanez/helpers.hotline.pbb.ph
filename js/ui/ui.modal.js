@@ -4,6 +4,7 @@ import { createEventBag } from "./ui.events.js";
 const DEFAULT_OPTIONS = {
   className: "",
   title: "",
+  ariaLabel: "Modal dialog",
   content: null,
   footer: null,
   showHeader: true,
@@ -33,6 +34,7 @@ const tabbableSelector = [
 
 let bodyLockCount = 0;
 let previousBodyOverflow = "";
+let modalIdSeed = 0;
 
 export function createModal(options = {}) {
   const events = createEventBag();
@@ -42,6 +44,7 @@ export function createModal(options = {}) {
   let closeTimer = null;
   let lastResult = null;
   let lastFocusedElement = null;
+  const titleId = `ui-modal-title-${++modalIdSeed}`;
 
   const root = createElement("div", { className: "ui-modal-root", attrs: { "aria-hidden": "true" } });
   const backdrop = createElement("div", { className: "ui-modal-backdrop" });
@@ -95,10 +98,18 @@ export function createModal(options = {}) {
     const showCloseButton = Boolean(currentOptions.showCloseButton);
     const titleText = currentOptions.title == null ? "" : String(currentOptions.title);
     titleEl.textContent = titleText;
+    titleEl.id = titleId;
 
     header.hidden = !showHeader;
     closeButton.hidden = !showHeader || !showCloseButton;
     header.classList.toggle("is-empty", !titleText && (!showCloseButton || closeButton.hidden));
+    if (titleText) {
+      panel.setAttribute("aria-labelledby", titleId);
+      panel.removeAttribute("aria-label");
+    } else {
+      panel.removeAttribute("aria-labelledby");
+      panel.setAttribute("aria-label", String(currentOptions.ariaLabel || "Modal dialog"));
+    }
 
     setSlot(body, currentOptions.content);
     setSlot(footer, currentOptions.footer);

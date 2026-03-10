@@ -12,6 +12,7 @@ const DEFAULT_DATA = {
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "",
   style: "vu", // vu | dots | mirrored | spectrum
   overlayHeader: true,
   headerInsetPx: 30,
@@ -37,6 +38,7 @@ export function createAudioGraph(container, data = {}, options = {}) {
   let muteButton = null;
   let canvas = null;
   let ctx = null;
+  let roleLabelId = "";
   let rafId = 0;
   let audioEl = null;
   let audioContext = null;
@@ -60,13 +62,20 @@ export function createAudioGraph(container, data = {}, options = {}) {
       className: `ui-audiograph ${currentOptions.className}`.trim(),
       dataset: { role: currentData.role || "" },
     });
+    roleLabelId = `ui-audiograph-role-${toDomIdToken(currentData.role || currentData.roleLabel || "role")}`;
     const header = createElement("div", { className: "ui-audiograph-header" });
-    roleLabelEl = createElement("p", { className: "ui-audiograph-role" });
+    roleLabelEl = createElement("p", {
+      className: "ui-audiograph-role",
+      attrs: { id: roleLabelId },
+    });
     muteButton = createElement("button", {
       className: "ui-button ui-audiograph-mute",
       attrs: { type: "button" },
     });
-    canvas = createElement("canvas", { className: "ui-audiograph-canvas" });
+    canvas = createElement("canvas", {
+      className: "ui-audiograph-canvas",
+      attrs: { "aria-hidden": "true" },
+    });
     ctx = canvas.getContext("2d");
 
     header.append(roleLabelEl);
@@ -98,8 +107,18 @@ export function createAudioGraph(container, data = {}, options = {}) {
     roleLabelEl.textContent = String(currentData.roleLabel || currentData.role || "Role");
     if (muteButton) {
       muteButton.textContent = currentData.muted ? currentOptions.unmuteLabel : currentOptions.muteLabel;
+      muteButton.setAttribute("aria-label", currentData.muted ? currentOptions.unmuteLabel : currentOptions.muteLabel);
+      muteButton.setAttribute("aria-pressed", currentData.muted ? "true" : "false");
     }
     if (root) {
+      root.setAttribute("role", "region");
+      if (currentOptions.ariaLabel) {
+        root.setAttribute("aria-label", currentOptions.ariaLabel);
+        root.removeAttribute("aria-labelledby");
+      } else {
+        root.setAttribute("aria-labelledby", roleLabelId);
+        root.removeAttribute("aria-label");
+      }
       root.classList.toggle("is-muted", currentData.muted);
       root.classList.toggle("is-playing", currentData.isPlaying);
       root.classList.toggle("is-overlay-header", Boolean(currentOptions.overlayHeader));
@@ -899,4 +918,8 @@ function drawPeakMarker(drawCtx, x, y, color) {
   drawCtx.arc(x, y, 2.5, 0, Math.PI * 2);
   drawCtx.fill();
   drawCtx.restore();
+}
+
+function toDomIdToken(value) {
+  return String(value).trim().replace(/[^a-zA-Z0-9_-]+/g, "-") || "item";
 }

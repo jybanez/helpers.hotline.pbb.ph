@@ -214,9 +214,29 @@ If changing callback signatures or removing methods, plan a major version.
   - failure diagnostics for CSS/module loading
   - support for both `ui.*` and `incident.*` component namespaces
 - Wrapper-style components may expose `chrome: false` to disable library-owned border/background/padding without changing behavior.
+- Only add `chrome: false` when the component actually owns a distinct outer shell. Do not add no-op chrome flags to components whose visuals are entirely internal.
 - Tree-style components may expose lazy child loading via `lazyLoadChildren(...)` plus explicit `loadChildren(...)` / `refreshChildren(...)` instance methods; treat these as part of the component contract once used by apps.
 - Demo pages should prefer `uiLoader` as well, so working demos remain the reference implementation for project integrations.
 - Registry changes should ship with a contract test update in `tests/registry.contract.mjs`.
+
+### 11.0a Accessibility Baseline
+
+- Wrapper/data primitives should expose `ariaLabel` when they render a user-visible region, panel, list, or inspector shell.
+- Prefer low-risk semantic improvements first:
+  - `role="region"` with `aria-label` for framed shells
+  - `role="list"` / `role="listitem"` for simple virtualized list primitives
+- For interactive overlays and menus, preserve and test:
+  - title/label wiring (`aria-labelledby` or `aria-label`)
+  - trigger state attributes (`aria-expanded`, `aria-controls`, `aria-haspopup`) where applicable
+  - active descendant wiring for composite widgets where the trigger/input owns the active option state
+  - focus restore after close
+  - `Escape` close behavior where the component already behaves like an overlay/menu surface
+- For navigation/tab primitives, preserve and test:
+  - landmark labels on `nav` / navigation-like containers
+  - `aria-current="page"` on active navigation/breadcrumb items
+  - tab-to-panel linkage via `aria-controls` / `aria-labelledby`
+- Do not add ARIA roles that conflict with the component's actual interaction model.
+- Accessibility improvements that reshape keyboard behavior or focus handling should be documented as contract-sensitive changes.
 
 ### 11.1 Modal Foundation (`ui.modal`)
 
@@ -269,11 +289,17 @@ If changing callback signatures or removing methods, plan a major version.
   - preserve virtualization settings behavior for large trees
 - `ui.kanban`:
   - lane/card rendering with drag-drop card moves
+  - preserve board labeling support (`ariaLabel`) and keyboard click activation
+  - preserve lane-wide drop behavior and pointer-position insertion logic
   - preserve move callback payload shape (`card`, `fromLaneId`, `toLaneId`, `fromIndex`, `toIndex`, `lanes`)
 - `ui.file.uploader`:
+  - preserve region/dropzone labeling support (`ariaLabel`, `dropzoneAriaLabel`)
   - preserve legacy `onUpload(item, controls)` behavior
   - preserve chunk/resume hook contracts when `useChunkUpload` is enabled
   - keep state fields stable for progress + chunk metadata (`uploadedBytes`, `chunkIndex`, `totalChunks`)
+- `ui.audio.player` / `ui.audio.callSession` / `ui.audio.audiograph`:
+  - preserve transport/session labeling support (`ariaLabel`, `seekLabel`)
+  - preserve mute semantics and per-role control behavior
 
 ## 12) Demo Ownership Split
 

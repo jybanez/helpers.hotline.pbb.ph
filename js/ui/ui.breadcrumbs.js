@@ -58,7 +58,7 @@ export function createBreadcrumbs(container, data = {}, options = {}) {
       const li = createElement("li", { className: "ui-breadcrumbs-item" });
       const last = index === currentItems.length - 1;
       if (last) {
-        const current = createElement("span", { className: "ui-breadcrumbs-current" });
+        const current = createElement("span", { className: "ui-breadcrumbs-current", attrs: { "aria-current": "page" } });
         appendIconLabel(current, item);
         li.appendChild(current);
       } else {

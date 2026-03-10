@@ -3,6 +3,8 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  chrome: true,
+  ariaLabel: "Scheduler",
   view: "month", // month | week
   locale: "en-US",
   weekStartsOn: 0, // 0=Sunday
@@ -27,7 +29,11 @@ export function createScheduler(container, data = {}, options = {}) {
     clearNode(container);
 
     const root = createElement("section", {
-      className: `ui-scheduler ${currentOptions.className || ""}`.trim(),
+      className: `ui-scheduler${currentOptions.chrome ? "" : " is-chrome-less"} ${currentOptions.className || ""}`.trim(),
+      attrs: {
+        role: "region",
+        "aria-label": currentOptions.ariaLabel,
+      },
     });
     const header = renderHeader();
     const body = currentOptions.view === "week" ? renderWeekView() : renderMonthView();
@@ -240,6 +246,8 @@ export function createScheduler(container, data = {}, options = {}) {
 
 function normalizeOptions(options) {
   const next = { ...DEFAULT_OPTIONS, ...(options || {}) };
+  next.chrome = next.chrome !== false;
+  next.ariaLabel = String(next.ariaLabel || "Scheduler");
   next.view = String(next.view || "month").toLowerCase() === "week" ? "week" : "month";
   next.weekStartsOn = clamp(Math.round(Number(next.weekStartsOn) || 0), 0, 6);
   return next;
@@ -333,4 +341,3 @@ function isSameDay(a, b) {
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
-

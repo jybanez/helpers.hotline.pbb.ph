@@ -3,6 +3,7 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "Select",
   placeholder: "Select...",
   emptyText: "No options found.",
   searchable: true,
@@ -28,6 +29,7 @@ export function createSelect(container, items = [], options = {}) {
   let searchInput = null;
   let list = null;
   let activeIndex = -1;
+  const listId = `ui-select-list-${Math.random().toString(36).slice(2, 10)}`;
 
   function render() {
     if (!container || container.nodeType !== 1) {
@@ -45,6 +47,8 @@ export function createSelect(container, items = [], options = {}) {
         type: "button",
         "aria-haspopup": "listbox",
         "aria-expanded": open ? "true" : "false",
+        "aria-label": currentOptions.ariaLabel,
+        "aria-controls": open ? listId : null,
       },
     });
 
@@ -154,7 +158,7 @@ export function createSelect(container, items = [], options = {}) {
         });
         menu.appendChild(searchInput);
       }
-      list = createElement("div", { className: "ui-select-list", attrs: { role: "listbox" } });
+      list = createElement("div", { className: "ui-select-list", attrs: { role: "listbox", id: listId, "aria-label": currentOptions.ariaLabel } });
       if (currentOptions.multiple) {
         list.setAttribute("aria-multiselectable", "true");
       }
@@ -194,6 +198,7 @@ export function createSelect(container, items = [], options = {}) {
         attrs: {
           type: "button",
           role: "option",
+          id: `${listId}-option-${index}`,
           "aria-selected": isSelected ? "true" : "false",
         },
       });
@@ -361,10 +366,14 @@ export function createSelect(container, items = [], options = {}) {
     const options = Array.from(list.querySelectorAll(".ui-select-option"));
     options.forEach((optionNode) => optionNode.classList.remove("is-active"));
     if (activeIndex < 0 || activeIndex >= options.length) {
+      trigger?.removeAttribute("aria-activedescendant");
       return;
     }
     const active = options[activeIndex];
     active?.classList.add("is-active");
+    if (active?.id) {
+      trigger?.setAttribute("aria-activedescendant", active.id);
+    }
     active?.scrollIntoView?.({ block: "nearest" });
   }
 
@@ -479,10 +488,12 @@ export function createSelect(container, items = [], options = {}) {
 }
 
 function normalizeOptions(options) {
-  return {
+  const next = {
     ...DEFAULT_OPTIONS,
     ...(options || {}),
   };
+  next.ariaLabel = String(next.ariaLabel || "Select");
+  return next;
 }
 
 function normalizeItems(items) {

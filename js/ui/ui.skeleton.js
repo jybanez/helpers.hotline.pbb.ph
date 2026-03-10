@@ -90,4 +90,3 @@ function normalizeData(data) {
     rows: Math.max(1, Number(next.rows) || 2),
   };
 }
-

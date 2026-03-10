@@ -203,9 +203,9 @@ Reusable shared UI utilities live under `js/ui`:
 - `ui.splitter.js`
   - `createSplitter(container, options)` resizable two-pane layout primitive (horizontal/vertical)
 - `ui.data.inspector.js`
-  - `createDataInspector(container, data, options)` expandable object/JSON inspector with copy-path actions
+  - `createDataInspector(container, data, options)` expandable object/JSON inspector with copy-path actions and optional chrome-less rendering
 - `ui.empty.state.js`
-  - `createEmptyState(container, data, options)` standardized empty/error/no-result presentation block
+  - `createEmptyState(container, data, options)` standardized empty/error/no-result presentation block with optional chrome-less rendering
 - `ui.skeleton.js`
   - `createSkeleton(container, data, options)` loading placeholders (`lines`, `card`, `grid`)
 - `ui.file.uploader.js`
@@ -224,9 +224,9 @@ Reusable shared UI utilities live under `js/ui`:
 - `ui.progress.js`
   - `createProgress(container, data, options)` progress indicator with multiple styles (linear, segmented, steps, radial, ring, etc.)
 - `ui.virtual.list.js`
-  - `createVirtualList(container, items, options)` virtualized list primitive for very large row sets
+  - `createVirtualList(container, items, options)` virtualized list primitive for very large row sets with optional chrome-less rendering
 - `ui.scheduler.js`
-  - `createScheduler(container, data, options)` month/week scheduler primitive with slot/event interactions
+  - `createScheduler(container, data, options)` month/week scheduler primitive with slot/event interactions and optional chrome-less rendering
 - `ui.menu.js`
   - `createMenu(triggerEl, items, options)` anchored popover menu primitive
   - item icon contract: `icon` (SVG/HTML string), `iconPosition: "start" | "end"`, `iconOnly: boolean`
@@ -298,6 +298,8 @@ Application integrations should use the registry loader.
 - `uiLoader` is the public app-loading contract.
 - App code should call components by registry key.
 - Direct path imports are for internal library work only and should be avoided in consuming apps.
+- `chrome: false` is only exposed by components that own a real library-managed outer shell.
+- Components without distinct wrapper chrome should not add a no-op `chrome` flag.
 
 Recommended keys:
 
@@ -365,10 +367,33 @@ Registry contract test:
 node tests/registry.contract.mjs
 ```
 
+## Chrome-less Components
+
+`chrome: false` is supported only on components that own a real library-managed outer shell.
+
+| Component key | Factory | `chrome: false` | Notes |
+| --- | --- | --- | --- |
+| `ui.grid` | `createGrid` | Yes | Removes outer grid frame; table internals remain intact. |
+| `ui.tree` | `createTree` | Yes | Removes outer tree shell; node rendering and lazy loading are unchanged. |
+| `ui.tree.grid` | `createTreeGrid` | Yes | Removes outer tree-grid frame; hierarchy, resize, and virtualization remain intact. |
+| `ui.virtual.list` | `createVirtualList` | Yes | Removes outer list shell; viewport/layer behavior remains intact. |
+| `ui.data.inspector` | `createDataInspector` | Yes | Removes outer inspector shell; nested node rendering remains intact. |
+| `ui.empty.state` | `createEmptyState` | Yes | Removes dashed empty-state frame so the host layout owns the presentation shell. |
+| `ui.scheduler` | `createScheduler` | Yes | Removes outer scheduler shell; month/week layout and interactions remain intact. |
+| `ui.timeline` | `createTimeline` | No | No distinct outer shell today; no-op `chrome` flags are intentionally avoided. |
+| `ui.stepper` | `createStepper` | No | Styling is item-level, not wrapper-shell-level. |
+| `ui.skeleton` | `createSkeleton` | No | Visuals are internal placeholder blocks; there is no meaningful outer shell to disable. |
+
+Rule of thumb:
+
+- If the component owns a visible outer border/background/padding shell, it may expose `chrome: false`.
+- If the component only renders internal items/blocks and has no distinct wrapper chrome, it should not expose the flag.
+
 ## Common Options
 
 - `theme`: `"dark"` | `"light"` (default `"dark"`)
 - `className`: extra class for root element
+- `ariaLabel`: accessible label for wrapper/region style components where supported
 - `emptyText`: fallback text for empty state
 - `locale`, `timezone`: formatting support
 - `debug`: boolean (default `false`)
@@ -606,6 +631,7 @@ Data:
 
 Options:
 
+- `ariaLabel`, `seekLabel`
 - `playLabel`, `pauseLabel`
 - `onTogglePlay(nextPlaying, state)`
 - `onSeek(nextMs, meta)`
@@ -642,6 +668,7 @@ Role labels:
 
 Options:
 
+- `ariaLabel`
 - `autoplay`
 - `baseUrl`
 - `audiographStyle`
@@ -1687,7 +1714,7 @@ Data shape:
 
 Options:
 
-- `draggable`, `className`
+- `draggable`, `className`, `ariaLabel`
 - `keyboardMoves` (default `true`)
 - key mapping options:
   - `laneIdKey`, `laneTitleKey`
@@ -1813,6 +1840,7 @@ Options:
   - `maxFileSize`
   - `allowedTypes` (`["image/", ".pdf", "video/mp4"]`)
 - behavior:
+  - `ariaLabel`, `dropzoneAriaLabel`
   - `autoUpload`
   - `smoothProgress` (default `true`)
   - `progressAnimationMs` (default `220`)
@@ -1901,15 +1929,15 @@ Recommended integration flow:
 
 ## Roadmap
 
-### Current Stable Line: `v0.16.x`
+### Current Stable Line: `v0.17.x`
 
-- Latest documented release: `v0.16.6`
+- Latest documented release: `v0.17.6`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`
   - fixes/docs/internal cleanup -> `patch`
 
-### Next Planned Line: `v0.17.x` (Unreleased)
+### Next Planned Line: `v0.17.x`
 
 - Dedicated accessibility hardening pass across all UI utilities
 - Additional data-entry primitives (mask/format helpers, richer validation wrappers)
@@ -2272,3 +2300,142 @@ Recommended integration flow:
   - `ui.tree.grid.loadChildren(rowId)`
   - `ui.tree.grid.refreshChildren(rowId)`
 - Added lazy child loading support to `ui.tree.grid` using the same `lazyLoadChildren(row, state)` / `onLoadChildren(...)` pattern used by `ui.tree`
+
+### v0.16.7
+
+- Fixed `ui.tree.grid` lazy hierarchy rendering so rows with `hasChildren: true` are treated as expandable before their children are loaded
+- Added loading/error visual state to tree-grid disclosure controls during async child loading
+- Expanded `demo.tree.grid.html` with:
+  - a lazy-loaded tree-grid section
+  - `chrome: false` rendering example
+  - explicit `refreshChildren(...)` and `setExpanded(...)` exercise paths
+
+### v0.16.8
+
+- Added `chrome: false` support to additional wrapper-style data components:
+  - `ui.virtual.list`
+  - `ui.data.inspector`
+- Kept `ui.timeline` unchanged because it does not currently own a distinct outer chrome shell; no-op chrome flags are avoided unless the component has actual wrapper styling to disable
+
+### v0.16.9
+
+- Added `chrome: false` support to `ui.empty.state`
+- Expanded `demo.empty.state.html` with:
+  - framed empty-state rendering
+  - chrome-less empty-state rendering inside host-owned layout
+
+### v0.16.10
+
+- Added `chrome: false` support to `ui.scheduler`
+- Clarified the shared contract: only components with a real library-owned outer shell should expose `chrome: false`; components without distinct wrapper chrome should not add no-op chrome flags
+
+### v0.16.11
+
+- Expanded `demo.scheduler.html` with side-by-side scheduler rendering:
+  - framed scheduler
+  - chrome-less scheduler inside a host-owned shell
+
+### v0.16.12
+
+- Added a public `Chrome-less Components` support matrix to the README
+- Documented the rule that `chrome: false` is only exposed by components with a real library-managed outer shell
+
+### v0.17.0
+
+- Started the dedicated accessibility hardening line with low-risk ARIA baseline improvements on wrapper/data primitives
+- Added `ariaLabel` support to:
+  - `ui.virtual.list`
+  - `ui.scheduler`
+  - `ui.empty.state`
+  - `ui.data.inspector`
+- Added explicit landmark/list semantics where applicable:
+  - `ui.virtual.list` now exposes labeled list/listitem semantics
+  - `ui.scheduler`, `ui.empty.state`, and `ui.data.inspector` now expose labeled region semantics
+
+### v0.17.1
+
+- Continued the accessibility hardening pass on interactive primitives
+- `ui.modal`
+  - added `ariaLabel` fallback when no visible title is present
+  - binds `aria-labelledby` to the rendered modal title when available
+- `ui.drawer`
+  - now exposes dialog semantics (`role="dialog"`, `aria-modal="true"`)
+  - restores focus to the previously focused element on close
+  - supports `Escape`-to-close consistently
+- `ui.menu`
+  - now synchronizes trigger accessibility state (`aria-haspopup`, `aria-expanded`, `aria-controls`)
+  - added `ariaLabel` support for the menu surface
+  - added keyboard `Home` / `End` navigation
+  - restores focus to the trigger after close
+
+### v0.17.2
+
+- Continued the accessibility hardening pass on selection/launcher/date primitives
+- `ui.select`
+  - added `ariaLabel` support
+  - synchronizes trigger/listbox wiring with `aria-controls`
+  - exposes active option state via `aria-activedescendant`
+- `ui.command.palette`
+  - added `ariaLabel` support
+  - added `Home` / `End` keyboard navigation
+  - restores focus to the previously focused element on close
+- `ui.datepicker`
+  - added `ariaLabel` support
+  - synchronizes trigger/panel wiring with `aria-controls`
+  - restores focus after outside-click or `Escape` close
+
+### v0.17.3
+
+- Continued the accessibility hardening pass on navigation and tab primitives
+- `ui.tabs`
+  - now wires tabs and tabpanel together with `id`, `aria-controls`, and `aria-labelledby`
+- `ui.navbar`
+  - added `ariaLabel` support for the navigation landmark
+  - active navigation items now expose `aria-current="page"`
+- `ui.sidebar`
+  - added `ariaLabel` support for the navigation landmark
+  - active items now expose `aria-current="page"`
+- `ui.breadcrumbs`
+  - current crumb now exposes `aria-current="page"`
+
+### v0.17.4
+
+- Performed a focused accessibility audit on demo pages that exercise the updated primitives
+- `demo.ui.html`
+  - now passes explicit `ariaLabel` values to select, datepicker, and command-palette demos
+- `demo.nav.html`
+  - now passes explicit `ariaLabel` values to navbar, sidebar, and breadcrumbs demos
+  - added an accessible label for the breadcrumb-input control
+
+### v0.17.5
+
+- Audited `ui.kanban` drag behavior and accessibility
+- `ui.kanban`
+  - added `ariaLabel` support on the board root
+  - lane roots are now labeled regions and card stacks expose list semantics
+  - cards can now trigger click handlers via `Enter` / `Space`
+  - drag-and-drop now treats the entire lane as a valid drop surface
+  - insertion index is resolved from pointer position, making cross-lane and between-card drops less fragile
+- `demo.ui.html`
+  - now passes an explicit `ariaLabel` to the kanban demo
+
+### v0.17.6
+
+- Continued the accessibility pass on heavy interactive components
+- `ui.file.uploader`
+  - added `ariaLabel` and `dropzoneAriaLabel`
+  - uploader root now exposes region semantics
+  - dropzone is keyboard-activatable and behaves as an explicit button target
+  - upload queue exposes list semantics and a polite live status channel
+- `ui.audio.player`
+  - added `ariaLabel` and `seekLabel`
+  - play/pause button now exposes `aria-pressed`
+  - seek slider now exposes `aria-valuetext`
+- `ui.audio.audiograph`
+  - root now exposes labeled region semantics
+  - mute button now exposes `aria-pressed`
+- `ui.audio.callSession`
+  - added `ariaLabel`
+  - session root and track list now expose region/list semantics
+- `demo.audio.html`
+  - now passes an explicit `ariaLabel` to the audio session demo

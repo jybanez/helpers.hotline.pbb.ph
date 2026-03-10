@@ -4,6 +4,7 @@ import { createAudioGraph } from "./ui.audio.audiograph.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "Audio call session",
   debug: false,
   autoplay: false,
   baseUrl: "",
@@ -40,9 +41,19 @@ export function createAudioCallSession(container, incident = {}, options = {}) {
     clearNode(container);
     root = createElement("section", {
       className: `ui-audio-session ${currentOptions.className}`.trim(),
+      attrs: {
+        role: "region",
+        "aria-label": currentOptions.ariaLabel,
+      },
     });
     playerHost = createElement("div", { className: "ui-audio-session-player" });
-    tracksHost = createElement("div", { className: "ui-audio-session-tracks" });
+    tracksHost = createElement("div", {
+      className: "ui-audio-session-tracks",
+      attrs: {
+        role: "list",
+        "aria-label": "Audio roles",
+      },
+    });
     root.append(playerHost, tracksHost);
     container.appendChild(root);
   }
@@ -62,6 +73,7 @@ export function createAudioCallSession(container, incident = {}, options = {}) {
         durationMs,
       },
       {
+        ariaLabel: "Call session playback controls",
         onTogglePlay(nextPlaying) {
           if (nextPlaying) {
             play();
@@ -79,6 +91,7 @@ export function createAudioCallSession(container, incident = {}, options = {}) {
       const trackWrap = createElement("div", {
         className: "ui-audio-session-track",
         dataset: { role: roleTrack.role },
+        attrs: { role: "listitem" },
       });
       tracksHost.appendChild(trackWrap);
 
@@ -94,6 +107,7 @@ export function createAudioCallSession(container, incident = {}, options = {}) {
           durationMs,
         },
         {
+          ariaLabel: `${roleTrack.roleLabel} audio graph`,
           style: roleStyle,
           sensitivity: currentOptions.sensitivity,
           showMute: currentOptions.showMute,

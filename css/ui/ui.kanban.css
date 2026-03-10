@@ -45,6 +45,32 @@
   background: rgba(57, 102, 176, 0.12);
 }
 
+.ui-kanban-cards.is-drop-target .ui-kanban-card {
+  position: relative;
+}
+
+.ui-kanban-card.is-drop-before::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: -7px;
+  height: 3px;
+  border-radius: 999px;
+  background: #6ea6ff;
+  box-shadow: 0 0 0 1px rgba(110, 166, 255, 0.18);
+}
+
+.ui-kanban-cards.is-drop-at-end::after {
+  content: "";
+  display: block;
+  height: 3px;
+  border-radius: 999px;
+  background: #6ea6ff;
+  box-shadow: 0 0 0 1px rgba(110, 166, 255, 0.18);
+  margin-top: 4px;
+}
+
 .ui-kanban-card {
   border: 1px solid var(--ui-border, #2b3750);
   border-radius: 8px;

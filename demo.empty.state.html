@@ -10,7 +10,7 @@
     .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 10px; }
     .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
-    #host { border: 1px solid #2b3750; border-radius: 8px; padding: 10px; background: #0b1220; }
+    .host-shell { border: 1px solid #2b3750; border-radius: 8px; padding: 10px; background: #0b1220; display: grid; gap: 10px; }
     .log { margin: 0; white-space: pre-wrap; font-size: 12px; color: #b2c2e5; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; height: 220px; overflow: auto; }
     .incident-list { display: grid; gap: 8px; }
     .incident-list-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -33,7 +33,14 @@
       <h1 class="ui-title">Empty State Demo</h1>
     </section>
     <section class="panel">
-      <div id="host"></div>
+      <h2 class="ui-title">Framed</h2>
+      <div id="host" class="host-shell"></div>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Chrome-less</h2>
+      <div class="host-shell">
+        <div id="hostChromeLess"></div>
+      </div>
     </section>
     <section class="panel">
       <h2 class="ui-title">Event Log</h2>
@@ -49,8 +56,10 @@
 
     const page = document.querySelector("main.page");
     const host = document.getElementById("host");
+    const hostChromeLess = document.getElementById("hostChromeLess");
     const log = document.getElementById("log");
     let emptyState = null;
+    let emptyStateChromeLess = null;
     const sampleIncidents = [
       { id: 1016, caller: "Maria Santos", location: "Guadalupe", status: "Active", createdAt: "2026-03-08 22:13" },
       { id: 1017, caller: "Juan Dela Cruz", location: "Talamban", status: "Dispatched", createdAt: "2026-03-08 22:17" },
@@ -98,6 +107,25 @@
               mountSampleData();
               writeLog("emptyState.refresh.complete", { status: "results_found", count: sampleIncidents.length });
             }, 800);
+          }
+        },
+      });
+
+      clearNode(hostChromeLess);
+      emptyStateChromeLess?.destroy?.();
+      emptyStateChromeLess = createEmptyState(hostChromeLess, {
+        title: "No linked incidents",
+        description: "Same component with chrome disabled so the host layout owns the framing.",
+        iconHtml: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 10h10M9 14h6M5 18h14"/></svg>',
+        actions: [
+          { id: "sample", label: "Load Sample Data" },
+        ],
+      }, {
+        chrome: false,
+        onActionClick(action) {
+          writeLog("emptyStateChromeLess.action", action);
+          if (action.id === "sample") {
+            renderSampleResults();
           }
         },
       });

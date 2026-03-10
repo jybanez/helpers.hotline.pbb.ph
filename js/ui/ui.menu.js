@@ -5,6 +5,7 @@ const DEFAULT_OPTIONS = {
   placement: "bottom-start", // bottom-start | bottom-end | top-start | top-end
   align: null, // null | left | right
   offset: 6,
+  ariaLabel: "Menu",
   closeOnSelect: true,
   closeOnOutsideClick: true,
   closeOnEscape: true,
@@ -23,6 +24,7 @@ export function createMenu(triggerEl, items = [], options = {}) {
   let listEl = null;
   let activeIndex = -1;
   let closeTimer = null;
+  const rootId = `ui-menu-${Math.random().toString(36).slice(2, 10)}`;
 
   function build() {
     if (root) {
@@ -30,7 +32,7 @@ export function createMenu(triggerEl, items = [], options = {}) {
     }
     root = createElement("div", {
       className: `ui-menu ${currentOptions.className}`.trim(),
-      attrs: { role: "menu", tabindex: "-1" },
+      attrs: { role: "menu", tabindex: "-1", id: rootId, "aria-label": currentOptions.ariaLabel },
     });
     listEl = createElement("div", { className: "ui-menu-list" });
     root.appendChild(listEl);
@@ -149,6 +151,11 @@ export function createMenu(triggerEl, items = [], options = {}) {
       document.body.appendChild(root);
     }
     open = true;
+    if (triggerEl && typeof triggerEl.setAttribute === "function") {
+      triggerEl.setAttribute("aria-expanded", "true");
+      triggerEl.setAttribute("aria-controls", rootId);
+      triggerEl.setAttribute("aria-haspopup", "menu");
+    }
     root.classList.remove("is-closing");
     position();
     requestAnimationFrame(() => {
@@ -170,6 +177,9 @@ export function createMenu(triggerEl, items = [], options = {}) {
       return;
     }
     open = false;
+    if (triggerEl && typeof triggerEl.setAttribute === "function") {
+      triggerEl.setAttribute("aria-expanded", "false");
+    }
     currentOptions.onOpenChange?.(false);
     unbindGlobal();
     activeIndex = -1;
@@ -187,6 +197,7 @@ export function createMenu(triggerEl, items = [], options = {}) {
       if (root.parentNode) {
         root.parentNode.removeChild(root);
       }
+      triggerEl?.focus?.();
     };
 
     const onTransitionEnd = (event) => {
@@ -248,6 +259,16 @@ export function createMenu(triggerEl, items = [], options = {}) {
           moveActive(-1);
           return;
         }
+        if (event.key === "Home") {
+          event.preventDefault();
+          moveActiveToBoundary("start");
+          return;
+        }
+        if (event.key === "End") {
+          event.preventDefault();
+          moveActiveToBoundary("end");
+          return;
+        }
         if (event.key === "Enter" || event.key === " ") {
           const item = currentItems[activeIndex];
           if (item && !item.disabled) {
@@ -274,6 +295,17 @@ export function createMenu(triggerEl, items = [], options = {}) {
 
   function unbindGlobal() {
     globalEvents.clear();
+  }
+
+  function moveActiveToBoundary(edge) {
+    const enabledIndexes = currentItems
+      .map((item, index) => ({ item, index }))
+      .filter((entry) => !entry.item?.disabled)
+      .map((entry) => entry.index);
+    if (!enabledIndexes.length) {
+      return;
+    }
+    setActiveIndex(edge === "end" ? enabledIndexes[enabledIndexes.length - 1] : enabledIndexes[0]);
   }
 
   function update(nextItems = [], nextOptions = {}) {
@@ -307,6 +339,10 @@ export function createMenu(triggerEl, items = [], options = {}) {
 
   const triggerElEvents = createEventBag();
   if (triggerEl && typeof triggerEl.addEventListener === "function") {
+    if (typeof triggerEl.setAttribute === "function") {
+      triggerEl.setAttribute("aria-haspopup", "menu");
+      triggerEl.setAttribute("aria-expanded", "false");
+    }
     triggerElEvents.on(triggerEl, "click", (event) => {
       event.preventDefault();
       toggle();

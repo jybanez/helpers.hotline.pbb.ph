@@ -9,6 +9,7 @@ const DEFAULT_OPTIONS = {
   emptyText: "No matching commands.",
   loadingText: "Loading commands...",
   title: "Command Palette",
+  ariaLabel: "Command palette",
   shortcut: "k",
   metaKey: true,
   ctrlKey: true,
@@ -42,6 +43,8 @@ export function createCommandPalette(options = {}) {
   let input = null;
   let list = null;
   let recentIds = hydrateRecentIds(currentOptions);
+  let lastFocusedElement = null;
+  const titleId = `ui-command-palette-title-${Math.random().toString(36).slice(2, 10)}`;
 
   function ensureDom() {
     if (root) {
@@ -51,9 +54,9 @@ export function createCommandPalette(options = {}) {
       className: `ui-command-palette ${currentOptions.className || ""}`.trim(),
       attrs: { "aria-hidden": "true" },
     });
-    panel = createElement("section", { className: "ui-command-palette-panel", attrs: { role: "dialog", "aria-modal": "true" } });
+    panel = createElement("section", { className: "ui-command-palette-panel", attrs: { role: "dialog", "aria-modal": "true", "aria-labelledby": titleId, "aria-label": currentOptions.ariaLabel } });
     const header = createElement("header", { className: "ui-command-palette-header" });
-    header.appendChild(createElement("h3", { className: "ui-title", text: currentOptions.title }));
+    header.appendChild(createElement("h3", { className: "ui-title", text: currentOptions.title, attrs: { id: titleId } }));
 
     input = createElement("input", {
       className: "ui-input ui-command-palette-input",
@@ -248,6 +251,20 @@ export function createCommandPalette(options = {}) {
       }
       return;
     }
+    if (event.key === "Home") {
+      event.preventDefault();
+      activeIndex = 0;
+      renderList();
+      return;
+    }
+    if (event.key === "End") {
+      event.preventDefault();
+      if (flat.length) {
+        activeIndex = flat.length - 1;
+        renderList();
+      }
+      return;
+    }
     if (event.key === "Enter") {
       event.preventDefault();
       const active = flat[activeIndex];
@@ -286,6 +303,7 @@ export function createCommandPalette(options = {}) {
       return;
     }
     open = true;
+    lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     root.setAttribute("aria-hidden", "false");
     root.classList.add("is-open");
     input.value = query;
@@ -302,6 +320,14 @@ export function createCommandPalette(options = {}) {
     open = false;
     root.classList.remove("is-open");
     root.setAttribute("aria-hidden", "true");
+    if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+      try {
+        lastFocusedElement.focus();
+      } catch (_error) {
+        // Ignore focus restore failures.
+      }
+    }
+    lastFocusedElement = null;
   }
 
   function bindShortcut() {
@@ -391,6 +417,7 @@ export function createCommandPalette(options = {}) {
 
 function normalizeOptions(options) {
   const next = { ...DEFAULT_OPTIONS, ...(options || {}) };
+  next.ariaLabel = String(next.ariaLabel || "Command palette");
   next.providers = Array.isArray(next.providers) ? next.providers : [];
   next.providerDebounceMs = Math.max(0, Number(next.providerDebounceMs) || 0);
   next.groupBySection = Boolean(next.groupBySection);

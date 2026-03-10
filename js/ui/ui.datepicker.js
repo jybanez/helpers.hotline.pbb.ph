@@ -3,6 +3,7 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "Date picker",
   locale: "en-US",
   placeholder: "Select date",
   mode: "single", // single | range
@@ -33,6 +34,8 @@ export function createDatepicker(container, options = {}) {
   let root = null;
   let trigger = null;
   let panel = null;
+  let lastFocusedElement = null;
+  const panelId = `ui-datepicker-panel-${Math.random().toString(36).slice(2, 10)}`;
 
   hydrateValue(currentOptions.value);
 
@@ -52,6 +55,8 @@ export function createDatepicker(container, options = {}) {
         type: "button",
         "aria-haspopup": "dialog",
         "aria-expanded": open ? "true" : "false",
+        "aria-label": currentOptions.ariaLabel,
+        "aria-controls": open ? panelId : null,
       },
     });
     trigger.appendChild(createElement("span", {
@@ -63,13 +68,16 @@ export function createDatepicker(container, options = {}) {
       html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
     }));
     events.on(trigger, "click", () => {
+      if (!open) {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      }
       open = !open;
       render();
     });
     root.appendChild(trigger);
 
     if (open) {
-      panel = createElement("div", { className: "ui-datepicker-panel", attrs: { role: "dialog" } });
+      panel = createElement("div", { className: "ui-datepicker-panel", attrs: { role: "dialog", id: panelId, "aria-label": currentOptions.ariaLabel } });
       renderHeader(panel);
       renderWeekdayRow(panel);
       renderCalendarGrid(panel);
@@ -77,6 +85,9 @@ export function createDatepicker(container, options = {}) {
         renderTimeSection(panel);
       }
       root.appendChild(panel);
+      requestAnimationFrame(() => {
+        panel?.querySelector?.(".ui-datepicker-day:not(.is-disabled), .ui-datepicker-nav, .ui-datepicker-select, .ui-input")?.focus?.();
+      });
     }
 
     container.appendChild(root);
@@ -370,14 +381,27 @@ export function createDatepicker(container, options = {}) {
       if (target && root && !root.contains(target)) {
         open = false;
         render();
+        restoreFocus();
       }
     });
     globalEvents.on(document, "keydown", (event) => {
       if (event.key === "Escape") {
         open = false;
         render();
+        restoreFocus();
       }
     });
+  }
+
+  function restoreFocus() {
+    if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+      try {
+        lastFocusedElement.focus();
+      } catch (_error) {
+        // Ignore focus restore failures.
+      }
+    }
+    lastFocusedElement = null;
   }
 
   function update(nextOptions = {}) {
@@ -437,6 +461,7 @@ export function createDatepicker(container, options = {}) {
 
 function normalizeOptions(options) {
   const next = { ...DEFAULT_OPTIONS, ...(options || {}) };
+  next.ariaLabel = String(next.ariaLabel || "Date picker");
   next.mode = next.mode === "range" ? "range" : "single";
   const week = Number(next.weekStartsOn);
   next.weekStartsOn = Number.isFinite(week) ? ((week % 7) + 7) % 7 : 0;

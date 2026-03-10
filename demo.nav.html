@@ -48,6 +48,17 @@
       text-decoration: none;
       font-size: 13px;
     }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
     .log {
       margin: 0;
       white-space: pre-wrap;
@@ -90,6 +101,7 @@
       <article class="panel">
         <div id="breadcrumbsHost"></div>
         <div class="row">
+          <label class="sr-only" for="crumbInput">New breadcrumb label</label>
           <input id="crumbInput" class="ui-input" type="text" placeholder="New breadcrumb label">
           <button id="crumbAddBtn" class="ui-button" type="button">Add Crumb</button>
           <button id="crumbResetBtn" class="ui-button" type="button">Reset</button>
@@ -133,6 +145,7 @@
     });
 
     createNavbar(document.getElementById("navbarHost"), {}, {
+      ariaLabel: "Top navigation",
       brandText: "Hotline UI",
       activeId: "incidents",
       sticky: true,
@@ -171,6 +184,7 @@
     });
 
     createSidebar(document.getElementById("sidebarHost"), {}, {
+      ariaLabel: "Section navigation",
       title: "Sections",
       activeId: "calls",
       items: [
@@ -189,6 +203,7 @@
     });
 
     const breadcrumbsApi = createBreadcrumbs(document.getElementById("breadcrumbsHost"), {}, {
+      ariaLabel: "Incident breadcrumb trail",
       autoTruncateOnNavigate: true,
     });
     const baseCrumbs = [

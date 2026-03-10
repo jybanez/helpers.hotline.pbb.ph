@@ -9,6 +9,8 @@ const DEFAULT_DATA = {
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "Audio player",
+  seekLabel: "Seek audio",
   playLabel: "Play",
   pauseLabel: "Pause",
   onTogglePlay: null,
@@ -34,6 +36,10 @@ export function createAudioPlayer(container, data = {}, options = {}) {
 
     root = createElement("div", {
       className: `ui-audio-player ${currentOptions.className}`.trim(),
+      attrs: {
+        role: "region",
+        "aria-label": currentOptions.ariaLabel,
+      },
     });
 
     const topRow = createElement("div", { className: "ui-audio-player-row" });
@@ -79,9 +85,13 @@ export function createAudioPlayer(container, data = {}, options = {}) {
       return;
     }
     playButton.textContent = currentData.isPlaying ? currentOptions.pauseLabel : currentOptions.playLabel;
+    playButton.setAttribute("aria-label", currentData.isPlaying ? currentOptions.pauseLabel : currentOptions.playLabel);
+    playButton.setAttribute("aria-pressed", currentData.isPlaying ? "true" : "false");
     timeLabel.textContent = `${formatClock(currentData.currentMs)} / ${formatClock(currentData.durationMs)}`;
     seekInput.max = String(currentData.durationMs || 0);
     seekInput.value = String(clampMs(currentData.currentMs, currentData.durationMs));
+    seekInput.setAttribute("aria-label", currentOptions.seekLabel);
+    seekInput.setAttribute("aria-valuetext", `${formatClock(currentData.currentMs)} of ${formatClock(currentData.durationMs)}`);
   }
 
   function update(nextData = {}, nextOptions = {}) {

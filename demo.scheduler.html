@@ -10,7 +10,7 @@
     .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 10px; }
     .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
-    #host { border: 1px solid #2b3750; border-radius: 8px; padding: 10px; background: #0b1220; }
+    .host-shell { border: 1px solid #2b3750; border-radius: 8px; padding: 10px; background: #0b1220; display: grid; gap: 10px; }
     .log { margin: 0; white-space: pre-wrap; font-size: 12px; color: #b2c2e5; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; height: 220px; overflow: auto; }
   </style>
   <script type="module">
@@ -30,7 +30,15 @@
     </section>
 
     <section class="panel">
+      <h2 class="ui-title">Framed</h2>
       <div id="host"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Chrome-less</h2>
+      <div class="host-shell">
+        <div id="hostChromeLess"></div>
+      </div>
     </section>
 
     <section class="panel">
@@ -57,7 +65,7 @@
       log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
     }
 
-    const scheduler = createScheduler(document.getElementById("host"), {
+    const schedulerData = {
       date: now,
       events: [
         { id: "e-1", title: "Morning Briefing", start: dateAt(-1, 8, 30), color: "#4f89ff" },
@@ -65,7 +73,9 @@
         { id: "e-3", title: "Operator Training", start: dateAt(2, 14, 0), color: "#ffb347" },
         { id: "e-4", title: "Resource Audit", start: dateAt(3, 16, 0), color: "#ff6a89" },
       ],
-    }, {
+    };
+
+    const scheduler = createScheduler(document.getElementById("host"), schedulerData, {
       view: "month",
       weekStartsOn: 1,
       onViewChange(view) {
@@ -82,7 +92,25 @@
       },
     });
 
-    window.schedulerDemo = { scheduler };
+    const schedulerChromeLess = createScheduler(document.getElementById("hostChromeLess"), schedulerData, {
+      view: "week",
+      weekStartsOn: 1,
+      chrome: false,
+      onViewChange(view) {
+        writeLog("schedulerChromeLess.view", { view });
+      },
+      onDateChange(date) {
+        writeLog("schedulerChromeLess.date", { date: date.toISOString() });
+      },
+      onSlotClick(slot) {
+        writeLog("schedulerChromeLess.slot", { date: slot.date.toISOString(), view: slot.view });
+      },
+      onEventClick(entry) {
+        writeLog("schedulerChromeLess.event", { id: entry.id, title: entry.title, start: entry.start.toISOString() });
+      },
+    });
+
+    window.schedulerDemo = { scheduler, schedulerChromeLess };
     document.getElementById("themeToggle").addEventListener("click", () => {
       const next = page.dataset.theme === "dark" ? "light" : "dark";
       page.dataset.theme = next;

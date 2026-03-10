@@ -146,6 +146,11 @@
   background: #142340;
 }
 
+.ui-tree-grid-toggle:disabled {
+  cursor: wait;
+  opacity: 0.9;
+}
+
 .ui-tree-grid-toggle svg {
   width: 12px;
   height: 12px;
@@ -159,6 +164,15 @@
 
 .ui-tree-grid-toggle.is-expanded svg {
   transform: rotate(90deg);
+}
+
+.ui-tree-grid-toggle.is-loading svg {
+  animation: ui-tree-grid-spin 900ms linear infinite;
+}
+
+.ui-tree-grid-toggle.is-error {
+  border-color: #a95555;
+  color: #ffb8b8;
 }
 
 .ui-tree-grid-tree-icon {
@@ -185,6 +199,15 @@
 .ui-tree-grid-cell-text {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+@keyframes ui-tree-grid-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .ui-tree-grid-state-cell {

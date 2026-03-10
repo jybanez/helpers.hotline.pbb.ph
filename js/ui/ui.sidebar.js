@@ -3,6 +3,7 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "Sidebar navigation",
   title: "Navigation",
   items: [],
   activeId: "",
@@ -16,6 +17,7 @@ const DEFAULT_OPTIONS = {
 export function createSidebar(container, data = {}, options = {}) {
   const events = createEventBag();
   let currentOptions = { ...DEFAULT_OPTIONS, ...(options || {}) };
+  const titleId = `ui-sidebar-title-${Math.random().toString(36).slice(2, 10)}`;
 
   function getToggleIcon(collapsed) {
     if (collapsed) {
@@ -60,10 +62,11 @@ export function createSidebar(container, data = {}, options = {}) {
 
     const root = createElement("aside", {
       className: `ui-sidebar ${currentOptions.className || ""}`.trim(),
+      attrs: { role: "navigation", "aria-label": currentOptions.ariaLabel, "aria-labelledby": titleId },
     });
     root.classList.toggle("is-collapsed", Boolean(currentOptions.collapsed));
     const header = createElement("div", { className: "ui-sidebar-header" });
-    const title = createElement("h4", { className: "ui-title", text: currentOptions.title });
+    const title = createElement("h4", { className: "ui-title", text: currentOptions.title, attrs: { id: titleId } });
     const toggle = createElement("button", {
       className: "ui-button ui-sidebar-toggle",
       html: getToggleIcon(Boolean(currentOptions.collapsed)),
@@ -93,7 +96,11 @@ export function createSidebar(container, data = {}, options = {}) {
     (currentOptions.items || []).forEach((item) => {
       const row = createElement("button", {
         className: `ui-sidebar-item${String(item?.id) === String(currentOptions.activeId) ? " is-active" : ""}`,
-        attrs: { type: "button", ...(item?.disabled ? { disabled: "disabled" } : {}) },
+        attrs: {
+          type: "button",
+          ...(item?.disabled ? { disabled: "disabled" } : {}),
+          ...(String(item?.id) === String(currentOptions.activeId) ? { "aria-current": "page" } : {}),
+        },
       });
       appendIconLabel(row, item);
       events.on(row, "click", () => currentOptions.onNavigate?.(item));

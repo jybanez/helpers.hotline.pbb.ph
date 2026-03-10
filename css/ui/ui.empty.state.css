@@ -8,6 +8,13 @@
   justify-items: start;
 }
 
+.ui-empty-state.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
 .ui-empty-state-icon {
   width: 34px;
   height: 34px;
@@ -40,4 +47,3 @@
   gap: 8px;
   flex-wrap: wrap;
 }
-

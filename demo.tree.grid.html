@@ -95,6 +95,16 @@
     </section>
 
     <section class="panel">
+      <h2 class="ui-title">Lazy Tree Grid (Chrome-less)</h2>
+      <p class="muted">Rows marked with <code>hasChildren: true</code> load children only on expand. This instance also uses <code>chrome: false</code>.</p>
+      <div class="row">
+        <button id="refreshLazyIncidentBtn" class="ui-button" type="button">Refresh Incident 42 Children</button>
+        <button id="expandLazyRootBtn" class="ui-button" type="button">Expand Incident 42</button>
+      </div>
+      <div id="treeGridHostLazy"></div>
+    </section>
+
+    <section class="panel">
       <h2 class="ui-title">Large Tree Grid (Virtualized)</h2>
       <p class="muted">Flattened visible rows are virtualized with fixed row height.</p>
       <div class="row">
@@ -182,6 +192,27 @@
             createdAt: "2026-03-09 22:20",
           },
         ],
+      },
+    ];
+
+    const lazyRows = [
+      {
+        id: "incident-42",
+        label: "Incident 42",
+        type: "incident",
+        status: "active",
+        location: "Mabolo",
+        createdAt: "2026-03-11 09:05",
+        hasChildren: true,
+      },
+      {
+        id: "incident-43",
+        label: "Incident 43",
+        type: "incident",
+        status: "pending",
+        location: "Banilad",
+        createdAt: "2026-03-11 09:11",
+        hasChildren: true,
       },
     ];
 
@@ -285,6 +316,84 @@
       },
     });
 
+    const lazyChildMap = {
+      "incident-42": [
+        {
+          id: "assignment-42-1",
+          label: "SWAT Dispatch",
+          type: "assignment",
+          status: "requested",
+          location: "Block 3",
+          createdAt: "2026-03-11 09:07",
+          hasChildren: true,
+        },
+        {
+          id: "assignment-42-2",
+          label: "Medical Team",
+          type: "assignment",
+          status: "accepted",
+          location: "Block 3",
+          createdAt: "2026-03-11 09:09",
+        },
+      ],
+      "assignment-42-1": [
+        {
+          id: "resource-42-1-1",
+          label: "Breach Kit",
+          type: "resource",
+          status: "allocated",
+          location: "Vehicle B",
+          createdAt: "2026-03-11 09:10",
+        },
+      ],
+      "incident-43": [
+        {
+          id: "assignment-43-1",
+          label: "Fire Response",
+          type: "assignment",
+          status: "requested",
+          location: "Sector 9",
+          createdAt: "2026-03-11 09:13",
+        },
+      ],
+    };
+
+    async function lazyLoadChildren(row) {
+      writeLog("treeGridLazy.loadChildren.begin", { rowId: row.id, label: row.label });
+      await new Promise((resolve) => setTimeout(resolve, 650));
+      return (lazyChildMap[row.id] || []).map((child) => ({ ...child }));
+    }
+
+    const treeGridLazy = createTreeGrid(document.getElementById("treeGridHostLazy"), {
+      rows: lazyRows,
+      chrome: false,
+      enableColumnResize: true,
+      lazyLoadChildren,
+      columns: [
+        {
+          key: "label",
+          label: "Name",
+          tree: true,
+          width: "320px",
+        },
+        { key: "status", label: "Status", width: "140px" },
+        { key: "location", label: "Location", width: "220px" },
+        { key: "createdAt", label: "Created", width: "180px" },
+      ],
+      onToggle(payload) {
+        writeLog("treeGridLazy.toggle", payload);
+      },
+      onLoadChildren(row, children) {
+        writeLog("treeGridLazy.loadChildren.complete", {
+          rowId: row.id,
+          childCount: children.length,
+        });
+      },
+      onRowClick(payload) {
+        writeLog("treeGridLazy.rowClick", payload);
+      },
+    });
+
     document.getElementById("expandAllBtn").addEventListener("click", () => {
       treeGrid.expandAll();
       writeLog("treeGrid.expandAll", {});
@@ -300,6 +409,17 @@
     document.getElementById("collapseAllLargeBtn").addEventListener("click", () => {
       treeGridLarge.collapseAll();
       writeLog("treeGridLarge.collapseAll", {});
+    });
+    document.getElementById("expandLazyRootBtn").addEventListener("click", async () => {
+      await treeGridLazy.setExpanded("incident-42", true);
+      writeLog("treeGridLazy.expandRoot", { rowId: "incident-42" });
+    });
+    document.getElementById("refreshLazyIncidentBtn").addEventListener("click", async () => {
+      const children = await treeGridLazy.refreshChildren("incident-42");
+      writeLog("treeGridLazy.refreshChildren", {
+        rowId: "incident-42",
+        childCount: Array.isArray(children) ? children.length : 0,
+      });
     });
   </script>
 </body>

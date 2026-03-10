@@ -4,6 +4,8 @@ import { createProgress } from "./ui.progress.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "File uploader",
+  dropzoneAriaLabel: "Add files",
   accept: "",
   multiple: true,
   autoUpload: false,
@@ -47,6 +49,7 @@ export function createFileUploader(container, options = {}) {
   let input = null;
   let startBtn = null;
   let clearBtn = null;
+  let statusLive = null;
 
   function render() {
     if (!container || container.nodeType !== 1) {
@@ -57,6 +60,10 @@ export function createFileUploader(container, options = {}) {
 
     root = createElement("section", {
       className: `ui-file-uploader ${currentOptions.className || ""}`.trim(),
+      attrs: {
+        role: "region",
+        "aria-label": currentOptions.ariaLabel,
+      },
     });
 
     const toolbar = createElement("div", { className: "ui-file-uploader-toolbar" });
@@ -83,17 +90,31 @@ export function createFileUploader(container, options = {}) {
     const dropzone = createElement("div", {
       className: "ui-file-uploader-dropzone",
       text: currentOptions.dropText,
+      attrs: {
+        role: "button",
+        tabindex: "0",
+        "aria-label": currentOptions.dropzoneAriaLabel,
+      },
     });
     input = createElement("input", {
       className: "ui-file-uploader-input",
       attrs: {
         type: "file",
+        "aria-hidden": "true",
+        tabindex: "-1",
         ...(currentOptions.accept ? { accept: currentOptions.accept } : {}),
         ...(currentOptions.multiple ? { multiple: "multiple" } : {}),
       },
     });
     dropzone.appendChild(input);
     events.on(dropzone, "click", () => input.click());
+    events.on(dropzone, "keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      event.preventDefault();
+      input.click();
+    });
     events.on(dropzone, "dragover", (event) => {
       event.preventDefault();
       dropzone.classList.add("is-dragover");
@@ -111,10 +132,24 @@ export function createFileUploader(container, options = {}) {
       input.value = "";
     });
 
-    list = createElement("div", { className: "ui-file-uploader-list" });
+    list = createElement("div", {
+      className: "ui-file-uploader-list",
+      attrs: {
+        role: "list",
+        "aria-label": "Upload queue",
+      },
+    });
+    statusLive = createElement("p", {
+      className: "ui-file-uploader-status",
+      attrs: {
+        role: "status",
+        "aria-live": "polite",
+        "aria-atomic": "true",
+      },
+    });
     renderList();
 
-    root.append(toolbar, dropzone, list);
+    root.append(toolbar, dropzone, list, statusLive);
     container.appendChild(root);
   }
 
@@ -131,11 +166,14 @@ export function createFileUploader(container, options = {}) {
         text: currentOptions.emptyText,
       }));
       syncButtons();
+      updateLiveStatus();
       return;
     }
 
     items.forEach((item) => {
       const row = createElement("article", { className: `ui-file-uploader-item is-${item.status}` });
+      row.setAttribute("role", "listitem");
+      row.setAttribute("aria-label", `${item.name}, ${item.status}, ${formatBytes(item.size)}`);
       const head = createElement("div", { className: "ui-file-uploader-item-head" });
       const name = createElement("p", { className: "ui-file-uploader-name", text: item.name });
       const meta = createElement("p", { className: "ui-file-uploader-meta", text: `${formatBytes(item.size)} • ${item.status}` });
@@ -183,6 +221,7 @@ export function createFileUploader(container, options = {}) {
       itemRefs.set(item.id, { progressApi, meta });
     });
     syncButtons();
+    updateLiveStatus();
   }
 
   function disposeItemRefs() {
@@ -262,6 +301,17 @@ export function createFileUploader(container, options = {}) {
     if (clearBtn) {
       clearBtn.disabled = !items.length;
     }
+  }
+
+  function updateLiveStatus() {
+    if (!statusLive) {
+      return;
+    }
+    const queued = items.filter((item) => item.status === "queued").length;
+    const uploading = items.filter((item) => item.status === "uploading").length;
+    const success = items.filter((item) => item.status === "success").length;
+    const errors = items.filter((item) => item.status === "error").length;
+    statusLive.textContent = `${items.length} file${items.length === 1 ? "" : "s"} in queue. ${queued} queued, ${uploading} uploading, ${success} complete, ${errors} error.`;
   }
 
   function emitChange() {
@@ -548,6 +598,7 @@ export function createFileUploader(container, options = {}) {
     input = null;
     startBtn = null;
     clearBtn = null;
+    statusLive = null;
     itemRefs.clear();
   }
 

@@ -3,6 +3,7 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "Kanban board",
   laneTitleKey: "title",
   laneIdKey: "id",
   cardIdKey: "id",
@@ -24,6 +25,8 @@ export function createKanban(container, lanes = [], options = {}) {
   let dragCardId = null;
   let dragFromLaneId = null;
   let dragFromIndex = -1;
+  let dragOverLaneId = null;
+  let dragOverIndex = -1;
   let pendingFocusCardId = null;
 
   function render() {
@@ -35,6 +38,10 @@ export function createKanban(container, lanes = [], options = {}) {
 
     const root = createElement("section", {
       className: `ui-kanban ${currentOptions.className || ""}`.trim(),
+      attrs: {
+        role: "region",
+        "aria-label": currentOptions.ariaLabel,
+      },
     });
     currentLanes.forEach((lane) => {
       root.appendChild(renderLane(lane));
@@ -48,31 +55,60 @@ export function createKanban(container, lanes = [], options = {}) {
   }
 
   function renderLane(lane) {
+    const titleId = `ui-kanban-lane-title-${toDomIdToken(lane.id)}`;
     const laneNode = createElement("section", {
       className: "ui-kanban-lane",
-      attrs: { "data-lane-id": lane.id },
+      attrs: {
+        "data-lane-id": lane.id,
+        role: "region",
+        "aria-labelledby": titleId,
+      },
     });
     const header = createElement("header", { className: "ui-kanban-lane-header" });
-    header.appendChild(createElement("h4", { className: "ui-title", text: lane.title }));
+    header.appendChild(createElement("h4", {
+      className: "ui-title",
+      text: lane.title,
+      attrs: { id: titleId },
+    }));
     header.appendChild(createElement("span", { className: "ui-kanban-count", text: String(lane.cards.length) }));
     laneNode.appendChild(header);
 
-    const cards = createElement("div", { className: "ui-kanban-cards" });
-    events.on(cards, "dragover", (event) => {
+    const cards = createElement("div", {
+      className: "ui-kanban-cards",
+      attrs: {
+        role: "list",
+        "aria-label": `${lane.title} cards`,
+      },
+    });
+    const handleLaneDragOver = (event) => {
       if (!currentOptions.draggable || !dragCardId) {
         return;
       }
       event.preventDefault();
-      cards.classList.add("is-drop-target");
-    });
-    events.on(cards, "dragleave", () => cards.classList.remove("is-drop-target"));
-    events.on(cards, "drop", (event) => {
-      event.preventDefault();
-      cards.classList.remove("is-drop-target");
-      if (!dragCardId || !dragFromLaneId) {
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+      setDropTarget(lane.id, resolveDropIndex(cards, event.clientY));
+    };
+    events.on(laneNode, "dragover", handleLaneDragOver);
+    events.on(cards, "dragover", handleLaneDragOver);
+    events.on(laneNode, "dragleave", (event) => {
+      if (laneNode.contains(event.relatedTarget)) {
         return;
       }
-      moveCard(dragCardId, dragFromLaneId, lane.id, lane.cards.length);
+      clearDropTarget();
+    });
+    events.on(laneNode, "drop", (event) => {
+      event.preventDefault();
+      if (!dragCardId || !dragFromLaneId) {
+        clearDropTarget();
+        return;
+      }
+      const targetIndex = dragOverLaneId === lane.id
+        ? dragOverIndex
+        : resolveDropIndex(cards, event.clientY);
+      moveCard(dragCardId, dragFromLaneId, lane.id, targetIndex);
+      clearDropTarget();
       dragCardId = null;
       dragFromLaneId = null;
       dragFromIndex = -1;
@@ -96,7 +132,9 @@ export function createKanban(container, lanes = [], options = {}) {
       attrs: {
         "data-card-id": card.id,
         draggable: currentOptions.draggable ? "true" : null,
-        tabindex: currentOptions.keyboardMoves ? "0" : null,
+        tabindex: currentOptions.keyboardMoves || typeof currentOptions.onCardClick === "function" ? "0" : null,
+        role: "listitem",
+        "aria-label": card.meta ? `${card.title}. ${card.meta}` : card.title,
       },
     });
     node.appendChild(createElement("h5", { className: "ui-kanban-card-title", text: card.title }));
@@ -115,28 +153,36 @@ export function createKanban(container, lanes = [], options = {}) {
         node.classList.add("is-dragging");
         event.dataTransfer?.setData("text/plain", card.id);
         event.dataTransfer?.setData("application/x-kanban-lane", laneId);
+        setDropTarget(laneId, cardIndex);
       });
       events.on(node, "dragover", (event) => {
         if (!dragCardId) {
           return;
         }
         event.preventDefault();
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "move";
+        }
+        setDropTarget(laneId, resolveDropIndex(node.parentElement, event.clientY));
       });
       events.on(node, "drop", (event) => {
         event.preventDefault();
         if (!dragCardId || !dragFromLaneId) {
+          clearDropTarget();
           return;
         }
-        const rect = node.getBoundingClientRect();
-        const insertAfter = event.clientY > (rect.top + (rect.height / 2));
-        const targetIndex = cardIndex + (insertAfter ? 1 : 0);
+        const targetIndex = dragOverLaneId === laneId
+          ? dragOverIndex
+          : resolveDropIndex(node.parentElement, event.clientY);
         moveCard(dragCardId, dragFromLaneId, laneId, targetIndex);
+        clearDropTarget();
         dragCardId = null;
         dragFromLaneId = null;
         dragFromIndex = -1;
       });
       events.on(node, "dragend", () => {
         node.classList.remove("is-dragging");
+        clearDropTarget();
         dragCardId = null;
         dragFromLaneId = null;
         dragFromIndex = -1;
@@ -145,7 +191,15 @@ export function createKanban(container, lanes = [], options = {}) {
 
     if (currentOptions.keyboardMoves) {
       events.on(node, "keydown", (event) => {
-        if (event.defaultPrevented || !currentOptions.draggable) {
+        if (event.defaultPrevented) {
+          return;
+        }
+        if ((event.key === "Enter" || event.key === " ") && typeof currentOptions.onCardClick === "function") {
+          event.preventDefault();
+          currentOptions.onCardClick(card, laneId);
+          return;
+        }
+        if (!currentOptions.draggable) {
           return;
         }
         let handled = false;
@@ -274,11 +328,13 @@ export function createKanban(container, lanes = [], options = {}) {
   function update(nextLanes = currentLanes, nextOptions = {}) {
     currentOptions = normalizeOptions({ ...currentOptions, ...(nextOptions || {}) });
     currentLanes = normalizeLanes(nextLanes, currentOptions);
+    clearDropTarget();
     render();
   }
 
   function destroy() {
     events.clear();
+    clearDropTarget();
     clearNode(container);
   }
 
@@ -287,6 +343,47 @@ export function createKanban(container, lanes = [], options = {}) {
       lanes: currentLanes.map(cloneLane),
       options: { ...currentOptions },
     };
+  }
+
+  function setDropTarget(laneId, index) {
+    dragOverLaneId = laneId;
+    dragOverIndex = Number.isFinite(Number(index)) ? Number(index) : -1;
+    updateDropIndicators();
+  }
+
+  function clearDropTarget() {
+    dragOverLaneId = null;
+    dragOverIndex = -1;
+    updateDropIndicators();
+  }
+
+  function updateDropIndicators() {
+    if (!container || container.nodeType !== 1) {
+      return;
+    }
+    container.querySelectorAll(".ui-kanban-cards").forEach((cardsNode) => {
+      cardsNode.classList.remove("is-drop-target", "is-drop-at-end");
+      cardsNode.querySelectorAll(".ui-kanban-card").forEach((cardNode) => {
+        cardNode.classList.remove("is-drop-before");
+      });
+    });
+
+    if (!dragOverLaneId || dragOverIndex < 0) {
+      return;
+    }
+
+    const cardsNode = container.querySelector(`.ui-kanban-lane[data-lane-id="${cssEscape(dragOverLaneId)}"] .ui-kanban-cards`);
+    if (!cardsNode) {
+      return;
+    }
+
+    cardsNode.classList.add("is-drop-target");
+    const cardNodes = Array.from(cardsNode.querySelectorAll(".ui-kanban-card"));
+    if (!cardNodes.length || dragOverIndex >= cardNodes.length) {
+      cardsNode.classList.add("is-drop-at-end");
+      return;
+    }
+    cardNodes[dragOverIndex]?.classList.add("is-drop-before");
   }
 
   render();
@@ -359,6 +456,27 @@ function resolveWipLimit(laneId, wipLimits) {
 
 function clampIndex(value, min, max) {
   return Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
+}
+
+function resolveDropIndex(cardsNode, clientY) {
+  if (!cardsNode || cardsNode.nodeType !== 1) {
+    return 0;
+  }
+  const cardNodes = Array.from(cardsNode.querySelectorAll(".ui-kanban-card"));
+  if (!cardNodes.length) {
+    return 0;
+  }
+  for (let index = 0; index < cardNodes.length; index += 1) {
+    const rect = cardNodes[index].getBoundingClientRect();
+    if (clientY < rect.top + (rect.height / 2)) {
+      return index;
+    }
+  }
+  return cardNodes.length;
+}
+
+function toDomIdToken(value) {
+  return String(value).trim().replace(/[^a-zA-Z0-9_-]+/g, "-") || "item";
 }
 
 function cssEscape(value) {

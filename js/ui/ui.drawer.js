@@ -3,13 +3,21 @@ import { createEventBag } from "./ui.events.js";
 
 export function createBottomDrawer(options = {}) {
   const events = createEventBag();
+  const documentEvents = createEventBag();
   const animationMs = Math.max(0, Number(options.animationMs) || 220);
   const position = normalizePosition(options.position);
+  const titleId = `ui-drawer-title-${Math.random().toString(36).slice(2, 10)}`;
+  let lastFocusedElement = null;
   const backdrop = createElement("div", {
     className: joinClassNames("ui-drawer-backdrop", options.backdropClass),
   });
   const panel = createElement("aside", {
     className: joinClassNames("ui-drawer", options.panelClass, `ui-drawer-pos-${position}`),
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      tabindex: "-1",
+    },
   });
   const header = createElement("div", {
     className: joinClassNames("ui-drawer-header", options.headerClass),
@@ -18,6 +26,7 @@ export function createBottomDrawer(options = {}) {
     className: joinClassNames("ui-title", options.titleClass),
     text: options.title || "",
   });
+  title.id = titleId;
   const closeButton = createElement("button", {
     className: joinClassNames("ui-drawer-close", options.closeClass),
     html: '<span aria-hidden="true">\u2715</span>',
@@ -29,6 +38,11 @@ export function createBottomDrawer(options = {}) {
   const body = createElement("div", {
     className: joinClassNames("ui-drawer-body", options.bodyClass),
   });
+  if (options.title) {
+    panel.setAttribute("aria-labelledby", titleId);
+  } else {
+    panel.setAttribute("aria-label", String(options.ariaLabel || options.title || "Drawer"));
+  }
 
   header.append(title, closeButton);
   panel.append(header, body);
@@ -53,6 +67,7 @@ export function createBottomDrawer(options = {}) {
     }
     isOpen = false;
     events.clear();
+    documentEvents.clear();
     backdrop.classList.remove("is-open");
     panel.classList.remove("is-open");
     backdrop.classList.add("is-closing");
@@ -72,6 +87,14 @@ export function createBottomDrawer(options = {}) {
       backdrop.classList.remove("is-closing");
       panel.classList.remove("is-closing");
       closeTimer = null;
+      if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+        try {
+          lastFocusedElement.focus();
+        } catch (_error) {
+          // Ignore focus restore failures.
+        }
+      }
+      lastFocusedElement = null;
       notifyClose();
     }, animationMs + 24);
   }
@@ -85,6 +108,7 @@ export function createBottomDrawer(options = {}) {
       closeTimer = null;
     }
     closeNotified = false;
+    lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     backdrop.classList.remove("is-open", "is-closing");
     panel.classList.remove("is-open", "is-closing");
     parent.append(backdrop, panel);
@@ -92,6 +116,15 @@ export function createBottomDrawer(options = {}) {
 
     events.on(backdrop, "click", close);
     events.on(closeButton, "click", close);
+    documentEvents.on(document, "keydown", (event) => {
+      if (!isOpen) {
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+      }
+    });
 
     requestAnimationFrame(() => {
       if (!isOpen) {
@@ -99,6 +132,7 @@ export function createBottomDrawer(options = {}) {
       }
       backdrop.classList.add("is-open");
       panel.classList.add("is-open");
+      closeButton.focus();
     });
   }
 

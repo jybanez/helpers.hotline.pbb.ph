@@ -103,7 +103,7 @@ export function createTreeGrid(container, options = {}) {
     rows.forEach((row) => {
       const id = getRowId(row);
       const children = getChildren(row);
-      const hasKids = children.length > 0;
+      const hasKids = hasChildrenRow(row);
       const expanded = hasKids && expandedIds.has(id);
       acc.push({
         id,
@@ -393,11 +393,13 @@ export function createTreeGrid(container, options = {}) {
 
     if (entry.hasChildren) {
       const toggle = createElement("button", {
-        className: `ui-tree-grid-toggle${entry.expanded ? " is-expanded" : ""}`,
+        className: `ui-tree-grid-toggle${entry.expanded ? " is-expanded" : ""}${entry.row?._loading ? " is-loading" : ""}${entry.row?._loadError ? " is-error" : ""}`,
         attrs: {
           type: "button",
           "aria-label": entry.expanded ? "Collapse row" : "Expand row",
           title: entry.expanded ? "Collapse" : "Expand",
+          "aria-busy": entry.row?._loading ? "true" : null,
+          disabled: entry.row?._loading ? "disabled" : null,
         },
         html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
       });
@@ -426,7 +428,7 @@ export function createTreeGrid(container, options = {}) {
 
     wrap.appendChild(createElement("span", {
       className: "ui-tree-grid-tree-label",
-      text: resolveColumnValue(column, entry),
+      text: `${resolveColumnValue(column, entry)}${entry.row?._loading ? " (loading...)" : ""}${entry.row?._loadError ? " (load failed)" : ""}`,
     }));
 
     return wrap;

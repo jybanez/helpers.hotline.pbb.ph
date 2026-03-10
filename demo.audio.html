@@ -183,6 +183,7 @@
         audioApi.destroy();
       }
       audioApi = createAudioCallSession(host, incident, {
+        ariaLabel: "Incident call session playback",
         audiographStyle: styleSelect.value,
         sensitivity: getSensitivity(),
         showMute: true,

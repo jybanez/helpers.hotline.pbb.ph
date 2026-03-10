@@ -4,6 +4,7 @@ import { createMenu } from "./ui.menu.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  ariaLabel: "Primary navigation",
   brandText: "App",
   items: [],
   actions: [],
@@ -61,7 +62,7 @@ export function createNavbar(container, data = {}, options = {}) {
 
     const root = createElement("nav", {
       className: `ui-navbar ${currentOptions.className || ""}`.trim(),
-      attrs: { role: "navigation" },
+      attrs: { role: "navigation", "aria-label": currentOptions.ariaLabel },
     });
     if (currentOptions.sticky) {
       root.classList.add("is-sticky");
@@ -78,7 +79,11 @@ export function createNavbar(container, data = {}, options = {}) {
     (currentOptions.items || []).forEach((item) => {
       const btn = createElement("button", {
         className: `ui-navbar-item${String(item?.id) === String(currentOptions.activeId) ? " is-active" : ""}`,
-        attrs: { type: "button", ...(item?.disabled ? { disabled: "disabled" } : {}) },
+        attrs: {
+          type: "button",
+          ...(item?.disabled ? { disabled: "disabled" } : {}),
+          ...(String(item?.id) === String(currentOptions.activeId) ? { "aria-current": "page" } : {}),
+        },
       });
       appendIconLabel(btn, item);
       events.on(btn, "click", () => currentOptions.onNavigate?.(item));
