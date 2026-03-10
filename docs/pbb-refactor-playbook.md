@@ -104,6 +104,8 @@ Shared UI layer:
 - `js/ui/ui.dialog.js`
 - `js/ui/ui.toast.js`
 - `js/ui/ui.select.js`
+- `js/ui/ui.toggle.button.js`
+- `js/ui/ui.toggle.group.js`
 - `js/ui/ui.datepicker.js`
 - `js/ui/ui.timeline.js`
 - `js/ui/ui.timeline.scrubber.js`
@@ -136,6 +138,7 @@ Shared CSS:
 - `css/ui/ui.dialog.css`
 - `css/ui/ui.toast.css`
 - `css/ui/ui.select.css`
+- `css/ui/ui.toggle.css`
 - `css/ui/ui.datepicker.css`
 - `css/ui/ui.timeline.css`
 - `css/ui/ui.timeline.scrubber.css`

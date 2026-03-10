@@ -56,6 +56,9 @@
     }
     #tabsHost,
     #stripHost,
+    #toggleButtonHost,
+    #toggleGroupMultiHost,
+    #toggleGroupSingleHost,
     #treeHost,
     #kanbanHost,
     #fileUploaderHost,
@@ -82,6 +85,14 @@
       display: inline-block;
       text-align: right;
     }
+    .toggle-stack {
+      display: grid;
+      gap: 12px;
+    }
+    .toggle-demo-block {
+      display: grid;
+      gap: 8px;
+    }
   </style>
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
@@ -94,6 +105,8 @@
       "ui.dialog",
       "ui.toast",
       "ui.select",
+      "ui.toggle.button",
+      "ui.toggle.group",
       "ui.datepicker",
       "ui.command.palette",
       "ui.tree",
@@ -155,6 +168,24 @@
         <div>
           <p>Multi Select</p>
           <div id="selectHostMulti"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Toggle</h2>
+      <div class="toggle-stack">
+        <div class="toggle-demo-block">
+          <p>Standalone Toggle Button</p>
+          <div id="toggleButtonHost"></div>
+        </div>
+        <div class="toggle-demo-block">
+          <p>Multi Toggle Group</p>
+          <div id="toggleGroupMultiHost"></div>
+        </div>
+        <div class="toggle-demo-block">
+          <p>Single Toggle Group</p>
+          <div id="toggleGroupSingleHost"></div>
         </div>
       </div>
     </section>
@@ -272,6 +303,8 @@ modal.open();</code></pre>
     const createActionModal = await uiLoader.get("ui.action.modal");
     const createToastStack = await uiLoader.get("ui.toast");
     const createSelect = await uiLoader.get("ui.select");
+    const createToggleButton = await uiLoader.get("ui.toggle.button");
+    const createToggleGroup = await uiLoader.get("ui.toggle.group");
     const createDatepicker = await uiLoader.get("ui.datepicker");
     const createCommandPalette = await uiLoader.get("ui.command.palette");
     const createTree = await uiLoader.get("ui.tree");
@@ -515,6 +548,52 @@ modal.open();</code></pre>
       selected: ["fire", "crime"],
       onChange(values, selectedItems) {
         writeLog("select.multi.change", { values, selectedItems });
+      },
+    });
+
+    createToggleButton(document.getElementById("toggleButtonHost"), {
+      id: "terrain",
+      label: "Terrain",
+      pressed: true,
+      variant: "pill",
+      tone: "success",
+      leadingDot: true,
+      icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 3 4-6 5 9"/></svg>',
+      onChange(payload) {
+        writeLog("toggle.button.change", payload);
+      },
+    });
+
+    createToggleGroup(document.getElementById("toggleGroupMultiHost"), {
+      name: "map-overlays",
+      variant: "chip",
+      tone: "success",
+      multi: true,
+      leadingDot: true,
+      items: [
+        { id: "terrain", label: "Terrain", pressed: true },
+        { id: "poi", label: "POI", pressed: false },
+        { id: "traffic", label: "Traffic", pressed: true, tone: "info" },
+        { id: "hazards", label: "Hazards", pressed: false, tone: "warning", count: 3 },
+      ],
+      onChange(payload) {
+        writeLog("toggle.group.multi.change", payload);
+      },
+    });
+
+    createToggleGroup(document.getElementById("toggleGroupSingleHost"), {
+      name: "view-mode",
+      variant: "segmented",
+      tone: "neutral",
+      multi: false,
+      allowNone: false,
+      items: [
+        { id: "map", label: "Map", pressed: true },
+        { id: "satellite", label: "Satellite", pressed: false },
+        { id: "hybrid", label: "Hybrid", pressed: false },
+      ],
+      onChange(payload) {
+        writeLog("toggle.group.single.change", payload);
       },
     });
 

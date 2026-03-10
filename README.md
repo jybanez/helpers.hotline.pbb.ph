@@ -29,6 +29,7 @@ css/
     ui.dialog.css
     ui.toast.css
     ui.select.css
+    ui.toggle.css
     ui.datepicker.css
     ui.timeline.css
     ui.timeline.scrubber.css
@@ -70,6 +71,8 @@ js/
     ui.dialog.js
     ui.toast.js
     ui.select.js
+    ui.toggle.button.js
+    ui.toggle.group.js
     ui.datepicker.js
     ui.timeline.js
     ui.timeline.scrubber.js
@@ -177,6 +180,10 @@ Reusable shared UI utilities live under `js/ui`:
   - `getVoices()` returns available speech voices so UI can render a voice selector; per-toast `voiceName` override is supported in `show(message, { voiceName })`
 - `ui.select.js`
   - `createSelect(container, items, options)` single/multi select with optional search and keyboard navigation (`ArrowUp/ArrowDown/Home/End/Enter/Escape`, optional `selectOnTab`)
+- `ui.toggle.button.js`
+  - `createToggleButton(container, options)` reusable binary toggle button with `aria-pressed`, tones, variants, icon/label support, and `setPressed/getPressed`
+- `ui.toggle.group.js`
+  - `createToggleGroup(container, options)` grouped toggle composition with `multi` or single-select behavior, `getValue()`, `setItems()`, and `updateItem()`
 - `ui.datepicker.js`
   - `createDatepicker(container, options)` single/range date picker with optional time controls, min/max bounds, disabled-date callback, and `setValue/getValue`
 - `ui.timeline.js`
@@ -249,6 +256,7 @@ Reusable UI styles live under `css/ui`:
 - `ui.dialog.css` dialog-specific styles on top of modal shell
 - `ui.toast.css` toast notification styles
 - `ui.select.css` select/dropdown styles
+- `ui.toggle.css` toggle button + toggle group styles
 - `ui.datepicker.css` datepicker styles
 - `ui.timeline.css` timeline styles
 - `ui.timeline.scrubber.css` timeline scrubber styles
@@ -1890,7 +1898,7 @@ Recommended integration flow:
 
 ### Current Stable Line: `v0.16.x`
 
-- Latest documented release: `v0.16.2`
+- Latest documented release: `v0.16.3`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`
@@ -2212,3 +2220,18 @@ Recommended integration flow:
 - Tightened integration guidance in README and playbook:
   - app integrations should use `uiLoader` by registry key
   - direct path imports are treated as internal-library usage
+
+### v0.16.3
+
+- Added toggle primitives:
+  - `js/ui/ui.toggle.button.js`
+  - `js/ui/ui.toggle.group.js`
+  - `css/ui/ui.toggle.css`
+- Added loader registry entries:
+  - `ui.toggle.button`
+  - `ui.toggle.group`
+- Added toggle components to the `forms` loader group
+- Updated `demo.ui.html`:
+  - standalone toggle button demo
+  - multi toggle group demo
+  - single-select segmented toggle group demo

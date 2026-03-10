@@ -93,6 +93,18 @@ export const DEFAULT_COMPONENT_REGISTRY = {
     deps: [],
     export: "createSelect",
   },
+  "ui.toggle.button": {
+    js: "./ui.toggle.button.js",
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.toggle.css"],
+    deps: [],
+    export: "createToggleButton",
+  },
+  "ui.toggle.group": {
+    js: "./ui.toggle.group.js",
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.toggle.css"],
+    deps: ["ui.toggle.button"],
+    export: "createToggleGroup",
+  },
   "ui.datepicker": {
     js: "./ui.datepicker.js",
     css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.datepicker.css"],
@@ -368,6 +380,8 @@ export const DEFAULT_COMPONENT_GROUPS = {
   ],
   forms: [
     "ui.select",
+    "ui.toggle.button",
+    "ui.toggle.group",
     "ui.datepicker",
     "ui.file.uploader",
   ],
