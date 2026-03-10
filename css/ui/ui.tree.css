@@ -5,6 +5,13 @@
   padding: 8px;
 }
 
+.ui-tree.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
 .ui-tree-list {
   display: grid;
   gap: 2px;

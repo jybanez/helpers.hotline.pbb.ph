@@ -7,6 +7,13 @@
   padding: 10px;
 }
 
+.ui-tree-grid.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
 .ui-tree-grid-table-wrap {
   overflow: auto;
   border: 1px solid var(--ui-border, #2b3750);
@@ -184,4 +191,17 @@
   text-align: center;
   color: var(--ui-muted, #9fb2d8);
   padding: 14px;
+}
+
+.ui-tree-grid-row-spacer .ui-tree-grid-cell-spacer {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.ui-tree-grid-spacer-fill {
+  display: block;
+  width: 1px;
 }

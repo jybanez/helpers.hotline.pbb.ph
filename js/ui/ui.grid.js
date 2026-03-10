@@ -18,6 +18,7 @@ const DEFAULT_OPTIONS = {
   virtualThreshold: 80,
   minColumnWidth: 72,
   columnWidths: {},
+  chrome: true,
   wrapCellContent: true,
   searchPlaceholder: "Search...",
   search: "",
@@ -114,7 +115,7 @@ export function createGrid(container, rows = [], options = {}) {
     clearNode(container);
 
     root = createElement("section", {
-      className: `ui-grid ${currentOptions.className}`.trim(),
+      className: `ui-grid${currentOptions.chrome ? "" : " is-chrome-less"} ${currentOptions.className}`.trim(),
       attrs: { "data-mode": currentOptions.mode },
     });
 
@@ -754,6 +755,7 @@ function normalizeOptions(options) {
     ...DEFAULT_OPTIONS,
     ...(options || {}),
   };
+  next.chrome = next.chrome !== false;
   if (next.enableSort === undefined) {
     next.enableSort = next.mode === "local";
   }

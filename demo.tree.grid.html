@@ -65,6 +65,10 @@
       color: #d7e0f4;
       font-size: 11px;
     }
+    #treeGridHostLarge .ui-tree-grid-table-wrap {
+      height: 420px;
+      max-height: 420px;
+    }
   </style>
   <script type="module">
     import { uiLoader } from "./js/ui/ui.loader.js";
@@ -88,6 +92,16 @@
         <button id="collapseAllBtn" class="ui-button" type="button">Collapse All</button>
       </div>
       <div id="treeGridHost"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Large Tree Grid (Virtualized)</h2>
+      <p class="muted">Flattened visible rows are virtualized with fixed row height.</p>
+      <div class="row">
+        <button id="expandAllLargeBtn" class="ui-button" type="button">Expand All</button>
+        <button id="collapseAllLargeBtn" class="ui-button" type="button">Collapse All</button>
+      </div>
+      <div id="treeGridHostLarge"></div>
     </section>
 
     <section class="panel">
@@ -171,6 +185,31 @@
       },
     ];
 
+    const largeRows = Array.from({ length: 250 }, (_, incidentIndex) => ({
+      id: `incident-${incidentIndex + 100}`,
+      label: `Incident ${incidentIndex + 100}`,
+      type: "incident",
+      status: incidentIndex % 2 === 0 ? "active" : "pending",
+      location: ["Guadalupe", "Talamban", "Lahug", "Mabolo"][incidentIndex % 4],
+      createdAt: `2026-03-${String((incidentIndex % 28) + 1).padStart(2, "0")} 08:${String(incidentIndex % 60).padStart(2, "0")}`,
+      children: Array.from({ length: 6 }, (_, teamIndex) => ({
+        id: `incident-${incidentIndex + 100}-team-${teamIndex + 1}`,
+        label: `Team ${String.fromCharCode(65 + (teamIndex % 6))}`,
+        type: "assignment",
+        status: ["requested", "accepted", "on_scene"][teamIndex % 3],
+        location: `Sector ${teamIndex + 1}`,
+        createdAt: `2026-03-${String((incidentIndex % 28) + 1).padStart(2, "0")} 09:${String((incidentIndex + teamIndex) % 60).padStart(2, "0")}`,
+        children: Array.from({ length: 2 }, (_, resourceIndex) => ({
+          id: `incident-${incidentIndex + 100}-team-${teamIndex + 1}-resource-${resourceIndex + 1}`,
+          label: resourceIndex === 0 ? "Medical Kit" : "Traffic Cone",
+          type: "resource",
+          status: "allocated",
+          location: `Vehicle ${String.fromCharCode(65 + resourceIndex)}`,
+          createdAt: `2026-03-${String((incidentIndex % 28) + 1).padStart(2, "0")} 09:${String((incidentIndex + teamIndex + resourceIndex + 10) % 60).padStart(2, "0")}`,
+        })),
+      })),
+    }));
+
     const treeGrid = createTreeGrid(document.getElementById("treeGridHost"), {
       rows,
       defaultExpanded: true,
@@ -217,6 +256,35 @@
       },
     });
 
+    const treeGridLarge = createTreeGrid(document.getElementById("treeGridHostLarge"), {
+      rows: largeRows,
+      defaultExpanded: false,
+      enableColumnResize: true,
+      enableVirtualization: true,
+      virtualRowHeight: 40,
+      virtualOverscan: 10,
+      virtualThreshold: 100,
+      selectable: "none",
+      columns: [
+        {
+          key: "label",
+          label: "Name",
+          tree: true,
+          width: "320px",
+        },
+        { key: "status", label: "Status", width: "140px" },
+        { key: "location", label: "Location", width: "220px" },
+        { key: "createdAt", label: "Created", width: "180px" },
+      ],
+      onToggle(payload) {
+        writeLog("treeGridLarge.toggle", {
+          rowId: payload.rowId,
+          expanded: payload.expanded,
+          depth: payload.depth,
+        });
+      },
+    });
+
     document.getElementById("expandAllBtn").addEventListener("click", () => {
       treeGrid.expandAll();
       writeLog("treeGrid.expandAll", {});
@@ -224,6 +292,14 @@
     document.getElementById("collapseAllBtn").addEventListener("click", () => {
       treeGrid.collapseAll();
       writeLog("treeGrid.collapseAll", {});
+    });
+    document.getElementById("expandAllLargeBtn").addEventListener("click", () => {
+      treeGridLarge.expandAll();
+      writeLog("treeGridLarge.expandAll", {});
+    });
+    document.getElementById("collapseAllLargeBtn").addEventListener("click", () => {
+      treeGridLarge.collapseAll();
+      writeLog("treeGridLarge.collapseAll", {});
     });
   </script>
 </body>

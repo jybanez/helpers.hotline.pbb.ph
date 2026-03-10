@@ -3,6 +3,7 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  chrome: true,
   columns: [],
   rows: [],
   rowKey: "id",
@@ -13,6 +14,12 @@ const DEFAULT_OPTIONS = {
   selectedRowIds: [],
   wrapCellContent: false,
   enableColumnResize: false,
+  lazyLoadChildren: null,
+  onLoadChildren: null,
+  enableVirtualization: false,
+  virtualRowHeight: 40,
+  virtualOverscan: 8,
+  virtualThreshold: 120,
   minColumnWidth: 72,
   columnWidths: {},
   emptyText: "No data available.",
@@ -36,11 +43,23 @@ export function createTreeGrid(container, options = {}) {
   let focusedRowId = null;
   let resizeCleanup = null;
   let isResizing = false;
+  let renderFrame = null;
   let tableColMap = new Map();
   let visibleRows = [];
   let expandedRowIds = initializeExpandedState();
   let selectedRowIds = new Set((currentOptions.selectedRowIds || []).map(String));
   let columnWidths = normalizeColumnWidths(currentOptions.columnWidths);
+  let virtualState = {
+    enabled: false,
+    rows: [],
+    totalRows: 0,
+    rowHeight: 40,
+    overscan: 8,
+    start: 0,
+    end: 0,
+    lastRenderedStart: -1,
+    lastRenderedEnd: -1,
+  };
 
   function getRowId(row) {
     if (typeof currentOptions.getRowId === "function") {
@@ -58,7 +77,15 @@ export function createTreeGrid(container, options = {}) {
   }
 
   function hasChildrenRow(row) {
-    return getChildren(row).length > 0;
+    return getChildren(row).length > 0 || Boolean(row?.hasChildren);
+  }
+
+  function shouldLoadChildren(row) {
+    return Boolean(currentOptions.lazyLoadChildren)
+      && Boolean(row?.hasChildren)
+      && !Array.isArray(row?.children)
+      && !row?._loaded
+      && !row?._loading;
   }
 
   function walkTree(rows, visitor, depth = 0, parentId = null) {
@@ -137,7 +164,7 @@ export function createTreeGrid(container, options = {}) {
     clearNode(container);
 
     root = createElement("section", {
-      className: `ui-tree-grid ${currentOptions.className || ""}`.trim(),
+      className: `ui-tree-grid${currentOptions.chrome ? "" : " is-chrome-less"} ${currentOptions.className || ""}`.trim(),
       attrs: {
         role: "treegrid",
         "aria-label": currentOptions.ariaLabel,
@@ -195,6 +222,18 @@ export function createTreeGrid(container, options = {}) {
     tableWrap.appendChild(table);
     root.appendChild(tableWrap);
     container.appendChild(root);
+    events.on(tableWrap, "scroll", () => {
+      if (!virtualState.enabled) {
+        return;
+      }
+      if (renderFrame != null) {
+        cancelAnimationFrame(renderFrame);
+      }
+      renderFrame = requestAnimationFrame(() => {
+        renderFrame = null;
+        renderVirtualRows();
+      });
+    });
     syncTableWidth();
     renderRows();
   }
@@ -208,6 +247,9 @@ export function createTreeGrid(container, options = {}) {
     visibleRows = flattenRows(currentRows, expandedRowIds);
 
     if (!visibleRows.length) {
+      virtualState.enabled = false;
+      virtualState.lastRenderedStart = -1;
+      virtualState.lastRenderedEnd = -1;
       const tr = createElement("tr", { className: "ui-tree-grid-state-row" });
       const td = createElement("td", {
         className: "ui-tree-grid-state-cell",
@@ -223,7 +265,26 @@ export function createTreeGrid(container, options = {}) {
       focusedRowId = visibleRows[0]?.id ?? null;
     }
 
-    visibleRows.forEach((entry, index) => {
+    if (shouldVirtualize(visibleRows.length)) {
+      virtualState.enabled = true;
+      virtualState.rows = visibleRows;
+      virtualState.totalRows = visibleRows.length;
+      virtualState.rowHeight = Math.max(24, Number(currentOptions.virtualRowHeight) || 40);
+      virtualState.overscan = Math.max(0, Number(currentOptions.virtualOverscan) || 8);
+      virtualState.lastRenderedStart = -1;
+      virtualState.lastRenderedEnd = -1;
+      renderVirtualRows();
+      return;
+    }
+
+    virtualState.enabled = false;
+    virtualState.lastRenderedStart = -1;
+    virtualState.lastRenderedEnd = -1;
+    appendVisibleRows(visibleRows, 0);
+  }
+
+  function appendVisibleRows(entries, offset = 0) {
+    entries.forEach((entry, index) => {
       const tr = createElement("tr", {
         className: [
           "ui-tree-grid-row",
@@ -247,7 +308,7 @@ export function createTreeGrid(container, options = {}) {
         handleRowActivation(entry, event);
       });
       rowEvents.on(tr, "keydown", (event) => {
-        handleRowKeydown(entry, index, event);
+        handleRowKeydown(entry, offset + index, event);
       });
       rowEvents.on(tr, "focus", () => {
         focusedRowId = entry.id;
@@ -275,6 +336,51 @@ export function createTreeGrid(container, options = {}) {
     });
   }
 
+  function shouldVirtualize(rowCount) {
+    if (!currentOptions.enableVirtualization) {
+      return false;
+    }
+    const threshold = Math.max(1, Number(currentOptions.virtualThreshold) || 120);
+    return rowCount >= threshold;
+  }
+
+  function renderVirtualRows() {
+    if (!tbody || !tableWrap || !virtualState.enabled) {
+      return;
+    }
+    const totalRows = virtualState.totalRows;
+    const rowHeight = virtualState.rowHeight;
+    const overscan = virtualState.overscan;
+    const viewportHeight = Math.max(1, tableWrap.clientHeight || 1);
+    const visibleCount = Math.max(1, Math.ceil(viewportHeight / rowHeight));
+    const scrollTop = Math.max(0, tableWrap.scrollTop || 0);
+    const firstVisible = Math.max(0, Math.floor(scrollTop / rowHeight));
+    const start = Math.max(0, firstVisible - overscan);
+    const end = Math.min(totalRows, firstVisible + visibleCount + overscan);
+
+    if (virtualState.lastRenderedStart === start && virtualState.lastRenderedEnd === end) {
+      return;
+    }
+
+    virtualState.start = start;
+    virtualState.end = end;
+    virtualState.lastRenderedStart = start;
+    virtualState.lastRenderedEnd = end;
+
+    clearNode(tbody);
+    rowEvents.clear();
+
+    const topPad = start * rowHeight;
+    const bottomPad = Math.max(0, (totalRows - end) * rowHeight);
+    if (topPad > 0) {
+      tbody.appendChild(buildSpacerRow(topPad));
+    }
+    appendVisibleRows(virtualState.rows.slice(start, end), start);
+    if (bottomPad > 0) {
+      tbody.appendChild(buildSpacerRow(bottomPad));
+    }
+  }
+
   function renderTreeCell(column, entry) {
     const wrap = createElement("div", {
       className: "ui-tree-grid-tree-cell",
@@ -295,10 +401,10 @@ export function createTreeGrid(container, options = {}) {
         },
         html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
       });
-      rowEvents.on(toggle, "click", (event) => {
+      rowEvents.on(toggle, "click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
-        toggleRow(entry.id);
+        await toggleRow(entry.id);
       });
       wrap.appendChild(toggle);
     } else {
@@ -355,7 +461,7 @@ export function createTreeGrid(container, options = {}) {
     renderRows();
   }
 
-  function handleRowKeydown(entry, index, event) {
+  async function handleRowKeydown(entry, index, event) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       focusRowAt(index + 1);
@@ -378,7 +484,7 @@ export function createTreeGrid(container, options = {}) {
     }
     if (event.key === "ArrowRight" && entry.hasChildren && !entry.expanded) {
       event.preventDefault();
-      setExpanded(entry.id, true);
+      await setExpanded(entry.id, true);
       return;
     }
     if (event.key === "ArrowLeft" && entry.hasChildren && entry.expanded) {
@@ -388,7 +494,7 @@ export function createTreeGrid(container, options = {}) {
     }
     if ((event.key === "Enter" || event.key === " ") && entry.hasChildren) {
       event.preventDefault();
-      toggleRow(entry.id);
+      await toggleRow(entry.id);
       return;
     }
   }
@@ -442,11 +548,44 @@ export function createTreeGrid(container, options = {}) {
     return currentOptions.selectable === "single" || currentOptions.selectable === "multi";
   }
 
-  function setExpanded(rowId, expanded, emit = true) {
+  async function loadChildrenRow(rowId, force = false) {
+    const key = String(rowId || "");
+    const entry = findRowEntryLocal(currentRows, key);
+    if (!entry || typeof currentOptions.lazyLoadChildren !== "function") {
+      return [];
+    }
+    const row = entry.row;
+    if (!force && !shouldLoadChildren(row)) {
+      return Array.isArray(row.children) ? row.children : [];
+    }
+    row._loading = true;
+    row._loadError = null;
+    renderRows();
+    try {
+      const loaded = await currentOptions.lazyLoadChildren(row, api.getState());
+      row.children = normalizeRows(Array.isArray(loaded) ? loaded : []);
+      row._loaded = true;
+      row._loading = false;
+      row._loadError = null;
+      currentOptions.onLoadChildren?.(row, row.children, api.getState());
+      return row.children;
+    } catch (error) {
+      row._loading = false;
+      row._loadError = error;
+      return [];
+    } finally {
+      renderRows();
+    }
+  }
+
+  async function setExpanded(rowId, expanded, emit = true) {
     const key = String(rowId || "");
     const entry = findRowEntryLocal(currentRows, key);
     if (!entry || !hasChildrenRow(entry.row)) {
       return false;
+    }
+    if (expanded && shouldLoadChildren(entry.row)) {
+      await loadChildrenRow(key, false);
     }
     if (expanded) {
       expandedRowIds.add(key);
@@ -465,7 +604,7 @@ export function createTreeGrid(container, options = {}) {
     return true;
   }
 
-  function toggleRow(rowId) {
+  async function toggleRow(rowId) {
     const key = String(rowId || "");
     const next = !expandedRowIds.has(key);
     return setExpanded(key, next, true);
@@ -579,6 +718,10 @@ export function createTreeGrid(container, options = {}) {
   }
 
   function destroy() {
+    if (renderFrame != null) {
+      cancelAnimationFrame(renderFrame);
+      renderFrame = null;
+    }
     if (resizeCleanup) {
       resizeCleanup();
     }
@@ -596,6 +739,15 @@ export function createTreeGrid(container, options = {}) {
     getVisibleRows,
     getExpandedRowIds,
     setExpanded,
+    loadChildren: loadChildrenRow,
+    async refreshChildren(rowId) {
+      const entry = findRowEntryLocal(currentRows, String(rowId || ""));
+      if (!entry) {
+        return [];
+      }
+      entry.row._loaded = false;
+      return loadChildrenRow(rowId, true);
+    },
     toggleRow,
     expandAll,
     collapseAll,
@@ -617,8 +769,20 @@ export function createTreeGrid(container, options = {}) {
   return api;
 }
 
+function buildSpacerRow(height) {
+  const tr = createElement("tr", { className: "ui-tree-grid-row-spacer", attrs: { "aria-hidden": "true" } });
+  const td = createElement("td", { className: "ui-tree-grid-cell-spacer", attrs: { colspan: "999" } });
+  const fill = createElement("span", {
+    className: "ui-tree-grid-spacer-fill",
+    attrs: { style: `height:${Math.max(0, Math.round(height))}px;` },
+  });
+  td.appendChild(fill);
+  tr.appendChild(td);
+  return tr;
+}
+
 function normalizeRows(rows) {
-  return Array.isArray(rows) ? rows : [];
+  return Array.isArray(rows) ? rows.map(normalizeTreeGridRow).filter(Boolean) : [];
 }
 
 function normalizeOptions(options) {
@@ -631,6 +795,7 @@ function normalizeOptions(options) {
   next.expandedRowIds = Array.isArray(next.expandedRowIds) ? next.expandedRowIds : [];
   next.selectedRowIds = Array.isArray(next.selectedRowIds) ? next.selectedRowIds : [];
   next.columnWidths = normalizeColumnWidths(next.columnWidths);
+  next.chrome = next.chrome !== false;
   const treeColumns = next.columns.filter((column) => Boolean(column?.tree));
   if (treeColumns.length > 1) {
     console.error("createTreeGrid: only one column may declare tree: true. Using the first declared tree column.");
@@ -643,6 +808,21 @@ function normalizeOptions(options) {
 
 function normalizeColumnWidths(widths) {
   return widths && typeof widths === "object" ? { ...widths } : {};
+}
+
+function normalizeTreeGridRow(row) {
+  if (!row || typeof row !== "object") {
+    return null;
+  }
+  const normalized = { ...row };
+  normalized.hasChildren = Object.prototype.hasOwnProperty.call(row, "hasChildren")
+    ? Boolean(row.hasChildren)
+    : Array.isArray(row.children) && row.children.length > 0;
+  normalized.children = Array.isArray(row.children) ? normalizeRows(row.children) : row.children;
+  normalized._loaded = Array.isArray(normalized.children) ? normalized.children.length > 0 : Boolean(row._loaded);
+  normalized._loading = Boolean(row._loading);
+  normalized._loadError = row._loadError || null;
+  return normalized;
 }
 
 function resolveColumnWidth(column, widths) {

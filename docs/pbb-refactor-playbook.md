@@ -213,6 +213,8 @@ If changing callback signatures or removing methods, plan a major version.
   - grouped loading support
   - failure diagnostics for CSS/module loading
   - support for both `ui.*` and `incident.*` component namespaces
+- Wrapper-style components may expose `chrome: false` to disable library-owned border/background/padding without changing behavior.
+- Tree-style components may expose lazy child loading via `lazyLoadChildren(...)` plus explicit `loadChildren(...)` / `refreshChildren(...)` instance methods; treat these as part of the component contract once used by apps.
 - Demo pages should prefer `uiLoader` as well, so working demos remain the reference implementation for project integrations.
 - Registry changes should ship with a contract test update in `tests/registry.contract.mjs`.
 

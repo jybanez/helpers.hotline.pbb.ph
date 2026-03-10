@@ -195,7 +195,7 @@ Reusable shared UI utilities live under `js/ui`:
 - `ui.command.palette.js`
   - `createCommandPalette(options)` global command launcher with keyboard shortcut, search, and action execution
 - `ui.tree.js`
-  - `createTree(container, data, options)` expandable/selectable tree view with optional checkboxes
+  - `createTree(container, data, options)` expandable/selectable tree view with optional checkboxes, lazy child loading, and optional chrome-less rendering
 - `ui.kanban.js`
   - `createKanban(container, lanes, options)` lane-based board with draggable cards and move callbacks
 - `ui.stepper.js`
@@ -218,9 +218,9 @@ Reusable shared UI utilities live under `js/ui`:
   - `createMediaStrip(container, items, options)` media thumbnails strip (image/video) with modal viewer/player + in-modal prev/next navigation
   - options include `layout: "scroll" | "wrap"` and `animationMs` (default `300`)
 - `ui.grid.js`
-  - `createGrid(container, rows, options)` data grid/table with local/remote modes, optional sort/search/pagination, and optional row virtualization
+  - `createGrid(container, rows, options)` data grid/table with local/remote modes, optional sort/search/pagination, optional row virtualization, and optional chrome-less rendering
 - `ui.tree.grid.js`
-  - `createTreeGrid(container, options)` tree grid with first-column hierarchy, aligned tabular columns, expand/collapse controls, and column resize
+  - `createTreeGrid(container, options)` tree grid with first-column hierarchy, aligned tabular columns, expand/collapse controls, column resize, optional fixed-row-height virtualization, lazy child loading, and optional chrome-less rendering
 - `ui.progress.js`
   - `createProgress(container, data, options)` progress indicator with multiple styles (linear, segmented, steps, radial, ring, etc.)
 - `ui.virtual.list.js`
@@ -1903,7 +1903,7 @@ Recommended integration flow:
 
 ### Current Stable Line: `v0.16.x`
 
-- Latest documented release: `v0.16.4`
+- Latest documented release: `v0.16.6`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`
@@ -2252,3 +2252,23 @@ Recommended integration flow:
 - Added dedicated demo page:
   - `demo.tree.grid.html`
 - Linked tree grid demo from `index.html`
+
+### v0.16.5
+
+- Added optional fixed-row-height virtualization to `ui.tree.grid`
+  - virtualization operates on the flattened visible rows after expand/collapse state is applied
+  - intended for large hierarchical datasets with stable row heights
+- Updated `demo.tree.grid.html` with a large virtualized tree-grid section
+
+### v0.16.6
+
+- Added `chrome: false` presentation support for wrapper-style data components:
+  - `ui.grid`
+  - `ui.tree`
+  - `ui.tree.grid`
+- Added explicit lazy child loading APIs:
+  - `ui.tree.loadChildren(nodeId)`
+  - `ui.tree.refreshChildren(nodeId)`
+  - `ui.tree.grid.loadChildren(rowId)`
+  - `ui.tree.grid.refreshChildren(rowId)`
+- Added lazy child loading support to `ui.tree.grid` using the same `lazyLoadChildren(row, state)` / `onLoadChildren(...)` pattern used by `ui.tree`

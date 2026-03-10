@@ -3,6 +3,7 @@ import { createEventBag } from "./ui.events.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  chrome: true,
   expandAll: false,
   selectable: true,
   checkable: false,
@@ -45,7 +46,7 @@ export function createTree(container, data = [], options = {}) {
     clearNode(container);
 
     root = createElement("div", {
-      className: `ui-tree ${currentOptions.className || ""}`.trim(),
+      className: `ui-tree${currentOptions.chrome ? "" : " is-chrome-less"} ${currentOptions.className || ""}`.trim(),
       attrs: { role: "tree" },
     });
 
@@ -198,17 +199,33 @@ export function createTree(container, data = [], options = {}) {
     expanded.add(node.id);
     currentOptions.onToggle?.(node, true);
 
-    const shouldLoad = Boolean(currentOptions.lazyLoadChildren)
-      && node.hasChildren
-      && !node._loaded
-      && !node._loading;
+    const shouldLoad = shouldLoadChildren(node);
 
     if (!shouldLoad) {
       render();
       return;
     }
 
+    await loadChildrenNode(node, false);
+    render();
+  }
+
+  function shouldLoadChildren(node) {
+    return Boolean(currentOptions.lazyLoadChildren)
+      && node.hasChildren
+      && !node._loaded
+      && !node._loading;
+  }
+
+  async function loadChildrenNode(node, force = false) {
+    if (!node || typeof node !== "object") {
+      return [];
+    }
+    if (!force && !shouldLoadChildren(node)) {
+      return node.children || [];
+    }
     node._loading = true;
+    node._loadError = null;
     render();
     try {
       const loaded = await currentOptions.lazyLoadChildren(node, getState());
@@ -216,11 +233,16 @@ export function createTree(container, data = [], options = {}) {
       node.children = normalized;
       node._loaded = true;
       node._loading = false;
+      node._loadError = null;
       currentOptions.onLoadChildren?.(node, normalized, getState());
-    } catch (_error) {
+      return normalized;
+    } catch (error) {
       node._loading = false;
+      node._loadError = error;
+      return [];
+    } finally {
+      render();
     }
-    render();
   }
 
   function update(nextData = treeData, nextOptions = {}) {
@@ -264,6 +286,21 @@ export function createTree(container, data = [], options = {}) {
 
   return {
     update,
+    async loadChildren(nodeId) {
+      const node = findNodeById(treeData, nodeId);
+      if (!node) {
+        return [];
+      }
+      return loadChildrenNode(node, false);
+    },
+    async refreshChildren(nodeId) {
+      const node = findNodeById(treeData, nodeId);
+      if (!node) {
+        return [];
+      }
+      node._loaded = false;
+      return loadChildrenNode(node, true);
+    },
     expandAll() {
       expandAll(treeData, expanded);
       render();
@@ -283,6 +320,7 @@ export function createTree(container, data = [], options = {}) {
 
 function normalizeOptions(options) {
   const next = { ...DEFAULT_OPTIONS, ...(options || {}) };
+  next.chrome = next.chrome !== false;
   next.expandAll = Boolean(next.expandAll);
   next.selectable = Boolean(next.selectable);
   next.checkable = Boolean(next.checkable);
@@ -320,6 +358,7 @@ function normalizeNode(node, fallbackId) {
     children,
     _loaded: children.length > 0,
     _loading: false,
+    _loadError: null,
   };
 }
 
@@ -355,6 +394,22 @@ function hasNodeId(nodes, id) {
   return false;
 }
 
+function findNodeById(nodes, id) {
+  for (let i = 0; i < nodes.length; i += 1) {
+    const node = nodes[i];
+    if (node.id === String(id)) {
+      return node;
+    }
+    if (node.children.length) {
+      const found = findNodeById(node.children, id);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+}
+
 function cloneNode(node) {
   return {
     id: node.id,
@@ -363,4 +418,3 @@ function cloneNode(node) {
     children: node.children.map(cloneNode),
   };
 }
-
