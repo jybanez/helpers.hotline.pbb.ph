@@ -245,6 +245,9 @@ If changing callback signatures or removing methods, plan a major version.
 
 - `createModal(options)` is now the base shell for overlay/dialog rendering.
 - `ui.dialog` helpers (`uiAlert`, `uiConfirm`, `uiPrompt`) are expected to compose over `ui.modal`, not duplicate modal/backdrop/focus logic.
+- `createModal(...)` may expose header-level actions through `headerActions`; keep these as a slot-level contract, not a second footer-action API.
+- `createActionModal(...)` may expose declarative `headerActions[]`; keep the header/footer action object contract identical when extending that helper.
+- If action buttons support icons, preserve the shared icon contract (`icon`, `iconPosition`, `iconOnly`, `ariaLabel`) across both header and footer actions.
 - Required behaviors to preserve:
   - escape/backdrop close controls
   - focus trap and focus restore

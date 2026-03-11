@@ -1221,6 +1221,7 @@ Key options:
 
 - `title`
 - `content` (`string | HTMLElement | () => HTMLElement`)
+- `headerActions` (`string | HTMLElement | HTMLElement[] | () => HTMLElement`)
 - `footer` (`string | HTMLElement | () => HTMLElement`)
 - `size`: `"sm" | "md" | "lg" | "xl" | "full"`
 - `position`: `"center" | "top"`
@@ -1237,6 +1238,7 @@ Methods:
 - `close(meta?)`
 - `update(nextOptions?)`
 - `setContent(content)`
+- `setHeaderActions(headerActions)`
 - `setFooter(footer)`
 - `setTitle(title)`
 - `destroy()`
@@ -1251,6 +1253,9 @@ const modal = createModal({
   title: "Reusable Modal",
   size: "md",
   content: "Hello from modal body",
+  headerActions: [
+    Object.assign(document.createElement("button"), { className: "ui-button ui-button-ghost", type: "button", textContent: "Refresh" }),
+  ],
 });
 
 modal.open();
@@ -1267,10 +1272,15 @@ Purpose:
 Key options:
 
 - all `createModal(...)` options
+- `headerActions`: array of button actions using the same action object contract as footer `actions`
 - `actions`: array of button actions
   - `id`
   - `label` (required)
   - `variant`: `"default" | "primary" | "danger" | "ghost"`
+  - `icon`: SVG/HTML string
+  - `iconPosition`: `"start" | "end"`
+  - `iconOnly`
+  - `ariaLabel` (recommended when `iconOnly: true`)
   - `closeOnClick` (default `true`)
   - `disabled`
   - `autoFocus`
@@ -1279,6 +1289,7 @@ Key options:
 Methods:
 
 - all `createModal(...)` methods
+- `setHeaderActions(actions[])`
 - `setActions(actions[])`
 
 Example:
@@ -1289,12 +1300,23 @@ import { createActionModal } from "./js/ui/ui.modal.js";
 const modal = createActionModal({
   title: "Delete Record",
   content: "This action cannot be undone.",
+  headerActions: [
+    {
+      id: "preview",
+      label: "Preview",
+      variant: "ghost",
+      onClick() {
+        return false;
+      },
+    },
+  ],
   actions: [
     { id: "cancel", label: "Cancel", variant: "ghost" },
     {
       id: "delete",
       label: "Delete",
       variant: "danger",
+      icon: "<svg viewBox='0 0 24 24'><path d='M9 3h6l1 2h4v2H4V5h4l1-2Zm1 7h2v8h-2v-8Zm4 0h2v8h-2v-8ZM7 10h2v8H7v-8Z'/></svg>",
       autoFocus: true,
       async onClick() {
         await apiDeleteRecord();
@@ -2017,7 +2039,7 @@ Recommended integration flow:
 
 ### Current Stable Line: `v0.18.x`
 
-- Latest documented release: `v0.18.2`
+- Latest documented release: `v0.18.5`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`
@@ -2030,6 +2052,28 @@ Recommended integration flow:
 - Performance refinements for heavy demo pages (timeline/grid/audio)
 
 ## Release Notes
+
+### v0.18.5
+
+- Added action-button icon support for `createActionModal(...)` header and footer actions:
+  - `icon`
+  - `iconPosition`
+  - `iconOnly`
+  - `ariaLabel`
+- Updated `demo.ui.html` action-modal example to show icon and icon-only actions
+
+### v0.18.4
+
+- Added declarative `headerActions[]` support to `createActionModal(...)`
+- Added `setHeaderActions(actions[])` to the action-modal helper
+- Header and footer action objects now use the same contract in `createActionModal(...)`
+- Updated `demo.ui.html` action-modal example to show declarative header actions
+
+### v0.18.3
+
+- Added `headerActions` slot support to `createModal(...)`
+- Added `setHeaderActions(...)` modal instance method
+- Updated `demo.ui.html` modal example to show header actions in use
 
 ### v0.18.1
 

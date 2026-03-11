@@ -6,6 +6,7 @@ const DEFAULT_OPTIONS = {
   title: "",
   ariaLabel: "Modal dialog",
   content: null,
+  headerActions: null,
   footer: null,
   showHeader: true,
   showCloseButton: true,
@@ -54,6 +55,7 @@ export function createModal(options = {}) {
   });
   const header = createElement("header", { className: "ui-modal-header" });
   const titleEl = createElement("h3", { className: "ui-title ui-modal-title" });
+  const headerActions = createElement("div", { className: "ui-modal-header-actions" });
   const closeButton = createElement("button", {
     className: "ui-button ui-modal-close",
     attrs: { type: "button", "aria-label": "Close modal", title: "Close" },
@@ -62,7 +64,7 @@ export function createModal(options = {}) {
   const body = createElement("div", { className: "ui-modal-body" });
   const footer = createElement("footer", { className: "ui-modal-footer" });
 
-  header.append(titleEl, closeButton);
+  header.append(titleEl, headerActions, closeButton);
   panel.append(header, body, footer);
   root.append(backdrop, panel);
 
@@ -99,10 +101,12 @@ export function createModal(options = {}) {
     const titleText = currentOptions.title == null ? "" : String(currentOptions.title);
     titleEl.textContent = titleText;
     titleEl.id = titleId;
+    setSlot(headerActions, currentOptions.headerActions);
+    headerActions.hidden = !headerActions.childNodes.length;
 
     header.hidden = !showHeader;
     closeButton.hidden = !showHeader || !showCloseButton;
-    header.classList.toggle("is-empty", !titleText && (!showCloseButton || closeButton.hidden));
+    header.classList.toggle("is-empty", !titleText && headerActions.hidden && (!showCloseButton || closeButton.hidden));
     if (titleText) {
       panel.setAttribute("aria-labelledby", titleId);
       panel.removeAttribute("aria-label");
@@ -314,7 +318,7 @@ export function createModal(options = {}) {
       root.classList.add("is-open");
       focusInitial();
     });
-    currentOptions.onOpen?.({ panel, body, footer, header, closeButton });
+    currentOptions.onOpen?.({ panel, body, footer, header, headerActions, closeButton });
     return true;
   }
 
@@ -400,6 +404,9 @@ export function createModal(options = {}) {
     setFooter(nextFooter) {
       update({ footer: nextFooter });
     },
+    setHeaderActions(nextHeaderActions) {
+      update({ headerActions: nextHeaderActions });
+    },
     setTitle(nextTitle) {
       update({ title: nextTitle });
     },
@@ -410,6 +417,7 @@ export function createModal(options = {}) {
       backdrop,
       panel,
       header,
+      headerActions,
       title: titleEl,
       body,
       footer,
@@ -422,40 +430,67 @@ export function createActionModal(options = {}) {
   const actionOptions = normalizeActionModalOptions(options);
   let modal = null;
 
+  function buildActionNodes(actions, placement) {
+    if (!actions.length) {
+      return null;
+    }
+    return actions.map((action) => createActionButton(action, placement));
+  }
+
+  function createActionButton(action, placement) {
+    const button = createElement("button", {
+      className: getActionButtonClass(action),
+      attrs: {
+        type: "button",
+        "aria-label": action.iconOnly ? action.ariaLabel || action.label : null,
+        title: action.iconOnly ? action.ariaLabel || action.label : null,
+        ...(action.disabled ? { disabled: "disabled" } : {}),
+      },
+    });
+    const content = createElement("span", {
+      className: `ui-action-modal-button-content${action.iconPosition === "end" ? " is-end" : ""}`,
+    });
+    if (action.icon) {
+      content.appendChild(createElement("span", {
+        className: "ui-action-modal-button-icon",
+        html: String(action.icon),
+      }));
+    }
+    if (!action.iconOnly || !action.icon) {
+      content.appendChild(createElement("span", {
+        className: "ui-action-modal-button-label",
+        text: action.label,
+      }));
+    }
+    button.appendChild(content);
+    if (action.autoFocus) {
+      button.setAttribute("data-action-autofocus", "true");
+    }
+    button.addEventListener("click", async (event) => {
+      const context = { action, modal, event, placement };
+      let result;
+      if (typeof action.onClick === "function") {
+        result = await action.onClick(context);
+      }
+      if (action.closeOnClick !== false && result !== false) {
+        await modal?.close({
+          reason: "action",
+          placement,
+          actionId: action.id,
+          actionLabel: action.label,
+          result,
+        });
+      }
+    });
+    return button;
+  }
+
   function buildFooter(actions) {
     if (!actions.length) {
       return null;
     }
     const footer = createElement("div", { className: "ui-dialog-footer-actions" });
-    actions.forEach((action) => {
-      const button = createElement("button", {
-        className: getActionButtonClass(action),
-        text: action.label,
-        attrs: {
-          type: "button",
-          ...(action.disabled ? { disabled: "disabled" } : {}),
-        },
-      });
-      if (action.autoFocus) {
-        button.setAttribute("data-action-autofocus", "true");
-      }
-      button.addEventListener("click", async (event) => {
-        const context = { action, modal, event };
-        let result;
-        if (typeof action.onClick === "function") {
-          result = await action.onClick(context);
-        }
-        if (action.closeOnClick !== false && result !== false) {
-          await modal?.close({
-            reason: "action",
-            actionId: action.id,
-            actionLabel: action.label,
-            result,
-          });
-        }
-      });
-      footer.appendChild(button);
-    });
+    buildActionNodes(actions, "footer").forEach((node) => footer.appendChild(node));
     return footer;
   }
 
@@ -469,6 +504,7 @@ export function createActionModal(options = {}) {
   modal = createModal({
     ...actionOptions,
     initialFocus: getInitialFocus(),
+    headerActions: buildActionNodes(actionOptions.headerActions, "header"),
     footer: buildFooter(actionOptions.actions),
   });
 
@@ -479,12 +515,31 @@ export function createActionModal(options = {}) {
     return normalized;
   }
 
+  function setHeaderActions(nextHeaderActions = []) {
+    const normalized = normalizeActions(nextHeaderActions);
+    actionOptions.headerActions = normalized;
+    modal.setHeaderActions(buildActionNodes(normalized, "header"));
+    return normalized;
+  }
+
   const originalUpdate = modal.update;
   modal.update = (nextOptions = {}) => {
     if (nextOptions && Object.prototype.hasOwnProperty.call(nextOptions, "actions")) {
       setActions(nextOptions.actions);
+    }
+    if (nextOptions && Object.prototype.hasOwnProperty.call(nextOptions, "headerActions")) {
+      setHeaderActions(nextOptions.headerActions);
+    }
+    if (
+      nextOptions
+      && (
+        Object.prototype.hasOwnProperty.call(nextOptions, "actions")
+        || Object.prototype.hasOwnProperty.call(nextOptions, "headerActions")
+      )
+    ) {
       const copy = { ...(nextOptions || {}) };
       delete copy.actions;
+      delete copy.headerActions;
       originalUpdate(copy);
       return;
     }
@@ -494,6 +549,7 @@ export function createActionModal(options = {}) {
   return {
     ...modal,
     setActions,
+    setHeaderActions,
   };
 }
 
@@ -513,6 +569,7 @@ function normalizePosition(position) {
 function normalizeActionModalOptions(options = {}) {
   const next = { ...(options || {}) };
   next.actions = normalizeActions(options.actions);
+  next.headerActions = normalizeActions(options.headerActions);
   return next;
 }
 
@@ -534,6 +591,10 @@ function normalizeActions(actions) {
         label,
         variant: normalizeActionVariant(action.variant),
         className: String(action.className || "").trim(),
+        icon: action.icon ? String(action.icon) : "",
+        iconPosition: String(action.iconPosition || "start").toLowerCase() === "end" ? "end" : "start",
+        iconOnly: Boolean(action.iconOnly),
+        ariaLabel: String(action.ariaLabel || "").trim(),
         onClick: typeof action.onClick === "function" ? action.onClick : null,
         closeOnClick: action.closeOnClick !== false,
         disabled: Boolean(action.disabled),
@@ -559,6 +620,9 @@ function getActionButtonClass(action) {
     classes.push("ui-button-danger");
   } else if (action.variant === "ghost") {
     classes.push("ui-button-ghost");
+  }
+  if (action.iconOnly && action.icon) {
+    classes.push("is-icon-only");
   }
   if (action.className) {
     classes.push(action.className);

@@ -89,6 +89,62 @@
 
 .ui-modal-title {
   margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ui-modal-header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui-space-2, 8px);
+  flex: 0 1 auto;
+}
+
+.ui-modal-header-actions[hidden] {
+  display: none;
+}
+
+.ui-action-modal-button-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-action-modal-button-content.is-end {
+  flex-direction: row-reverse;
+}
+
+.ui-action-modal-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  line-height: 0;
+}
+
+.ui-action-modal-button-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.ui-action-modal-button-label {
+  min-width: 0;
+}
+
+.ui-action-modal-button.is-icon-only {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ui-modal-close {
