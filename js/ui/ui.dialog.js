@@ -14,6 +14,10 @@ export function uiAlert(message, options = {}) {
           id: "ok",
           label: options.okText || "OK",
           variant: "primary",
+          icon: options.okIcon || "",
+          iconPosition: options.okIconPosition || "start",
+          iconOnly: Boolean(options.okIconOnly),
+          ariaLabel: options.okAriaLabel || "",
           autoFocus: true,
           onClick() {
             if (settled) {
@@ -24,6 +28,7 @@ export function uiAlert(message, options = {}) {
           },
         },
       ],
+      headerActions: Array.isArray(options.headerActions) ? options.headerActions : [],
       size: options.size || "sm",
       closeOnBackdrop: Boolean(options.allowBackdropClose),
       closeOnEscape: options.allowEscClose !== false,
@@ -57,6 +62,10 @@ export function uiConfirm(message, options = {}) {
           id: "cancel",
           label: options.cancelText || "Cancel",
           variant: "default",
+          icon: options.cancelIcon || "",
+          iconPosition: options.cancelIconPosition || "start",
+          iconOnly: Boolean(options.cancelIconOnly),
+          ariaLabel: options.cancelAriaLabel || "",
           onClick() {
             if (settled) {
               return;
@@ -69,6 +78,10 @@ export function uiConfirm(message, options = {}) {
           id: "confirm",
           label: options.confirmText || "Confirm",
           variant: "primary",
+          icon: options.confirmIcon || "",
+          iconPosition: options.confirmIconPosition || "start",
+          iconOnly: Boolean(options.confirmIconOnly),
+          ariaLabel: options.confirmAriaLabel || "",
           autoFocus: true,
           onClick() {
             if (settled) {
@@ -79,6 +92,7 @@ export function uiConfirm(message, options = {}) {
           },
         },
       ],
+      headerActions: Array.isArray(options.headerActions) ? options.headerActions : [],
       size: options.size || "sm",
       closeOnBackdrop: Boolean(options.allowBackdropClose),
       closeOnEscape: options.allowEscClose !== false,
@@ -119,6 +133,10 @@ export function uiPrompt(message, options = {}) {
           id: "cancel",
           label: options.cancelText || "Cancel",
           variant: "default",
+          icon: options.cancelIcon || "",
+          iconPosition: options.cancelIconPosition || "start",
+          iconOnly: Boolean(options.cancelIconOnly),
+          ariaLabel: options.cancelAriaLabel || "",
           onClick() {
             if (settled) {
               return;
@@ -131,6 +149,10 @@ export function uiPrompt(message, options = {}) {
           id: "submit",
           label: options.submitText || "Submit",
           variant: "primary",
+          icon: options.submitIcon || "",
+          iconPosition: options.submitIconPosition || "start",
+          iconOnly: Boolean(options.submitIconOnly),
+          ariaLabel: options.submitAriaLabel || "",
           onClick() {
             if (settled) {
               return;
@@ -140,6 +162,7 @@ export function uiPrompt(message, options = {}) {
           },
         },
       ],
+      headerActions: Array.isArray(options.headerActions) ? options.headerActions : [],
       size: options.size || "sm",
       closeOnBackdrop: Boolean(options.allowBackdropClose),
       closeOnEscape: options.allowEscClose !== false,

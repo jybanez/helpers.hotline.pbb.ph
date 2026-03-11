@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Data Inspector Demo</title>
+  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
@@ -17,6 +18,7 @@
     import { uiLoader } from "./js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.data.inspector"]);
   </script>
+  <script type='module' src='./js/demo/demo.shell.js'></script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -88,3 +90,4 @@
   </script>
 </body>
 </html>
+

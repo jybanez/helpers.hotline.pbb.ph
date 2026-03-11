@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tree Grid Demo</title>
+  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -74,6 +75,7 @@
     import { uiLoader } from "./js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.tree.grid"]);
   </script>
+  <script type='module' src='./js/demo/demo.shell.js'></script>
 </head>
 <body>
   <main class="page" data-theme="dark">
@@ -88,6 +90,8 @@
 
     <section class="panel">
       <div class="row">
+        <input id="treeGridSearch" class="ui-input" type="search" placeholder="Search tree grid">
+        <button id="clearTreeGridSearchBtn" class="ui-button" type="button">Clear Search</button>
         <button id="expandAllBtn" class="ui-button" type="button">Expand All</button>
         <button id="collapseAllBtn" class="ui-button" type="button">Collapse All</button>
       </div>
@@ -108,6 +112,8 @@
       <h2 class="ui-title">Large Tree Grid (Virtualized)</h2>
       <p class="muted">Flattened visible rows are virtualized with fixed row height.</p>
       <div class="row">
+        <input id="treeGridLargeSearch" class="ui-input" type="search" placeholder="Search large tree grid">
+        <button id="clearTreeGridLargeSearchBtn" class="ui-button" type="button">Clear Search</button>
         <button id="expandAllLargeBtn" class="ui-button" type="button">Expand All</button>
         <button id="collapseAllLargeBtn" class="ui-button" type="button">Collapse All</button>
       </div>
@@ -398,9 +404,33 @@
       treeGrid.expandAll();
       writeLog("treeGrid.expandAll", {});
     });
+    document.getElementById("treeGridSearch").addEventListener("input", (event) => {
+      const term = event.target.value || "";
+      treeGrid.setSearchTerm(term);
+      writeLog("treeGrid.search", { term });
+    });
+    document.getElementById("clearTreeGridSearchBtn").addEventListener("click", () => {
+      const input = document.getElementById("treeGridSearch");
+      input.value = "";
+      treeGrid.setSearchTerm("");
+      writeLog("treeGrid.search.clear", {});
+      input.focus();
+    });
     document.getElementById("collapseAllBtn").addEventListener("click", () => {
       treeGrid.collapseAll();
       writeLog("treeGrid.collapseAll", {});
+    });
+    document.getElementById("treeGridLargeSearch").addEventListener("input", (event) => {
+      const term = event.target.value || "";
+      treeGridLarge.setSearchTerm(term);
+      writeLog("treeGridLarge.search", { term });
+    });
+    document.getElementById("clearTreeGridLargeSearchBtn").addEventListener("click", () => {
+      const input = document.getElementById("treeGridLargeSearch");
+      input.value = "";
+      treeGridLarge.setSearchTerm("");
+      writeLog("treeGridLarge.search.clear", {});
+      input.focus();
     });
     document.getElementById("expandAllLargeBtn").addEventListener("click", () => {
       treeGridLarge.expandAll();
@@ -424,3 +454,4 @@
   </script>
 </body>
 </html>
+

@@ -51,6 +51,26 @@
       border-color: #4a5f86;
       background: #101a2b;
     }
+    .docs {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .docs a {
+      display: block;
+      border: 1px solid #334563;
+      border-radius: 8px;
+      padding: 12px;
+      color: #d7e0f4;
+      text-decoration: none;
+      background: #0b1423;
+    }
+    .docs a:hover {
+      border-color: #4a5f86;
+      background: #101a2b;
+    }
   </style>
 </head>
 <body>
@@ -93,6 +113,16 @@
         <li><a href="./demo.empty.state.html">Empty State Demo</a></li>
         <li><a href="./demo.skeleton.html">Skeleton Demo</a></li>
         <li><a href="./demo.ui.html">UI Utilities Demo</a></li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Documentation</h2>
+      <p class="muted">Use these docs for contracts, release history, and integration guidance.</p>
+      <ul class="docs">
+        <li><a href="./README.md">README</a></li>
+        <li><a href="./CHANGELOG.md">Changelog</a></li>
+        <li><a href="./docs/pbb-refactor-playbook.md">PBB Refactor Playbook</a></li>
       </ul>
     </section>
   </main>

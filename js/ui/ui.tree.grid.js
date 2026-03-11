@@ -16,6 +16,11 @@ const DEFAULT_OPTIONS = {
   enableColumnResize: false,
   lazyLoadChildren: null,
   onLoadChildren: null,
+  searchTerm: "",
+  searchFields: [],
+  autoExpandMatches: true,
+  highlightMatches: true,
+  emptySearchText: "No matching results.",
   enableVirtualization: false,
   virtualRowHeight: 40,
   virtualOverscan: 8,
@@ -46,6 +51,12 @@ export function createTreeGrid(container, options = {}) {
   let renderFrame = null;
   let tableColMap = new Map();
   let visibleRows = [];
+  let searchSummary = {
+    active: false,
+    term: "",
+    matchCount: 0,
+    visibleCount: 0,
+  };
   let expandedRowIds = initializeExpandedState();
   let selectedRowIds = new Set((currentOptions.selectedRowIds || []).map(String));
   let columnWidths = normalizeColumnWidths(currentOptions.columnWidths);
@@ -116,6 +127,72 @@ export function createTreeGrid(container, options = {}) {
       });
       if (hasKids && expanded) {
         flattenRows(children, expandedIds, depth + 1, id, acc);
+      }
+    });
+    return acc;
+  }
+
+  function getSearchState() {
+    const term = String(currentOptions.searchTerm || "").trim().toLowerCase();
+    const fields = Array.isArray(currentOptions.searchFields) && currentOptions.searchFields.length
+      ? currentOptions.searchFields.map(String)
+      : currentOptions.columns.map((column) => String(column?.key || "")).filter(Boolean);
+    return {
+      active: Boolean(term),
+      term,
+      fields,
+      autoExpandMatches: currentOptions.autoExpandMatches !== false,
+      highlightMatches: currentOptions.highlightMatches !== false,
+    };
+  }
+
+  function collectSearchableText(row, searchState) {
+    const values = [];
+    searchState.fields.forEach((field) => {
+      const value = row?.[field];
+      if (value == null) {
+        return;
+      }
+      if (Array.isArray(value)) {
+        values.push(value.join(" "));
+        return;
+      }
+      if (typeof value === "object") {
+        return;
+      }
+      values.push(String(value));
+    });
+    return values.join(" ").toLowerCase();
+  }
+
+  function filterAndFlattenRows(rows, searchState, depth = 0, parentId = null, acc = []) {
+    rows.forEach((row) => {
+      const id = getRowId(row);
+      const children = getChildren(row);
+      const hasKids = hasChildrenRow(row);
+      const childEntries = [];
+      if (children.length) {
+        filterAndFlattenRows(children, searchState, depth + 1, id, childEntries);
+      }
+      const selfMatch = collectSearchableText(row, searchState).includes(searchState.term);
+      const include = selfMatch || childEntries.length > 0;
+      if (!include) {
+        return;
+      }
+      const expanded = hasKids && searchState.autoExpandMatches && childEntries.length > 0;
+      acc.push({
+        id,
+        row,
+        depth,
+        parentId,
+        hasChildren: hasKids,
+        expanded,
+        isLeaf: !hasKids,
+        selfMatch,
+        hasMatchedDescendant: childEntries.length > 0,
+      });
+      if (expanded) {
+        acc.push(...childEntries);
       }
     });
     return acc;
@@ -244,7 +321,18 @@ export function createTreeGrid(container, options = {}) {
     }
     rowEvents.clear();
     clearNode(tbody);
-    visibleRows = flattenRows(currentRows, expandedRowIds);
+    const searchState = getSearchState();
+    visibleRows = searchState.active
+      ? filterAndFlattenRows(currentRows, searchState)
+      : flattenRows(currentRows, expandedRowIds);
+    searchSummary = {
+      active: searchState.active,
+      term: searchState.term,
+      matchCount: searchState.active
+        ? visibleRows.filter((entry) => entry.selfMatch).length
+        : visibleRows.length,
+      visibleCount: visibleRows.length,
+    };
 
     if (!visibleRows.length) {
       virtualState.enabled = false;
@@ -253,7 +341,7 @@ export function createTreeGrid(container, options = {}) {
       const tr = createElement("tr", { className: "ui-tree-grid-state-row" });
       const td = createElement("td", {
         className: "ui-tree-grid-state-cell",
-        text: currentOptions.emptyText,
+        text: searchState.active ? currentOptions.emptySearchText : currentOptions.emptyText,
         attrs: { colspan: String(Math.max(1, currentOptions.columns.length)) },
       });
       tr.appendChild(td);
@@ -273,17 +361,17 @@ export function createTreeGrid(container, options = {}) {
       virtualState.overscan = Math.max(0, Number(currentOptions.virtualOverscan) || 8);
       virtualState.lastRenderedStart = -1;
       virtualState.lastRenderedEnd = -1;
-      renderVirtualRows();
+      renderVirtualRows(searchState);
       return;
     }
 
     virtualState.enabled = false;
     virtualState.lastRenderedStart = -1;
     virtualState.lastRenderedEnd = -1;
-    appendVisibleRows(visibleRows, 0);
+    appendVisibleRows(visibleRows, searchState, 0);
   }
 
-  function appendVisibleRows(entries, offset = 0) {
+  function appendVisibleRows(entries, searchState, offset = 0) {
     entries.forEach((entry, index) => {
       const tr = createElement("tr", {
         className: [
@@ -325,9 +413,9 @@ export function createTreeGrid(container, options = {}) {
           td.dataset.align = String(column.align);
         }
         if (isTreeColumn(column)) {
-          td.appendChild(renderTreeCell(column, entry));
+          td.appendChild(renderTreeCell(column, entry, searchState));
         } else {
-          td.appendChild(renderStandardCell(column, entry));
+          td.appendChild(renderStandardCell(column, entry, searchState));
         }
         tr.appendChild(td);
       });
@@ -344,7 +432,7 @@ export function createTreeGrid(container, options = {}) {
     return rowCount >= threshold;
   }
 
-  function renderVirtualRows() {
+  function renderVirtualRows(searchState = getSearchState()) {
     if (!tbody || !tableWrap || !virtualState.enabled) {
       return;
     }
@@ -375,13 +463,13 @@ export function createTreeGrid(container, options = {}) {
     if (topPad > 0) {
       tbody.appendChild(buildSpacerRow(topPad));
     }
-    appendVisibleRows(virtualState.rows.slice(start, end), start);
+    appendVisibleRows(virtualState.rows.slice(start, end), searchState, start);
     if (bottomPad > 0) {
       tbody.appendChild(buildSpacerRow(bottomPad));
     }
   }
 
-  function renderTreeCell(column, entry) {
+  function renderTreeCell(column, entry, searchState) {
     const wrap = createElement("div", {
       className: "ui-tree-grid-tree-cell",
       attrs: {
@@ -426,25 +514,23 @@ export function createTreeGrid(container, options = {}) {
       }
     }
 
-    wrap.appendChild(createElement("span", {
-      className: "ui-tree-grid-tree-label",
-      text: `${resolveColumnValue(column, entry)}${entry.row?._loading ? " (loading...)" : ""}${entry.row?._loadError ? " (load failed)" : ""}`,
-    }));
+    wrap.appendChild(renderHighlightedText(
+      `${resolveColumnValue(column, entry)}${entry.row?._loading ? " (loading...)" : ""}${entry.row?._loadError ? " (load failed)" : ""}`,
+      "ui-tree-grid-tree-label",
+      searchState
+    ));
 
     return wrap;
   }
 
-  function renderStandardCell(column, entry) {
+  function renderStandardCell(column, entry, searchState) {
     const content = typeof column.render === "function"
       ? column.render(entry.row?.[column.key], entry.row, entry)
       : resolveColumnValue(column, entry);
     if (content instanceof HTMLElement) {
       return content;
     }
-    return createElement("span", {
-      className: "ui-tree-grid-cell-text",
-      text: content == null ? "" : String(content),
-    });
+    return renderHighlightedText(content == null ? "" : String(content), "ui-tree-grid-cell-text", searchState);
   }
 
   function handleRowActivation(entry, event) {
@@ -716,6 +802,9 @@ export function createTreeGrid(container, options = {}) {
     if (nextOptions.selectedRowIds) {
       selectedRowIds = new Set((nextOptions.selectedRowIds || []).map(String));
     }
+    if (Object.prototype.hasOwnProperty.call(nextOptions, "searchTerm")) {
+      currentOptions.searchTerm = String(nextOptions.searchTerm || "");
+    }
     render();
   }
 
@@ -754,6 +843,14 @@ export function createTreeGrid(container, options = {}) {
     expandAll,
     collapseAll,
     setRows,
+    setSearchTerm(nextSearchTerm = "") {
+      currentOptions.searchTerm = String(nextSearchTerm || "");
+      renderRows();
+    },
+    clearSearch() {
+      currentOptions.searchTerm = "";
+      renderRows();
+    },
     update,
     destroy,
     getState() {
@@ -762,6 +859,7 @@ export function createTreeGrid(container, options = {}) {
         visibleRows: getVisibleRows(),
         expandedRowIds: getExpandedRowIds(),
         selectedRowIds: Array.from(selectedRowIds),
+        search: { ...searchSummary },
         options: { ...currentOptions },
       };
     },
@@ -845,6 +943,49 @@ function resolveColumnValue(column, entry) {
   }
   const value = entry.row?.[column.key];
   return value == null ? "" : value;
+}
+
+function renderHighlightedText(text, className, searchState) {
+  const value = String(text || "");
+  if (!searchState?.active || !searchState?.highlightMatches || !searchState.term) {
+    return createElement("span", {
+      className,
+      text: value,
+    });
+  }
+  const lower = value.toLowerCase();
+  const needle = searchState.term;
+  let cursor = 0;
+  let found = false;
+  const wrap = createElement("span", { className });
+  while (cursor < value.length) {
+    const index = lower.indexOf(needle, cursor);
+    if (index < 0) {
+      const tail = value.slice(cursor);
+      if (tail) {
+        wrap.appendChild(document.createTextNode(tail));
+      }
+      break;
+    }
+    found = true;
+    const before = value.slice(cursor, index);
+    const match = value.slice(index, index + needle.length);
+    if (before) {
+      wrap.appendChild(document.createTextNode(before));
+    }
+    wrap.appendChild(createElement("mark", {
+      className: "ui-tree-grid-match",
+      text: match,
+    }));
+    cursor = index + needle.length;
+  }
+  if (!found) {
+    return createElement("span", {
+      className,
+      text: value,
+    });
+  }
+  return wrap;
 }
 
 function buildCellClassName(column, entry) {

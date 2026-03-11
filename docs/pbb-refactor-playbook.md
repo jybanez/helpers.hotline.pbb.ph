@@ -6,6 +6,7 @@ This guide is for engineers integrating this library into `*.pbb.ph` projects wi
 
 - API and behavior contracts live in:
   - `README.md` (public contract)
+  - `CHANGELOG.md` (release history)
   - `js/incident/*.js` (runtime contract)
   - `js/ui/*.js` (shared UI contract)
 - If docs and implementation differ, implementation currently wins. Update docs in the same change.
@@ -44,6 +45,14 @@ Validation is per-instance, never global.
 5. Update `README.md` + this playbook in same commit.
 
 Avoid simultaneous behavior changes and structural refactors in one PR.
+
+## 4.1) Validation Depth
+
+- Syntax checks and registry checks are baseline only.
+- If a change touches render-path behavior in a DOM-heavy component, add or update a targeted browser-rendered regression harness when practical.
+- Current explicit example:
+  - `tests/tree.grid.regression.mjs`
+  - this protects `ui.tree.grid` initial render, search filtering, empty-search state, and recovery path
 
 ## 5) Integration Pattern In pbb.ph Projects
 
@@ -248,6 +257,7 @@ If changing callback signatures or removing methods, plan a major version.
 - `createModal(...)` may expose header-level actions through `headerActions`; keep these as a slot-level contract, not a second footer-action API.
 - `createActionModal(...)` may expose declarative `headerActions[]`; keep the header/footer action object contract identical when extending that helper.
 - If action buttons support icons, preserve the shared icon contract (`icon`, `iconPosition`, `iconOnly`, `ariaLabel`) across both header and footer actions.
+- `ui.dialog` helpers (`uiAlert`, `uiConfirm`, `uiPrompt`) must pass through the same header-action and icon-action options instead of inventing a separate action schema.
 - Required behaviors to preserve:
   - escape/backdrop close controls
   - focus trap and focus restore

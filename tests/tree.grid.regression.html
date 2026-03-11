@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tree Grid Regression Test</title>
+  <link rel="stylesheet" href="../css/ui/ui.tree.grid.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #0c1017;
+      color: #d7e0f4;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #host {
+      max-width: 960px;
+    }
+    #results {
+      margin-top: 12px;
+      white-space: pre-wrap;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body data-status="pending">
+  <div id="host"></div>
+  <pre id="results">Running...</pre>
+
+  <script type="module">
+    import { createTreeGrid } from "../js/ui/ui.tree.grid.js";
+
+    const results = document.getElementById("results");
+    const failures = [];
+    const rows = [
+      {
+        id: "incident-16",
+        label: "Incident 16",
+        status: "active",
+        location: "Guadalupe",
+        createdAt: "2026-03-10 08:54",
+        children: [
+          {
+            id: "assignment-16-1",
+            label: "Team Alpha",
+            status: "requested",
+            location: "Sector 4",
+            createdAt: "2026-03-10 09:03",
+          },
+          {
+            id: "assignment-16-2",
+            label: "Team Bravo",
+            status: "accepted",
+            location: "Sector 6",
+            createdAt: "2026-03-10 09:04",
+            children: [
+              {
+                id: "resource-16-2-1",
+                label: "Medical Kit Alpha",
+                status: "allocated",
+                location: "Vehicle A",
+                createdAt: "2026-03-10 09:08",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "incident-15",
+        label: "Incident 15",
+        status: "resolved",
+        location: "Talamban",
+        createdAt: "2026-03-09 22:10",
+      },
+    ];
+
+    const grid = createTreeGrid(document.getElementById("host"), {
+      rows,
+      defaultExpanded: true,
+      columns: [
+        { key: "label", label: "Name", tree: true, width: "320px" },
+        { key: "status", label: "Status", width: "140px" },
+        { key: "location", label: "Location", width: "220px" },
+        { key: "createdAt", label: "Created", width: "180px" },
+      ],
+    });
+
+    assert(grid.getVisibleRows().length === 5, "initial visible rows should be 5");
+    assert(document.querySelectorAll("#host tbody tr[data-row-id]").length === 5, "initial DOM row count should be 5");
+
+    grid.setSearchTerm("alpha");
+    let state = grid.getState();
+    assert(state.search.active === true, "search should be active after setSearchTerm");
+    assert(state.search.matchCount === 2, "alpha should match two rows");
+    assert(state.search.visibleCount === 4, "alpha search should keep full ancestor path visible");
+    assert(state.visibleRows.some((entry) => entry.id === "incident-16"), "ancestor row should remain visible");
+    assert(state.visibleRows.some((entry) => entry.id === "assignment-16-1"), "direct match row should remain visible");
+    assert(state.visibleRows.some((entry) => entry.id === "assignment-16-2"), "intermediate ancestor row should remain visible");
+    assert(state.visibleRows.some((entry) => entry.id === "resource-16-2-1"), "descendant match row should remain visible");
+    assert(document.querySelectorAll("#host mark.ui-tree-grid-match").length >= 2, "all alpha occurrences should be highlighted");
+
+    grid.setSearchTerm("zzzz-no-match");
+    state = grid.getState();
+    assert(state.search.active === true, "search remains active for empty result");
+    assert(state.search.matchCount === 0, "empty result should report zero direct matches");
+    assert(state.search.visibleCount === 0, "empty result should report zero visible rows");
+    assert(document.querySelector("#host tbody").textContent.includes("No matching results."), "empty search text should render");
+
+    grid.clearSearch();
+    state = grid.getState();
+    assert(state.search.active === false, "clearSearch should deactivate search");
+    assert(state.visibleRows.length === 5, "clearSearch should restore visible rows");
+    assert(document.querySelectorAll("#host tbody tr[data-row-id]").length === 5, "clearSearch should restore DOM rows");
+
+    if (failures.length) {
+      document.body.dataset.status = "fail";
+      results.textContent = `FAIL\\n${failures.map((line) => `- ${line}`).join("\\n")}`;
+    } else {
+      document.body.dataset.status = "pass";
+      results.textContent = "PASS";
+    }
+
+    function assert(condition, message) {
+      if (!condition) {
+        failures.push(message);
+      }
+    }
+  </script>
+</body>
+</html>

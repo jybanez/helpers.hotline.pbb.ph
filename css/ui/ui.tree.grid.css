@@ -201,6 +201,13 @@
   overflow-wrap: anywhere;
 }
 
+.ui-tree-grid-match {
+  background: rgba(255, 206, 84, 0.22);
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
 @keyframes ui-tree-grid-spin {
   from {
     transform: rotate(0deg);
