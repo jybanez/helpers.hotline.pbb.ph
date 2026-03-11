@@ -62,6 +62,11 @@ Use adapter functions between helper callbacks and backend APIs.
 - Keep API payload mapping outside helpers.
 - App integrations should use `uiLoader` by registry key.
 - Direct path imports from `js/ui/*` and `js/incident/*` are internal-library usage, not app integration usage.
+- Before adding project-local UI overrides, check whether the shared primitive layer already exposes a suitable contract:
+  - button variants in `ui.components.css`
+  - shell/layout primitives such as `ui-panel`, `ui-surface`, `ui-field`, `ui-label`, `ui-badge`, `ui-eyebrow`, `ui-shell-header`, `ui-shell-search`
+- Prefer shared variants first. Only add project-local overrides when the library contract is genuinely insufficient for the use case.
+- If a project needs the same override more than once, raise it back into the shared library instead of duplicating CSS across `*.pbb.ph` apps.
 
 Example adapter boundary:
 
@@ -131,6 +136,19 @@ Shared UI layer:
 - `js/ui/ui.progress.js`
 - `js/ui/ui.virtual.list.js`
 - `js/ui/ui.scheduler.js`
+
+## 8.1) Shared Styling First
+
+- Treat `css/ui/ui.components.css` as the first styling surface for shared app chrome.
+- Existing button variants should be considered before custom button CSS:
+  - `.ui-button-primary`
+  - `.ui-button-ghost`
+  - `.ui-button-borderless`
+  - `.ui-button-quiet`
+  - `.ui-button-link`
+  - `.ui-button-icon`
+- The goal is to keep visual behavior consistent across `*.pbb.ph` projects and avoid local style drift.
+- If a project cannot use an existing variant cleanly, document the gap and promote a new shared variant instead of normalizing on ad hoc overrides.
 - `js/ui/ui.menu.js`
 - `js/ui/ui.dropdown.js`
 - `js/ui/ui.dropup.js`

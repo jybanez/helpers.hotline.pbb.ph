@@ -5,7 +5,7 @@ All notable changes to `helpers.pbb.ph` are documented here.
 ## Versioning
 
 - Current stable line: `v0.18.x`
-- Latest documented release: `v0.18.8`
+- Latest documented release: `v0.18.9`
 - Next planned line: `v0.19.x`
 
 ## Release Line Index
@@ -30,6 +30,17 @@ All notable changes to `helpers.pbb.ph` are documented here.
 - `v0.1.x`: initial public prototype
 
 ## Release Notes
+### v0.18.9
+
+- Added shared button-style variants in `ui.components.css`:
+  - `.ui-button-borderless`
+  - `.ui-button-quiet`
+  - `.ui-button-link`
+  - `.ui-button-icon`
+- Normalized `.ui-button` to `inline-flex` so text/icon layouts stay consistent across shared UI components
+- Updated `demo.ui.html` with a visible button-variants section so engineers can inspect the styling contract directly
+- Updated `README.md` to document the expanded shared button-style surface
+
 ### v0.18.8
 
 - Added a browser-rendered regression harness for `ui.tree.grid`:

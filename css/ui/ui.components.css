@@ -87,6 +87,10 @@
 }
 
 .ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 8px 12px;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
@@ -129,6 +133,60 @@
 .ui-button-danger:hover {
   border-color: #bc5768;
   background: #59202a;
+}
+
+.ui-button-borderless {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-button-borderless:hover {
+  border-color: transparent;
+  background: rgba(82, 113, 171, 0.1);
+}
+
+.ui-button-link {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: #8db8ff;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  box-shadow: none;
+}
+
+.ui-button-link:hover {
+  border-color: transparent;
+  background: transparent;
+  color: #bed6ff;
+}
+
+.ui-button-quiet {
+  border-color: rgba(51, 69, 99, 0.65);
+  background: rgba(13, 20, 35, 0.55);
+  color: #b9c9e7;
+}
+
+.ui-button-quiet:hover {
+  border-color: #4b6087;
+  background: rgba(28, 42, 67, 0.75);
+  color: #e0ebff;
+}
+
+.ui-button-icon {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.ui-button-icon.ui-button-link,
+.ui-button-icon.ui-button-borderless {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
 }
 
 .ui-input:focus,
