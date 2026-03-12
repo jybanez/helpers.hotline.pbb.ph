@@ -5,7 +5,7 @@ All notable changes to `helpers.pbb.ph` are documented here.
 ## Versioning
 
 - Current stable line: `v0.18.x`
-- Latest documented release: `v0.18.13`
+- Latest documented release: `v0.18.14`
 - Next planned line: `v0.19.x`
 
 ## Release Line Index
@@ -30,6 +30,12 @@ All notable changes to `helpers.pbb.ph` are documented here.
 - `v0.1.x`: initial public prototype
 
 ## Release Notes
+### v0.18.14
+
+- Added `.ui-form-error` to `ui.components.css` as the shared inline form/auth error primitive
+- Updated the login-failure modal flow in `demo.ui.html` to use `.ui-form-error` instead of inline error styling
+- Documented form feedback primitives in `README.md` so async modal/login flows can reuse shared error presentation instead of app-local styles
+
 ### v0.18.13
 
 - Added modal-level busy-state support to `createModal(...)`:

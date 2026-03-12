@@ -271,6 +271,8 @@ Reusable UI styles live under `css/ui`:
   - cell-action helpers:
     - `.ui-cell-actions` inline action-row wrapper for grid/tree-grid/list cells
     - `.ui-cell-action` per-action alignment helper for icon/button controls inside dense cells
+  - form feedback:
+    - `.ui-form-error` inline validation/auth error text for shared form/modal flows
 - `ui.modal.css` shared modal shell styles
 - `ui.dialog.css` dialog-specific styles on top of modal shell
 - `ui.toast.css` toast notification styles
@@ -320,6 +322,7 @@ Application integrations should use the registry loader.
 - Start with `css/ui/ui.components.css` primitives such as:
   - button variants: `.ui-button-primary`, `.ui-button-ghost`, `.ui-button-borderless`, `.ui-button-quiet`, `.ui-button-link`, `.ui-button-icon`
   - dense cell actions: `.ui-cell-actions`, `.ui-cell-action`
+  - form feedback: `.ui-form-error`
   - shell/layout primitives: `.ui-panel`, `.ui-surface`, `.ui-field`, `.ui-label`, `.ui-badge`, `.ui-eyebrow`, `.ui-shell-header`, `.ui-shell-search`
 - If the same override appears more than once in a consuming app, it is a candidate to move back into the shared library instead of remaining project-local.
 
@@ -2306,7 +2309,7 @@ Recommended integration flow:
 
 ### Current Stable Line: `v0.18.x`
 
-- Latest documented release: `v0.18.13`
+- Latest documented release: `v0.18.14`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`

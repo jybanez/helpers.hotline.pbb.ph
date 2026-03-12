@@ -162,6 +162,9 @@
   line-height: 0;
 }
 
+.ui-modal-close[hidden] {
+  display: none;
+}
 .ui-modal-close svg {
   width: 16px;
   height: 16px;
@@ -282,3 +285,4 @@
     transform: rotate(360deg);
   }
 }
+

@@ -232,6 +232,7 @@
       <div class="row">
         <button id="modalBtn" class="ui-button" type="button">Open Modal</button>
         <button id="busyModalBtn" class="ui-button" type="button">Open Busy Modal</button>
+        <button id="loginModalBtn" class="ui-button" type="button">Open Login Failure Modal</button>
         <button id="actionModalBtn" class="ui-button" type="button">Open Action Modal</button>
       </div>
       <pre class="log"><code>import { uiLoader } from "./js/ui/ui.loader.js";
@@ -518,6 +519,7 @@ modal.open();</code></pre>
         writeLog("modal.header.help", { ok: true });
       });
       modal.open();
+
       writeLog("modal.open", { size: "md" });
     });
 
@@ -571,10 +573,109 @@ modal.open();</code></pre>
       });
 
       modal.open();
+
       writeLog("modal.busy.open", { size: "md" });
     });
 
-    document.getElementById("actionModalBtn").addEventListener("click", () => {
+    document.getElementById("loginModalBtn").addEventListener("click", () => {
+  const content = createElement("div");
+  content.innerHTML = `
+    <div class="demo-modal-form">
+      <label class="ui-label" for="loginEmail">Email address</label>
+      <input id="loginEmail" class="ui-input" type="email" value="operator@pbb.ph" autocomplete="off" />
+      <label class="ui-label" for="loginPassword">Password</label>
+      <input id="loginPassword" class="ui-input" type="password" value="wrong-password" autocomplete="new-password" />
+      <p style="margin:0;color:#9fb2d8;">This demo intentionally fails and keeps the modal open.</p>
+      <p id="loginError" class="ui-form-error" hidden></p>
+      <div class="ui-dialog-footer-actions">
+        <button id="loginCancel" class="ui-button ui-button-ghost" type="button">Cancel</button>
+        <button id="loginSubmit" class="ui-button ui-button-primary" type="button">Login</button>
+      </div>
+    </div>
+  `;
+
+  const emailInput = content.querySelector("#loginEmail");
+  const passwordInput = content.querySelector("#loginPassword");
+  const errorEl = content.querySelector("#loginError");
+  const cancelBtn = content.querySelector("#loginCancel");
+  const loginBtn = content.querySelector("#loginSubmit");
+
+  let modal;
+
+  async function attemptLogin() {
+    if (modal.isBusy()) {
+      return;
+    }
+
+    errorEl.hidden = true;
+    errorEl.textContent = "";
+    modal.setBusy(true, { message: "Signing in..." });
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const email = emailInput.value.trim();
+      errorEl.textContent = "Incorrect password.";
+      errorEl.hidden = false;
+      passwordInput.focus();
+      writeLog("loginModal.failed", { email });
+    } finally {
+      if (modal.getState().open) {
+        modal.setBusy(false);
+      }
+    }
+  }
+
+  modal = createModal({
+    title: "Operator Login (Failure Demo)",
+    size: "sm",
+    content,
+    busy: false,
+    busyMessage: "Signing in...",
+    showCloseButton: false,
+    closeOnBackdrop: false,
+    closeOnEscape: false,
+    closeWhileBusy: false,
+    backdropCloseWhileBusy: false,
+    escapeCloseWhileBusy: false,
+    onBeforeClose(meta) {
+      writeLog("loginModal.closeBlocked", meta || {});
+      return false;
+    },
+    onClose(meta) {
+      writeLog("loginModal.close", meta || {});
+      modal.destroy();
+    },
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    if (modal.isBusy()) {
+      return;
+    }
+    writeLog("loginModal.close", { reason: "cancel" });
+    modal.destroy();
+  });
+
+  loginBtn.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    await attemptLogin();
+  });
+
+  passwordInput.addEventListener("keydown", async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    await attemptLogin();
+  });
+
+  modal.open();
+  writeLog("loginModal.open", { variant: "failure-demo" });
+
+});
+
+document.getElementById("actionModalBtn").addEventListener("click", () => {
       const content = createElement("div");
       content.innerHTML = `
         <form class="ui-modal-demo-form">
@@ -659,6 +760,7 @@ modal.open();</code></pre>
         },
       });
       modal.open();
+
       writeLog("actionModal.open", { size: "sm" });
     });
 
@@ -1239,4 +1341,20 @@ modal.open();</code></pre>
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

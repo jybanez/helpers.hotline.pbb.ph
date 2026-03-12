@@ -114,7 +114,16 @@ export function createModal(options = {}) {
   }
 
   function applyClasses() {
+    const rootState = {
+      mounted: root.classList.contains("is-mounted"),
+      open: root.classList.contains("is-open"),
+      closing: root.classList.contains("is-closing"),
+    };
     root.className = `ui-modal-root ${currentOptions.className || ""}`.trim();
+    root.classList.toggle("is-mounted", rootState.mounted);
+    root.classList.toggle("is-open", rootState.open);
+    root.classList.toggle("is-closing", rootState.closing);
+
     panel.className = "ui-modal";
     panel.classList.add(`is-size-${normalizeSize(currentOptions.size)}`);
     panel.classList.add(`is-pos-${normalizePosition(currentOptions.position)}`);
@@ -757,3 +766,4 @@ function getActionButtonClass(action) {
 function isPromiseLike(value) {
   return Boolean(value) && (typeof value === "object" || typeof value === "function") && typeof value.then === "function";
 }
+
