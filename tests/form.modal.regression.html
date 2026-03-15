@@ -140,6 +140,27 @@
 
     assert(document.querySelector(".ui-modal-root") === null, "truthy submit should close and remove modal root");
 
+    const keyboardSubmitModal = createFormModal({
+      title: "Keyboard Submit",
+      busyMessage: "Signing in...",
+      submitLabel: "Login",
+      rows: [
+        [{ type: "input", input: "email", name: "email", label: "Email", value: "operator@pbb.ph", required: true }],
+        [{ type: "input", input: "password", name: "password", label: "Password", value: "correct-password", required: true }],
+      ],
+      async onSubmit() {
+        await wait(80);
+        return true;
+      },
+    });
+
+    keyboardSubmitModal.open();
+    await wait(80);
+    keyboardSubmitModal.refs.form.requestSubmit();
+    await wait(500);
+
+    assert(document.querySelector(".ui-modal-root") === null, "truthy native form submit should also close and remove modal root");
+
     const hubModal = createFormModal({
       title: "Edit Hub",
       mode: "edit",
@@ -337,3 +358,4 @@
   </script>
 </body>
 </html>
+

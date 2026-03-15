@@ -718,7 +718,16 @@ export function createFormModal(options = {}) {
     modal.destroy();
   }
 
-  refs.form.addEventListener("submit", handleSubmit);
+  refs.form.addEventListener("submit", async (event) => {
+      const shouldClose = await handleSubmit(event);
+      if (shouldClose) {
+        await modal.close({
+          reason: "submit",
+          actionId: "submit",
+          result: true,
+        });
+      }
+    });
   render();
 
   modal = createActionModal({
@@ -988,4 +997,7 @@ function normalizeApiErrors(response) {
 
   return { fieldErrors, formError };
 }
+
+
+
 

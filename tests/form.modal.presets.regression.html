@@ -68,6 +68,27 @@
     presetLoginModal.destroy();
     await wait(80);
 
+    const presetLoginSuccessModal = createLoginFormModal({
+      fields: {
+        identifier: "user_email",
+        password: "user_password",
+      },
+      initialValues: {
+        user_email: "operator@pbb.ph",
+        user_password: "correct-password",
+      },
+      async onSubmit() {
+        await wait(80);
+        return true;
+      },
+    });
+
+    presetLoginSuccessModal.open();
+    await wait(80);
+    presetLoginSuccessModal.refs.form.requestSubmit();
+    await wait(500);
+    assert(document.querySelector(".ui-modal-root") === null, "preset login should close on successful native form submit");
+
     const reauthModal = createReauthFormModal({
       fields: {
         identifier: "account_email",
@@ -96,6 +117,27 @@
 
     reauthModal.destroy();
     await wait(80);
+
+    const reauthSuccessModal = createReauthFormModal({
+      fields: {
+        identifier: "account_email",
+        password: "reauth_password",
+      },
+      identifierValue: "supervisor@pbb.ph",
+      initialValues: {
+        reauth_password: "correct-password",
+      },
+      async onSubmit() {
+        await wait(80);
+        return true;
+      },
+    });
+
+    reauthSuccessModal.open();
+    await wait(80);
+    reauthSuccessModal.refs.form.requestSubmit();
+    await wait(500);
+    assert(document.querySelector(".ui-modal-root") === null, "reauth preset should close on successful native form submit");
 
     const statusModal = createStatusUpdateFormModal({
       fields: {
@@ -190,3 +232,4 @@
   </script>
 </body>
 </html>
+
