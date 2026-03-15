@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alert Dialog Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+    .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 12px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
+    .muted { margin: 0; color: #9fb2d8; font-size: 13px; line-height: 1.45; }
+    .log, pre:not(.log) { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; overflow: auto; }
+    .log { color: #b2c2e5; min-height: 180px; }
+    .demo-matrix { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .demo-matrix-card { display: grid; gap: 8px; padding: 12px; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; }
+    .demo-matrix-meta { display: grid; gap: 4px; font-size: 12px; color: #9fb2d8; }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.dialog"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Alert Dialog",
+      overview: "Promise-based read-only dialog for acknowledgement flows, semantic variants, descriptions, and optional speech.",
+      useWhen: [
+        "Use <code>uiAlert(...)</code> for read-only acknowledgement flows where the user only needs to dismiss a message.",
+        "Use it when semantic status treatment and optional speech help communicate a short outcome clearly."
+      ],
+      avoidWhen: [
+        "Do not use it when the user must choose between actions; use <code>uiConfirm(...)</code> instead.",
+        "Do not use it for structured data entry; use a modal or form-modal helper instead."
+      ],
+      description: "This page focuses on the alert helper only: semantic variants, optional status icon suppression, descriptions, and speech toggles.",
+      defaultSampleCode: `await uiAlert(\"This is a UI alert message.\", {\n  title: \"Alert\",\n  variant: \"info\",\n  description: \"Use alert dialogs for read-only notices.\",\n  speak: false,\n});`,
+      constructor: [
+        { factory: "<code>uiAlert(message, options)</code>", arguments: "message string, dialog options", returns: "<code>Promise&lt;void&gt;</code>" }
+      ],
+      options: [
+        { option: "<code>variant</code>", default: "<code>\"default\"</code>", description: "Semantic dialog tone.", values: ["default", "success", "info", "warning", "error"] },
+        { option: "<code>description</code>", default: "<code>\"\"</code>", description: "Secondary explanatory copy." },
+        { option: "<code>showVariantIcon</code>", default: "<code>true</code>", description: "Show or suppress the built-in status icon.", values: ["true", "false"] },
+        { option: "<code>speak</code>", default: "<code>false</code>", description: "Opt-in speech for dialog content.", values: ["true", "false"] }
+      ],
+      propertiesText: "This helper returns a promise, not a stateful instance with public properties.",
+      events: [
+        { event: "<code>headerActions[].onClick</code>", arguments: "action callback context", returns: "truthy/falsey" }
+      ],
+      methods: [
+        { method: "<code>uiAlert(...)</code>", arguments: "message, options", returns: "<code>Promise&lt;void&gt;</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Alert Dialog Demo</h1>
+      <p class="muted">Dedicated alert-helper demo for acknowledgement flows, semantic variants, and optional speech.</p>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Acknowledgement Variants</h2>
+      <div class="demo-matrix">
+        <article class="demo-matrix-card">
+          <strong>Info Alert</strong>
+          <div class="demo-matrix-meta">
+            <span>Variant: <code>info</code></span>
+            <span>Description: <code>yes</code></span>
+            <span>Variant icon: <code>shown</code></span>
+          </div>
+        </article>
+        <article class="demo-matrix-card">
+          <strong>Success Alert</strong>
+          <div class="demo-matrix-meta">
+            <span>Variant: <code>success</code></span>
+            <span>Description: <code>yes</code></span>
+            <span>Variant icon: <code>shown</code></span>
+          </div>
+        </article>
+        <article class="demo-matrix-card">
+          <strong>No Icon</strong>
+          <div class="demo-matrix-meta">
+            <span>Variant: <code>warning</code></span>
+            <span>Description: <code>yes</code></span>
+            <span>Variant icon: <code>suppressed</code></span>
+          </div>
+        </article>
+      </div>
+      <div class="row">
+        <button id="alertBtn" class="ui-button" type="button">Alert (Info)</button>
+        <button id="successAlertBtn" class="ui-button ui-button-primary" type="button">Alert (Success)</button>
+        <button id="iconlessAlertBtn" class="ui-button ui-button-ghost" type="button">Alert (No Icon)</button>
+      </div>
+      <div class="row">
+        <label><input id="dialogSpeakToggle" type="checkbox"> Speak Dialogs</label>
+        <label>Voice
+          <select id="dialogVoiceSelect" class="ui-input" style="min-width:220px;">
+            <option value="">Default Voice</option>
+          </select>
+        </label>
+      </div>
+      <pre>await uiAlert("This is a UI alert message.", {
+  title: "Alert",
+  variant: "info",
+  description: "Use alert dialogs for read-only notices.",
+  speak: false,
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const uiAlert = await uiLoader.get("ui.dialog.alert");
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    const dialogSpeakToggle = document.getElementById("dialogSpeakToggle");
+    const dialogVoiceSelect = document.getElementById("dialogVoiceSelect");
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+    function getDialogSpeechOptions() {
+      return { speak: Boolean(dialogSpeakToggle?.checked), voiceName: String(dialogVoiceSelect?.value || "") };
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+    document.getElementById("alertBtn").addEventListener("click", async () => {
+      await uiAlert("This is a UI alert message.", {
+        title: "Alert",
+        variant: "info",
+        description: "Use alert dialogs for read-only notices where the user only needs to acknowledge the message.",
+        ...getDialogSpeechOptions(),
+      });
+      writeLog("dialog.alert", { ok: true });
+    });
+    document.getElementById("successAlertBtn").addEventListener("click", async () => {
+      await uiAlert("Barangay uplink synchronized successfully.", {
+        title: "Synchronization Complete",
+        variant: "success",
+        description: "All dependent records were updated and the next verification cycle can proceed normally.",
+        ...getDialogSpeechOptions(),
+        okText: "Continue",
+      });
+      writeLog("dialog.success", { acknowledged: true });
+    });
+    document.getElementById("iconlessAlertBtn").addEventListener("click", async () => {
+      await uiAlert("This warning intentionally suppresses the built-in variant icon.", {
+        title: "Maintenance Window",
+        variant: "warning",
+        showVariantIcon: false,
+        description: "Use this path when the semantic color treatment is enough and the extra icon would add noise.",
+        ...getDialogSpeechOptions(),
+      });
+      writeLog("dialog.warningNoIcon", { acknowledged: true });
+    });
+  </script>
+</body>
+</html>

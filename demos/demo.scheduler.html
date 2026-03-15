@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scheduler Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 1200px; margin: 0 auto; display: grid; gap: 14px; }
@@ -15,12 +15,48 @@
     .log { margin: 0; white-space: pre-wrap; font-size: 12px; color: #b2c2e5; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; height: 220px; overflow: auto; }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.scheduler"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Scheduler",
+      overview: "Month/week scheduling surface for time slots and scheduled events.",
+      useWhen: [
+        "Use <code>createScheduler(...)</code> when the user needs to see slot-based planning in calendar form.",
+        "Use it for event placement and inspection rather than free-form Kanban movement."
+      ],
+      avoidWhen: [
+        "Do not use it for task boards; use <code>createKanban(...)</code>.",
+        "Do not use it for simple date picking; use <code>createDatepicker(...)</code>."
+      ],
+      description: "The scheduler sits between a picker and a full calendar system. It is appropriate for operational planning surfaces where slots and event summaries matter more than document-heavy record editing.",
+      sectionSamples: {
+        "framed": `const scheduler = createScheduler(host, data, {\n  chrome: true,\n  onSlotClick(slot) {\n    writeLog("scheduler.slot", slot);\n  },\n});`,
+        "chrome-less": `createScheduler(host, data, {\n  chrome: false,\n  view: "week",\n});`
+      },
+      constructor: [
+        { factory: "<code>createScheduler(container, data, options)</code>", arguments: "<code>container</code>, scheduler <code>data</code>, <code>options</code>", returns: "Scheduler instance" }
+      ],
+      options: [
+        { option: "<code>view</code>", default: "documented default", description: "Initial scheduler view such as month or week." },
+        { option: "<code>onSlotClick</code>", default: "<code>null</code>", description: "Handles slot selection." },
+        { option: "<code>onEventClick</code>", default: "<code>null</code>", description: "Handles event selection." }
+      ],
+      events: [
+        { event: "<code>onSlotClick</code>", arguments: "slot payload", returns: "No return effect" },
+        { event: "<code>onEventClick</code>", arguments: "event payload", returns: "No return effect" }
+      ],
+      methods: [
+        { method: "<code>setData(data)</code>", arguments: "scheduler data", returns: "<code>void</code>" },
+        { method: "<code>update(nextOptions)</code>", arguments: "partial options", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -49,7 +85,7 @@
     </section>
   </main>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createScheduler = await uiLoader.get("ui.scheduler");
 

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Action Modal Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+    .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 12px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
+    .muted { margin: 0; color: #9fb2d8; font-size: 13px; line-height: 1.45; }
+    .log, pre:not(.log) { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; overflow: auto; }
+    .log { color: #b2c2e5; min-height: 220px; }
+    pre:not(.log) { color: #d7e0f4; }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.dom", "ui.modal"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Action Modal",
+      overview: "Declarative action-footer modal demo for known button sets, per-action busy behavior, and header action wiring.",
+      useWhen: [
+        "Use <code>createActionModal(...)</code> when the modal footer actions are known up front.",
+        "Use it when you want shared action handling without hand-building modal footer buttons."
+      ],
+      avoidWhen: [
+        "Do not use it when the body is a structured row-based form; use <code>createFormModal(...)</code> instead.",
+        "Do not use it when the shell needs totally custom footer composition; drop down to <code>createModal(...)</code>."
+      ],
+      description: "This demo keeps the action modal focused on its real value: declarative footer actions, auto-busy behavior, and header actions that share the same vocabulary.",
+      defaultSampleCode: `const modal = createActionModal({\n  title: "Update Operator Profile",\n  size: "sm",\n  content,\n  autoBusy: true,\n  actions: [\n    { id: "cancel", label: "Cancel", variant: "ghost" },\n    { id: "save", label: "Save Changes", variant: "primary" },\n  ],\n});\n\nmodal.open();`,
+      constructor: [
+        { factory: "<code>createActionModal(options)</code>", arguments: "action-modal <code>options</code>", returns: "Action modal instance" }
+      ],
+      options: [
+        { option: "<code>actions</code>", default: "<code>[]</code>", description: "Declarative footer actions." },
+        { option: "<code>headerActions</code>", default: "<code>[]</code>", description: "Declarative header actions." },
+        { option: "<code>autoBusy</code>", default: "<code>true</code>", description: "Enters busy state automatically for promise-returning actions.", values: ["true", "false"] },
+        { option: "<code>busyMessage</code>", default: "<code>\"\"</code>", description: "Fallback busy copy while actions are resolving." }
+      ],
+      propertiesText: "No stable public instance properties are documented. Use inherited modal methods plus <code>setActions()</code> and <code>setHeaderActions()</code>.",
+      events: [
+        { event: "<code>action.onClick</code>", arguments: "<code>({ action, modal, event, placement })</code>", returns: "<code>any | Promise&lt;any&gt;</code>" }
+      ],
+      methods: [
+        { method: "<code>setActions(actions)</code>", arguments: "action array", returns: "<code>void</code>" },
+        { method: "<code>setHeaderActions(actions)</code>", arguments: "action array", returns: "<code>void</code>" },
+        { method: "<code>open()</code>", arguments: "none", returns: "<code>Promise&lt;void&gt;</code>" },
+        { method: "<code>close(meta?)</code>", arguments: "optional close meta", returns: "<code>Promise&lt;boolean&gt;</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Action Modal Demo</h1>
+      <p class="muted">Dedicated declarative-footer modal demo with header actions, per-action busy state, and close lifecycle logging.</p>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Declarative Action Flow</h2>
+      <p class="muted">Open the modal to inspect shared header/footer action wiring and promise-driven busy state.</p>
+      <div class="row">
+        <button id="actionModalBtn" class="ui-button" type="button">Open Action Modal</button>
+      </div>
+      <pre>const modal = createActionModal({
+  title: "Update Operator Profile",
+  size: "sm",
+  content,
+  autoBusy: true,
+  busyMessage: "Saving operator profile...",
+  actions: [
+    { id: "cancel", label: "Cancel", variant: "ghost" },
+    { id: "save", label: "Save Changes", variant: "primary" },
+  ],
+});
+
+modal.open();</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createElement = await uiLoader.get("ui.dom.createElement");
+    const createActionModal = await uiLoader.get("ui.action.modal");
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+    document.getElementById("actionModalBtn").addEventListener("click", () => {
+      const content = createElement("div");
+      content.innerHTML = `
+        <form class="ui-modal-demo-form">
+          <p style="margin:0;color:#9fb2d8;">Use createActionModal for declarative footer buttons. This example reviews an operator profile change.</p>
+          <label>
+            Operator Name
+            <input type="text" class="ui-input" value="Maria Santos">
+          </label>
+          <label>
+            Role
+            <select class="ui-input">
+              <option selected>Operator Level 1</option>
+              <option>Operator Level 2</option>
+              <option>Supervisor</option>
+            </select>
+          </label>
+          <label>
+            Remarks
+            <textarea class="ui-input" placeholder="Reason for update">Promote access for night-shift dispatch coverage.</textarea>
+          </label>
+        </form>
+      `;
+
+      const modal = createActionModal({
+        title: "Update Operator Profile",
+        size: "sm",
+        content,
+        autoBusy: true,
+        busyMessage: "Saving operator profile...",
+        headerActions: [
+          {
+            id: "preview",
+            label: "Preview",
+            variant: "ghost",
+            icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.5 0 9.5 5.5 9.5 7S17.5 19 12 19 2.5 13.5 2.5 12 6.5 5 12 5Zm0 2C8.1 7 5 10.7 4.6 12 5 13.3 8.1 17 12 17s7-3.7 7.4-5C19 10.7 15.9 7 12 7Zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5Z"/></svg>',
+            onClick() {
+              writeLog("actionModal.header.preview", { ok: true });
+              return false;
+            },
+          },
+          {
+            id: "audit",
+            label: "Audit",
+            variant: "ghost",
+            icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5.2 3.4 9.9 8 11 4.6-1.1 8-5.8 8-11V5l-8-3Zm0 2.2 6 2.2V11c0 4.1-2.5 7.9-6 9-3.5-1.1-6-4.9-6-9V6.4l6-2.2Z"/></svg>',
+            iconOnly: true,
+            ariaLabel: "Open audit trail",
+            onClick() {
+              writeLog("actionModal.header.audit", { ok: true });
+              return false;
+            },
+          },
+        ],
+        actions: [
+          {
+            id: "cancel",
+            label: "Cancel",
+            variant: "ghost",
+            icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7a1 1 0 1 0-1.4 1.4l4.9 4.9-4.9 4.9a1 1 0 1 0 1.4 1.4l4.9-4.9 4.9 4.9a1 1 0 0 0 1.4-1.4l-4.9-4.9 4.9-4.9a1 1 0 0 0 0-1.4z"/></svg>',
+            onClick() {
+              writeLog("actionModal.cancel", { ok: true });
+            },
+          },
+          {
+            id: "save",
+            label: "Save Changes",
+            variant: "primary",
+            icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5a2 2 0 0 0-2 2v14h18V7l-4-4Zm-5 14a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm3-10H5V5h10v2Z"/></svg>',
+            autoFocus: true,
+            busyMessage: "Saving operator profile...",
+            async onClick() {
+              writeLog("actionModal.save.begin", { ok: true });
+              await new Promise((resolve) => setTimeout(resolve, 1300));
+              writeLog("actionModal.save.complete", { ok: true });
+              return true;
+            },
+          },
+        ],
+        onClose(meta) {
+          writeLog("actionModal.close", meta || {});
+          modal.destroy();
+        },
+      });
+      modal.open();
+      writeLog("actionModal.open", { size: "sm" });
+    });
+  </script>
+</body>
+</html>

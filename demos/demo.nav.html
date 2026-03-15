@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Navigation Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -76,12 +76,35 @@
     }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.navbar", "ui.sidebar", "ui.breadcrumbs", "ui.dropdown", "ui.dropup"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Navigation",
+      overview: "Navigation-family playground for navbar, sidebar, breadcrumbs, dropdown, and dropup helpers.",
+      useWhen: [
+        "Use these helpers for shared navigation surfaces rather than app-local bespoke nav markup.",
+        "Use dropdown/dropup wrappers when anchored action menus are the real need."
+      ],
+      avoidWhen: [
+        "Do not use top-level nav helpers when a simple menu or button group is enough.",
+        "Do not overload the nav helpers with page-specific business logic."
+      ],
+      description: "This demo covers the shared navigation vocabulary as a family. The point is consistency across top-level navigation, side navigation, breadcrumbs, and anchored menus.",
+      defaultSampleCode: `createNavbar(host, data, {\n  items,\n  actions,\n  onNavigate(item) {\n    writeLog("navbar.navigate", item);\n  },\n});`,
+      constructor: [
+        { factory: "<code>createNavbar(...)</code>, <code>createSidebar(...)</code>, <code>createBreadcrumbs(...)</code>, <code>createDropdown(...)</code>, <code>createDropup(...)</code>", arguments: "container or trigger plus navigation data/options", returns: "Helper-specific navigation instances" }
+      ],
+      propertiesText: "This page demonstrates a family of helpers. Public contracts should be read per helper, not as one shared instance.",
+      methods: [
+        { method: "<code>Helper-specific methods</code>", arguments: "varies", returns: "varies" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -122,7 +145,7 @@
   </main>
 
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createNavbar = await uiLoader.get("ui.navbar");
     const createSidebar = await uiLoader.get("ui.sidebar");

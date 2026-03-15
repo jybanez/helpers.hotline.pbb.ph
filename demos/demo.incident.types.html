@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Incident Types Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -64,12 +64,38 @@
     }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["incident.base", "incident.types"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Incident Types",
+      overview: "PBB incident-type demo for the incident helper layer, not a generic UI primitive.",
+      useWhen: [
+        "Use this page to inspect the shared incident-type presentation and behavior used by PBB incident workflows.",
+        "Use it when validating the incident helper contract against the real incident domain."
+      ],
+      avoidWhen: [
+        "Do not treat this as a generic helper outside the incident domain.",
+        "Do not copy the demo markup into apps instead of consuming the shared incident helper."
+      ],
+      description: "This is a domain-level demo page. It exists to prove that the incident-type helper remains reusable inside the PBB incident stack after the demo-surface migration.",
+      sectionSamples: {
+        "incident.types (editor)": `const editor = createIncidentTypesEditor(host, data, {\n  onChange(next) {\n    writeLog("incident.types.change", next);\n  },\n});`,
+        "incident.types (viewer)": `createIncidentTypesViewer(host, data, {\n  readonly: true,\n});`
+      },
+      constructor: [
+        { factory: "<code>incident.types</code> helper entry", arguments: "incident-domain data and options", returns: "Domain-specific incident-type surface" }
+      ],
+      propertiesText: "Read this page as a domain demo. Its stable contract is owned by the incident helper layer rather than the generic UI family.",
+      methods: [
+        { method: "<code>Domain-specific methods</code>", arguments: "varies by incident helper", returns: "varies" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page">
     <section class="controls">
       <a class="back" href="./index.html">← Back to Home</a>
@@ -109,7 +135,7 @@
   </main>
 
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const incidentBase = await uiLoader.get("incident.base");
     const incidentTypes = await uiLoader.get("incident.types");
@@ -154,14 +180,14 @@
         resourceTypes,
         operators
       ] = await Promise.all([
-        fetchJson("./boot.team.assignment.status.json"),
-        fetchJson("./boot.incident.status.json"),
-        fetchJson("./boot.alert.levels.json"),
-        fetchJson("./boot.incident.types.json"),
-        fetchJson("./boot.incident.categories.json"),
-        fetchJson("./boot.teams.json"),
-        fetchJson("./boot.resource.types.json"),
-        fetchJson("./boot.operators.json")
+        fetchJson("../boot.team.assignment.status.json"),
+        fetchJson("../boot.incident.status.json"),
+        fetchJson("../boot.alert.levels.json"),
+        fetchJson("../boot.incident.types.json"),
+        fetchJson("../boot.incident.categories.json"),
+        fetchJson("../boot.teams.json"),
+        fetchJson("../boot.resource.types.json"),
+        fetchJson("../boot.operators.json")
       ]);
 
       const lookups = {
@@ -225,7 +251,7 @@
         const availability = await Promise.all(
           sampleCandidates.map(async (name) => {
             try {
-                await fetchJson(`./samples/${name}`);
+                await fetchJson(`../samples/${name}`);
               return name;
             } catch (error) {
               return null;
@@ -249,7 +275,7 @@
       }
 
       async function applySample(sampleFile) {
-        const samplePayload = await fetchJson(`./samples/${sampleFile}`);
+        const samplePayload = await fetchJson(`../samples/${sampleFile}`);
         incidentState = samplePayload?.incident || {};
         editableListItems = buildIncidentTypeItems(incidentState);
         editorListApi.setList(editableListItems);

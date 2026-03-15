@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #0c1017;
+      color: #d7e0f4;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+    .panel {
+      border: 1px solid #263146;
+      border-radius: 10px;
+      background: #111826;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .back {
+      color: #b2c2e5;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .muted {
+      margin: 0;
+      color: #9fb2d8;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    #kanbanHost {
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      padding: 10px;
+      background: #0b1220;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      box-sizing: border-box;
+    }
+    .log {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #b2c2e5;
+      font-family: Consolas, "Courier New", monospace;
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 10px;
+      min-height: 180px;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+    pre:not(.log) {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #d7e0f4;
+      font-family: Consolas, "Courier New", monospace;
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 10px;
+      overflow-x: auto;
+    }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.kanban"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Kanban",
+      overview: "Lane-based workflow board for dispatch and incident movement, with drag-and-drop, move validation, and WIP constraints.",
+      useWhen: [
+        "Use <code>createKanban(...)</code> when lane transitions and card movement are the core interaction.",
+        "Use it for dispatch queues, incident workflow boards, and operational status movement where WIP limits matter."
+      ],
+      avoidWhen: [
+        "Do not use it for date/time scheduling; use <code>createScheduler(...)</code> instead.",
+        "Do not use it for flat reporting tables or hierarchy exploration where movement is not the point."
+      ],
+      description: "This demo focuses on workflow movement rules: drag between lanes, validate moves, enforce a WIP limit, and emit stable callbacks for click, move, and rejection events.",
+      defaultSampleCode: `const board = createKanban(host, lanes, {\n  ariaLabel: "Incident workflow board",\n  wipLimits: { active: 3 },\n  validateMove(payload) {\n    if (payload.toLaneId === "resolved" && payload.card.requiresReview) {\n      return { ok: false, reason: "Review required first." };\n    }\n    return true;\n  },\n  onCardMove(payload) {\n    writeLog("kanban.card.move", payload);\n  },\n});`,
+      constructor: [
+        { factory: "<code>createKanban(container, lanes, options)</code>", arguments: "<code>container</code>, lane array, kanban <code>options</code>", returns: "Kanban instance with update, move, state, and destroy methods" }
+      ],
+      options: [
+        { option: "<code>ariaLabel</code>", default: "<code>\"Incident workflow board\"</code>", description: "Accessibility label for the board region." },
+        { option: "<code>draggable</code>", default: "<code>true</code>", description: "Enables drag-and-drop between lanes." },
+        { option: "<code>keyboardMoves</code>", default: "<code>true</code>", description: "Enables keyboard move interactions." },
+        { option: "<code>wipLimits</code>", default: "<code>null</code>", description: "Per-lane WIP limits such as <code>{ active: 3 }</code>." },
+        { option: "<code>validateMove</code>", default: "<code>null</code>", description: "Business-rule hook for move approval or rejection." }
+      ],
+      propertiesText: "No stable public instance properties are documented. Use <code>getState()</code> instead of reading internal fields directly.",
+      events: [
+        { event: "<code>onCardClick</code>", arguments: "<code>(card, laneId)</code>", returns: "<code>void</code>" },
+        { event: "<code>onCardMove</code>", arguments: "<code>(payload)</code>", returns: "<code>void</code>" },
+        { event: "<code>onMoveRejected</code>", arguments: "<code>(payload)</code>", returns: "<code>void</code>" }
+      ],
+      methods: [
+        { method: "<code>update(nextLanes, nextOptions?)</code>", arguments: "lane array and optional options", returns: "<code>void</code>" },
+        { method: "<code>moveCard(cardId, fromLaneId, toLaneId, toIndex?)</code>", arguments: "move arguments", returns: "<code>void</code>" },
+        { method: "<code>getState()</code>", arguments: "none", returns: "Board state snapshot" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Kanban Demo</h1>
+      <p class="muted">Dedicated workflow-board demo for lane movement, WIP limits, rejection rules, and move callbacks.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Incident Workflow Board</h2>
+      <p class="muted">Active lane has a WIP limit of three cards. Cards marked with review requirements cannot move directly into Resolved.</p>
+      <div id="kanbanHost"></div>
+      <pre>const board = createKanban(host, lanes, {
+  ariaLabel: "Incident workflow board",
+  wipLimits: { active: 3 },
+  validateMove(payload) {
+    if (payload.toLaneId === "resolved" && payload.card.requiresReview) {
+      return { ok: false, reason: "Review required first." };
+    }
+    return true;
+  },
+  onCardMove(payload) {
+    writeLog("kanban.card.move", payload);
+  },
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createKanban = await uiLoader.get("ui.kanban");
+
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+
+    createKanban(document.getElementById("kanbanHost"), [
+      {
+        id: "queued",
+        title: "Queued",
+        cards: [
+          { id: "i-101", title: "Incident #101", meta: "Caller: Maria Santos", requiresReview: false },
+          { id: "i-102", title: "Incident #102", meta: "Caller: Juan Dela Cruz", requiresReview: true },
+        ],
+      },
+      {
+        id: "active",
+        title: "Active",
+        cards: [
+          { id: "i-103", title: "Incident #103", meta: "Team: Alpha", requiresReview: false },
+          { id: "i-104", title: "Incident #104", meta: "Team: Bravo", requiresReview: false },
+        ],
+      },
+      {
+        id: "resolved",
+        title: "Resolved",
+        cards: [
+          { id: "i-100", title: "Incident #100", meta: "Closed 5m ago", requiresReview: false },
+        ],
+      },
+    ], {
+      ariaLabel: "Incident workflow board",
+      wipLimits: {
+        active: 3,
+      },
+      validateMove(payload) {
+        if (payload.toLaneId === "resolved" && payload.card?.requiresReview) {
+          return { ok: false, reason: "Review required first." };
+        }
+        return true;
+      },
+      onCardClick(card, laneId) {
+        writeLog("kanban.card.click", { cardId: card.id, laneId });
+      },
+      onCardMove(payload) {
+        writeLog("kanban.card.move", {
+          cardId: payload.card.id,
+          fromLaneId: payload.fromLaneId,
+          toLaneId: payload.toLaneId,
+          fromIndex: payload.fromIndex,
+          toIndex: payload.toIndex,
+        });
+      },
+      onMoveRejected(payload) {
+        writeLog("kanban.card.move.rejected", payload);
+      },
+    });
+  </script>
+</body>
+</html>

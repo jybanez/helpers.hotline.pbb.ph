@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datepicker Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+    .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 12px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .two-up { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .picker-card { display: grid; gap: 8px; padding: 12px; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; }
+    .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
+    .muted { margin: 0; color: #9fb2d8; font-size: 13px; line-height: 1.45; }
+    .log, pre:not(.log) { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; overflow: auto; }
+    .log { color: #b2c2e5; min-height: 180px; }
+    pre:not(.log) { color: #d7e0f4; }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.datepicker"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Datepicker",
+      overview: "Reusable single-date and range picker demo with optional time selection and change callbacks.",
+      useWhen: [
+        "Use <code>createDatepicker(...)</code> when you need one shared picker surface instead of app-local calendar markup.",
+        "Use it for single-date or range selection with optional time inputs."
+      ],
+      avoidWhen: [
+        "Do not use it for full scheduling or resource-grid UIs; those belong in scheduler-style components.",
+        "Do not use it when a native date input is sufficient and you do not need helper-owned behavior."
+      ],
+      description: "This page shows the two common picker modes the shared helper is expected to cover in operational tools: single-date capture and date-range selection with time.",
+      defaultSampleCode: `createDatepicker(host, {\n  mode: "range",\n  showTime: true,\n  closeOnSelect: false,\n  onChange(value, state) {\n    writeLog("datepicker.change", { value, state });\n  },\n});`,
+      constructor: [
+        { factory: "<code>createDatepicker(container, options)</code>", arguments: "host element, picker <code>options</code>", returns: "Datepicker instance" }
+      ],
+      options: [
+        { option: "<code>mode</code>", default: "<code>\"single\"</code>", description: "Selection mode.", values: ["single", "range"] },
+        { option: "<code>showTime</code>", default: "<code>false</code>", description: "Enables time inputs alongside date selection.", values: ["true", "false"] },
+        { option: "<code>closeOnSelect</code>", default: "<code>true</code>", description: "Controls whether the picker closes after selection.", values: ["true", "false"] },
+        { option: "<code>onChange</code>", default: "<code>null</code>", description: "Change callback receiving value and picker state." }
+      ],
+      propertiesText: "No stable public instance properties are documented. Use explicit methods such as <code>getValue()</code> or <code>getState()</code> where available.",
+      events: [
+        { event: "<code>onChange</code>", arguments: "<code>(value, state)</code>", returns: "<code>void</code>" }
+      ],
+      methods: [
+        { method: "<code>update(...)</code>", arguments: "next options", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Datepicker Demo</h1>
+      <p class="muted">Dedicated picker demo for single-date and range-plus-time selection behavior.</p>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Operational Date Capture</h2>
+      <p class="muted">The single picker is suited for one incident date; the range picker models active windows or maintenance periods.</p>
+      <div class="two-up">
+        <div class="picker-card">
+          <strong>Single Date</strong>
+          <div id="datePickerHostSingle"></div>
+        </div>
+        <div class="picker-card">
+          <strong>Range + Time</strong>
+          <div id="datePickerHostRange"></div>
+        </div>
+      </div>
+      <pre>createDatepicker(document.getElementById("datePickerHostSingle"), {
+  ariaLabel: "Incident date picker",
+  placeholder: "Pick incident date",
+  mode: "single",
+  onChange(value, state) {
+    writeLog("datepicker.single.change", { value, state });
+  },
+});
+
+createDatepicker(document.getElementById("datePickerHostRange"), {
+  ariaLabel: "Incident date range picker",
+  placeholder: "Pick active range",
+  mode: "range",
+  showTime: true,
+  closeOnSelect: false,
+  onChange(value, state) {
+    writeLog("datepicker.range.change", { value, state });
+  },
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createDatepicker = await uiLoader.get("ui.datepicker");
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+    createDatepicker(document.getElementById("datePickerHostSingle"), {
+      ariaLabel: "Incident date picker",
+      placeholder: "Pick incident date",
+      mode: "single",
+      onChange(value, state) {
+        writeLog("datepicker.single.change", { value, state });
+      },
+    });
+    createDatepicker(document.getElementById("datePickerHostRange"), {
+      ariaLabel: "Incident date range picker",
+      placeholder: "Pick active range",
+      mode: "range",
+      showTime: true,
+      closeOnSelect: false,
+      onChange(value, state) {
+        writeLog("datepicker.range.change", { value, state });
+      },
+    });
+  </script>
+</body>
+</html>

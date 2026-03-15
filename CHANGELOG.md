@@ -5,7 +5,7 @@ All notable changes to `helpers.pbb.ph` are documented here.
 ## Versioning
 
 - Current stable line: `v0.20.x`
-- Latest documented release: `v0.20.6`
+- Latest documented release: `v0.20.7`
 - Next planned line: `v0.21.x`
 
 ## Release Line Index
@@ -32,6 +32,28 @@ All notable changes to `helpers.pbb.ph` are documented here.
 - `v0.1.x`: initial public prototype
 
 ## Release Notes
+### v0.20.7
+
+- Extended `ui.form.modal` for real acceptance-proof coverage of the approved improvement stage:
+  - added narrow top-level `context` support for geodata-driven hub flows
+  - exposed instance-level `applyApiErrors(response)`
+  - mapped dotted backend keys such as `uplink_hub_ids.0` back onto the base field when possible
+- Hardened `ui.form.modal` hidden-field layout behavior:
+  - hidden-only rows no longer render empty visible grid rows
+  - hidden fields now render in a dedicated non-visual form container while still participating in payload values
+- Fixed `ui.select` overflow behavior in modals and other clipped containers:
+  - menus now render in a floating body-level layer instead of inside the local overflow container
+  - floating menu positioning now follows the trigger during scroll and resize
+- Updated `demos/demo.form.modal.html` so the proof-oriented examples align to the real PBB HQ targets:
+  - geodata `Hub Add`
+  - `other` deployment `Hub Edit`
+  - `Add Uplink`
+- Expanded `tests/form.modal.regression.html` to cover:
+  - narrow context-strip rendering
+  - dotted backend error mapping to hosted `ui.select`
+  - hidden-only row collapse behavior
+  - body-level floating `ui.select` menus
+
 ### v0.20.6
 
 - Split modal-form regression coverage into two targeted browser harnesses:

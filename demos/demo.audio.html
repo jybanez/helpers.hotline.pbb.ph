@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Audio Session Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -49,12 +49,38 @@
     }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.audio.callSession"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Audio Session",
+      overview: "Operational audio-call session playback surface for stitched incident-call samples.",
+      useWhen: [
+        "Use the audio call-session helper when recorded call segments need a cohesive playback experience.",
+        "Use it for incident-review and call-audit surfaces where segment metadata matters."
+      ],
+      avoidWhen: [
+        "Do not use it as a generic audio player for unrelated media galleries.",
+        "Do not use it when simple browser audio controls are enough."
+      ],
+      description: "The audio demo loads incident sample JSON and resolves segment paths against the repo base. It is an operational playback surface, not a generic entertainment-style media player.",
+      defaultSampleCode: `const session = createAudioCallSession(host, data, {\n  baseUrl: "..",\n});`,
+      constructor: [
+        { factory: "<code>createAudioCallSession(container, data, options)</code>", arguments: "<code>container</code>, call-session <code>data</code>, <code>options</code>", returns: "Audio-session instance" }
+      ],
+      options: [
+        { option: "<code>baseUrl</code>", default: "<code>\"\"</code>", description: "Base URL for relative audio segment paths." }
+      ],
+      methods: [
+        { method: "<code>setData(data)</code>", arguments: "session payload", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="audio-demo-controls">
@@ -102,7 +128,7 @@
   </main>
 
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createAudioCallSession = await uiLoader.get("ui.audio.callSession");
 
@@ -143,7 +169,7 @@
       const available = [];
       for (const name of sampleCandidates) {
         try {
-          await fetchJson(`./samples/${name}`);
+          await fetchJson(`../samples/${name}`);
           available.push(name);
         } catch (error) {
           // skip missing file
@@ -177,7 +203,7 @@
     }
 
     async function mountSelectedSample() {
-      const samplePath = `./samples/${sampleSelect.value}`;
+      const samplePath = `../samples/${sampleSelect.value}`;
       const payload = await fetchJson(samplePath);
       const incident = payload?.incident || {};
       const mediaCount = Array.isArray(incident.media) ? incident.media.length : 0;
@@ -186,6 +212,7 @@
       }
       audioApi = createAudioCallSession(host, incident, {
         ariaLabel: "Incident call session playback",
+        baseUrl: "..",
         audiographStyle: styleSelect.value,
         sensitivity: getSensitivity(),
         showMute: true,

@@ -89,7 +89,7 @@ export const DEFAULT_COMPONENT_REGISTRY = {
   },
   "ui.form.modal": {
     js: "./ui.form.modal.js",
-    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.modal.css", "../../css/ui/ui.form.modal.css"],
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.modal.css", "../../css/ui/ui.form.modal.css", "../../css/ui/ui.select.css"],
     deps: ["ui.action.modal"],
     export: "createFormModal",
   },

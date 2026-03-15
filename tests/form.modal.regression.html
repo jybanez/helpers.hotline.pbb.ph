@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../css/ui/ui.components.css">
   <link rel="stylesheet" href="../css/ui/ui.modal.css">
   <link rel="stylesheet" href="../css/ui/ui.form.modal.css">
+  <link rel="stylesheet" href="../css/ui/ui.select.css">
   <style>
     body {
       margin: 0;
@@ -138,6 +139,183 @@
     await wait(500);
 
     assert(document.querySelector(".ui-modal-root") === null, "truthy submit should close and remove modal root");
+
+    const hubModal = createFormModal({
+      title: "Edit Hub",
+      mode: "edit",
+      submitLabel: "Save Hub",
+      context: {
+        badge: "CITY",
+        summary: "Philippines / Region VII / Cebu / Cebu City",
+      },
+      rows: [
+        [{
+          type: "display",
+          name: "locationSummary",
+          label: "Location",
+          span: 2,
+        }],
+        [
+          {
+            type: "input",
+            input: "text",
+            name: "hub_name",
+            label: "Hub Name",
+            readonlyOn: ["edit"],
+          },
+          {
+            type: "input",
+            input: "text",
+            name: "token",
+            label: "Token",
+            requiredOn: ["create"],
+            hiddenOn: ["edit"],
+          },
+        ],
+        [{ type: "hidden", name: "generated_name", value: "CEBU CITY, CEBU" }],
+        [{ type: "input", input: "text", name: "domain", label: "Domain", value: "city-cebu.pbb.ph", span: 2, required: true }],
+      ],
+      initialValues: {
+        locationSummary: "CEBU CITY, CEBU",
+        hub_name: "CEBU CITY, CEBU",
+      },
+      async onSubmit() {
+        await wait(50);
+        return false;
+      },
+    });
+
+    hubModal.open();
+    await wait(100);
+
+    const getLocationDisplay = () => Array.from(document.querySelectorAll(".ui-form-modal-display-value")).find((node) => node.textContent.includes("CEBU CITY"));
+    const getContextStrip = () => document.querySelector(".ui-form-modal-context");
+    const getHiddenGeneratedName = () => document.querySelector('input[type="hidden"][name="generated_name"]');
+    const getTokenInput = () => document.querySelector('input[name="token"]');
+    const getDomainField = () => document.querySelector('input[name="domain"]')?.closest(".ui-form-modal-field");
+    const getHubNameInput = () => document.querySelector('input[name="hub_name"]');
+    const getRenderedRows = () => Array.from(document.querySelectorAll(".ui-form-modal-rows > .ui-form-modal-row"));
+
+    assert(hubModal.getState().mode === "edit", "getState should expose current mode");
+    assert(getContextStrip()?.textContent.includes("Philippines / Region VII / Cebu / Cebu City"), "context option should render top-level summary strip");
+    assert(Boolean(getLocationDisplay()), "display item should render visible context text");
+    assert(Boolean(getHiddenGeneratedName()), "hidden item should render hidden input");
+    assert(hubModal.getValues().generated_name === "CEBU CITY, CEBU", "hidden item should participate in getValues");
+    assert(getTokenInput() === null, "hiddenOn should omit the field in edit mode");
+    assert(getHubNameInput()?.hasAttribute("readonly"), "readonlyOn should set readonly in edit mode");
+    assert(getDomainField()?.classList.contains("is-span-2"), "span: 2 should apply full-width field class");
+    assert(getRenderedRows().length === 3, "hidden-only rows should not render empty visible rows");
+
+    hubModal.update({ mode: "create" });
+    await wait(100);
+
+    const tokenInputAfterUpdate = getTokenInput();
+    assert(hubModal.getState().mode === "create", "update should apply new mode");
+    assert(Boolean(tokenInputAfterUpdate), "hiddenOn field should render when mode changes");
+    assert(tokenInputAfterUpdate?.hasAttribute("required"), "requiredOn should mark field required in create mode");
+    assert(getRenderedRows().length === 3, "hidden-only rows should stay collapsed even when another field in an existing row becomes visible");
+
+    hubModal.destroy();
+    await wait(80);
+    assert(document.querySelector(".ui-modal-root") === null, "destroy should remove mode/rules modal from DOM");
+
+    const apiErrorsModal = createFormModal({
+      title: "API Error Mapping",
+      submitLabel: "Save",
+      rows: [
+        [{ type: "input", input: "text", name: "domain", label: "Domain", value: "city-cebu.pbb.ph", required: true }],
+      ],
+      async onSubmit(_values, ctx) {
+        await wait(50);
+        ctx.applyApiErrors({
+          errors: {
+            domain: ["Domain already exists."],
+            _form: "Unable to save record.",
+          },
+        });
+        return false;
+      },
+    });
+
+    apiErrorsModal.open();
+    await wait(80);
+    Array.from(document.querySelectorAll(".ui-modal-footer .ui-button")).find((button) => /save/i.test(button.textContent || "")).click();
+    await wait(180);
+
+    const mappedFieldError = document.querySelector('input[name="domain"]')?.closest(".ui-form-modal-field")?.querySelector(".ui-form-modal-field-error");
+    const mappedFormError = document.querySelector(".ui-form-modal-form-error");
+    assert(apiErrorsModal.getState().open === true, "applyApiErrors should keep modal open when submit returns false");
+    assert(mappedFieldError?.textContent.includes("Domain already exists."), "applyApiErrors should map backend field errors");
+    assert(mappedFormError?.textContent.includes("Unable to save record."), "applyApiErrors should map backend form error");
+
+    apiErrorsModal.destroy();
+    await wait(80);
+    assert(document.querySelector(".ui-modal-root") === null, "destroy should remove API error mapping modal from DOM");
+
+    const uplinkModal = createFormModal({
+      title: "Add Uplink",
+      submitLabel: "Save Uplink",
+      rows: [
+        [{
+          type: "ui.select",
+          name: "uplink_hub_ids",
+          label: "Uplinks",
+          searchable: true,
+          multiple: true,
+          closeOnSelect: false,
+          options: [
+            { label: "CEBU CITY CORE", value: "hub-cebu-city" },
+            { label: "MANDAUE CITY CORE", value: "hub-mandaue-city" },
+            { label: "LAPU-LAPU CITY CORE", value: "hub-lapu-lapu-city" },
+          ],
+          required: true,
+        }],
+      ],
+      async onSubmit() {
+        await wait(50);
+        return false;
+      },
+    });
+
+    uplinkModal.open();
+    await wait(100);
+
+    const getUplinkField = () => document.querySelector(".ui-form-modal-field.is-ui-select");
+    const getUplinkTrigger = () => getUplinkField()?.querySelector(".ui-select-trigger");
+    const getUplinkError = () => getUplinkField()?.querySelector(".ui-form-modal-field-error");
+    uplinkModal.setErrors({ uplink_hub_ids: "Select at least one uplink." });
+    await wait(80);
+    assert(getUplinkError()?.textContent.includes("Select at least one uplink."), "ui.select should render helper-applied field error");
+    assert(getUplinkTrigger()?.getAttribute("aria-invalid") === "true", "ui.select trigger should receive aria-invalid on helper error");
+
+    getUplinkTrigger()?.click();
+    await wait(80);
+    const floatingMenu = document.querySelector(".ui-select-menu");
+    assert(Boolean(floatingMenu), "ui.select should render an open menu");
+    assert(floatingMenu?.parentElement === document.body, "ui.select menu should mount at document.body to avoid modal clipping");
+    getUplinkTrigger()?.click();
+    await wait(80);
+
+    uplinkModal.setValues({ uplink_hub_ids: ["hub-cebu-city"] });
+    await wait(80);
+    const uplinkValues = uplinkModal.getValues();
+    assert(Array.isArray(uplinkValues.uplink_hub_ids) && uplinkValues.uplink_hub_ids.length === 1, "ui.select should participate in getValues with selected values");
+
+    uplinkModal.clearErrors();
+    uplinkModal.refs.formError.hidden = true;
+    uplinkModal.refs.formError.textContent = "";
+    const mapped = uplinkModal.applyApiErrors({
+      errors: {
+        "uplink_hub_ids.0": ["Selected uplink is already attached to this hub."],
+      },
+    });
+    await wait(80);
+    assert(mapped.fieldErrors["uplink_hub_ids.0"]?.includes("already attached"), "applyApiErrors should preserve dotted backend keys in the mapped response");
+    assert(getUplinkError()?.textContent.includes("already attached"), "applyApiErrors should map dotted backend keys onto the base ui.select field");
+
+    uplinkModal.destroy();
+    await wait(80);
+    assert(document.querySelector(".ui-modal-root") === null, "destroy should remove ui.select integration modal from DOM");
 
     if (failures.length) {
       document.body.dataset.status = "fail";

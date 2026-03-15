@@ -149,9 +149,16 @@ Never add backend-specific quirks inside helper rendering logic.
      - overlay lock
      - control disabling
      - close suppression while busy
-11. Hierarchy/demo data drift:
-   - When a demo is backed by real dataset extracts, keep the extractor script beside the sample payload.
-   - For `ui.hierarchy.map`, `samples/samplehierarchy_cebu.json` should be regenerated via `scripts/generate.hierarchy.sample.ps1` instead of being hand-edited when the data contract changes.
+11. Hosted select clipping regressions:
+   - `ui.select` menus used inside modals, drawers, or other overflow containers must render in a floating layer instead of the local clipped container.
+   - Do not solve hosted-select clipping with per-app z-index or overflow overrides. Fix it in the shared helper so placement works across shells.
+12. Hidden-field layout regressions in `ui.form.modal`:
+   - Hidden fields are payload concerns, not layout concerns.
+   - Rows with no visible renderable items must not produce visible spacing.
+   - Hidden-only fields should render through a non-visual container while still participating in helper values and submit payloads.
+13. Hierarchy/demo data drift:
+  - When a demo is backed by real dataset extracts, keep the extractor script beside the sample payload.
+  - For `ui.hierarchy.map`, `samples/samplehierarchy_cebu.json` should be regenerated via `scripts/generate.hierarchy.sample.ps1` instead of being hand-edited when the data contract changes.
 
 ## 8) UI Utility Ownership
 
@@ -247,23 +254,26 @@ Rule: add generic behavior to `ui/*`; keep incident domain logic in `incident/*`
 Run this checklist:
 
 1. All demo pages load and interact correctly:
-   - `index.html`
-   - `demo.team.assignments.html`
-   - `demo.incident.types.html`
-   - `demo.grid.html`
-   - `demo.progress.html`
-   - `demo.virtual.list.html`
-   - `demo.scheduler.html`
-   - `demo.timeline.html`
-   - `demo.ui.html`
-   - `demo.audio.html`
-   - `demo.media.viewer.html`
-   - `demo.nav.html`
-   - `demo.stepper.html`
-   - `demo.splitter.html`
-   - `demo.inspector.html`
-   - `demo.empty.state.html`
-   - `demo.skeleton.html`
+   - `demos/index.html`
+   - `demos/demo.team.assignments.html`
+   - `demos/demo.incident.types.html`
+   - `demos/demo.grid.html`
+   - `demos/demo.tree.grid.html`
+   - `demos/demo.hierarchy.map.html`
+   - `demos/demo.progress.html`
+   - `demos/demo.virtual.list.html`
+   - `demos/demo.scheduler.html`
+   - `demos/demo.timeline.html`
+   - `demos/demo.ui.html`
+   - `demos/demo.audio.html`
+   - `demos/demo.media.viewer.html`
+   - `demos/demo.nav.html`
+   - `demos/demo.stepper.html`
+   - `demos/demo.splitter.html`
+   - `demos/demo.inspector.html`
+   - `demos/demo.empty.state.html`
+   - `demos/demo.skeleton.html`
+   - `demos/demo.form.modal.html`
 2. No console errors in normal demo flow.
 3. Required-option behavior still matches contract.
 4. `getData()` output shape unchanged for touched helpers.
@@ -427,23 +437,23 @@ If changing callback signatures or removing methods, plan a major version.
 
 ## 12) Demo Ownership Split
 
-- `demo.ui.html` is for general UI playground and should avoid heavy domain/data-grid scenarios.
-- Grid-focused behavior belongs in `demo.grid.html`:
+- `demos/demo.ui.html` is for general UI playground and should avoid heavy domain/data-grid scenarios.
+- Grid-focused behavior belongs in `demos/demo.grid.html`:
   - local
   - remote
   - large virtualized fixed-height list
-- Timeline-focused behavior belongs in `demo.timeline.html`:
+- Timeline-focused behavior belongs in `demos/demo.timeline.html`:
   - vertical/horizontal timeline
   - scrubber interaction (seek/range/zoom)
-- Media-viewer-focused behavior belongs in `demo.media.viewer.html`.
-- Navigation-focused behavior belongs in `demo.nav.html`.
-- Virtual-list-focused behavior belongs in `demo.virtual.list.html`.
-- Scheduler/calendar-focused behavior belongs in `demo.scheduler.html`.
-- Stepper behavior belongs in `demo.stepper.html`.
-- Splitter behavior belongs in `demo.splitter.html`.
-- Data inspector behavior belongs in `demo.inspector.html`.
-- Empty-state behavior belongs in `demo.empty.state.html`.
-- Skeleton behavior belongs in `demo.skeleton.html`.
+- Media-viewer-focused behavior belongs in `demos/demo.media.viewer.html`.
+- Navigation-focused behavior belongs in `demos/demo.nav.html`.
+- Virtual-list-focused behavior belongs in `demos/demo.virtual.list.html`.
+- Scheduler/calendar-focused behavior belongs in `demos/demo.scheduler.html`.
+- Stepper behavior belongs in `demos/demo.stepper.html`.
+- Splitter behavior belongs in `demos/demo.splitter.html`.
+- Data inspector behavior belongs in `demos/demo.inspector.html`.
+- Empty-state behavior belongs in `demos/demo.empty.state.html`.
+- Skeleton behavior belongs in `demos/demo.skeleton.html`.
 
-When introducing a substantial UI module, prefer a dedicated demo page and link it from `index.html`.
+When introducing a substantial UI module, prefer a dedicated demo page and link it from `demos/index.html`.
 

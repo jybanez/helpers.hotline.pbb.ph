@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Progress Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -82,12 +82,43 @@
     }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.progress"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Progress",
+      overview: "Progress-display helper covering multiple styles such as linear, segmented, and radial variants.",
+      useWhen: [
+        "Use <code>createProgress(...)</code> to show task, upload, or workflow completion visually.",
+        "Use it when the visual treatment matters more than a plain numeric percentage."
+      ],
+      avoidWhen: [
+        "Do not use it for indeterminate page loading where skeletons communicate structure better.",
+        "Do not use it as a substitute for step-navigation; use <code>createStepper(...)</code> when sequence matters."
+      ],
+      description: "Progress is a display helper, not a task container. The demo exists to compare styles and states without mixing in unrelated workflow logic.",
+      sectionSamples: {
+        "live progress": `const progress = createProgress(host, {\n  label: "Live upload",\n  value: 56,\n}, {\n  style: "linear",\n  showPercent: true,\n});`,
+        "style gallery": `["linear", "ring", "segmented"].forEach((style) => {\n  createProgress(card, { value: 64 }, { style });\n});`
+      },
+      constructor: [
+        { factory: "<code>createProgress(container, data, options)</code>", arguments: "<code>container</code>, progress <code>data</code>, <code>options</code>", returns: "Progress instance" }
+      ],
+      options: [
+        { option: "<code>type</code>", default: "documented default", description: "Progress style.", values: ["line", "ring", "segmented"] },
+        { option: "<code>value</code>", default: "<code>0</code>", description: "Current progress value." }
+      ],
+      methods: [
+        { method: "<code>setData(data)</code>", arguments: "progress payload", returns: "<code>void</code>" },
+        { method: "<code>update(nextOptions)</code>", arguments: "partial options", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -141,7 +172,7 @@
   </main>
 
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createProgress = await uiLoader.get("ui.progress");
 

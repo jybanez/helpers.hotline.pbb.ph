@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>helpers.pbb.ph Cookbook</title>
+  <link rel="stylesheet" href="../css/demo/demo.shell.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #0c1017;
+      color: #d7e0f4;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+    .panel {
+      border: 1px solid #263146;
+      border-radius: 12px;
+      background: #111826;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .muted {
+      margin: 0;
+      color: #aebcdc;
+      line-height: 1.55;
+    }
+    .recipes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .recipe {
+      border: 1px solid #334563;
+      border-radius: 10px;
+      background: #0b1423;
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+    }
+    .recipe h3,
+    .recipe p {
+      margin: 0;
+    }
+    .recipe small {
+      color: #aebcdc;
+      line-height: 1.45;
+    }
+    .recipe code {
+      color: #d7e0f4;
+    }
+    .recipe a {
+      color: #8db5ff;
+      text-decoration: none;
+      font-size: 13px;
+    }
+  </style>
+  <script type="module" src="../js/demo/demo.shell.js"></script>
+</head>
+<body>
+  <main class="page">
+    <section class="panel">
+      <h1 style="margin:0;">Operational UI Cookbook</h1>
+      <p class="muted">
+        Use this page to find the right helper flow by common operational task rather than by raw component name.
+        These recipes are intentionally narrow. If a workflow stops fitting the shared pattern cleanly, fall back to
+        the lower-level helper instead of overloading the wrapper.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin:0;">Common Modal Workflows</h2>
+      <div class="recipes">
+        <article class="recipe">
+          <h3>Login</h3>
+          <small>Use <code>createLoginFormModal(...)</code> for shared login structure, busy submit handling, and field-name remapping.</small>
+          <a href="./demo.form.modal.html">Open Form Modal Demo</a>
+        </article>
+        <article class="recipe">
+          <h3>Re-auth</h3>
+          <small>Use <code>createReauthFormModal(...)</code> when a session-sensitive flow requires password confirmation without rebuilding the form.</small>
+          <a href="./demo.form.modal.html">Open Form Modal Demo</a>
+        </article>
+        <article class="recipe">
+          <h3>Status Update</h3>
+          <small>Use <code>createStatusUpdateFormModal(...)</code> for routine state changes with status options, remarks, and optional notify behavior.</small>
+          <a href="./demo.form.modal.html">Open Form Modal Demo</a>
+        </article>
+        <article class="recipe">
+          <h3>Reason Required</h3>
+          <small>Use <code>createReasonFormModal(...)</code> when you need a categorized reason select plus details for audit and reporting.</small>
+          <a href="./demo.form.modal.html">Open Form Modal Demo</a>
+        </article>
+        <article class="recipe">
+          <h3>Alert / Confirm / Prompt</h3>
+          <small>Use <code>uiAlert(...)</code>, <code>uiConfirm(...)</code>, or <code>uiPrompt(...)</code> for short decision flows instead of hand-built modals.</small>
+          <a href="./demo.ui.html">Open UI Utilities Demo</a>
+        </article>
+        <article class="recipe">
+          <h3>Busy Async Form</h3>
+          <small>Use <code>createFormModal(...)</code> or dialog wrappers with helper-owned busy state. Do not rebuild duplicate-submit locking in app code.</small>
+          <a href="./demo.ui.html">Open UI Utilities Demo</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin:0;">Feedback And Messaging</h2>
+      <div class="recipes">
+        <article class="recipe">
+          <h3>Toast Feedback</h3>
+          <small>Use <code>createToastStack(...)</code> for semantic transient feedback, shared status icons, and optional speech.</small>
+          <a href="./demo.ui.html">Open UI Utilities Demo</a>
+        </article>
+        <article class="recipe">
+          <h3>Semantic Dialogs</h3>
+          <small>Use dialog variants and descriptions when you need stronger status framing without building custom dialog chrome.</small>
+          <a href="./demo.ui.html">Open UI Utilities Demo</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin:0;">Data Exploration</h2>
+      <div class="recipes">
+        <article class="recipe">
+          <h3>Flat Data Grid</h3>
+          <small>Use <code>createGrid(...)</code> for flat tabular data, remote query flows, and dense action cells.</small>
+          <a href="./demo.grid.html">Open Grid Demo</a>
+        </article>
+        <article class="recipe">
+          <h3>Tabular Hierarchy</h3>
+          <small>Use <code>createTreeGrid(...)</code> when you need hierarchy with aligned columns, tree-aware search, and virtualization.</small>
+          <a href="./demo.tree.grid.html">Open Tree Grid Demo</a>
+        </article>
+        <article class="recipe">
+          <h3>Visual Hierarchy</h3>
+          <small>Use <code>createHierarchyMap(...)</code> when the hierarchy needs to be read visually and overlay links matter.</small>
+          <a href="./demo.hierarchy.map.html">Open Hierarchy Map Demo</a>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

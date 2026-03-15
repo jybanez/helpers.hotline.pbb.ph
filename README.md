@@ -119,24 +119,30 @@ js/
     incident.types.js
     incident.types.details.editor.js
     incident.types.details.viewer.js
+demos/
+  index.html
+  cookbook.html
+  guide.which-helper.html
+  demo.team.assignments.html
+  demo.incident.types.html
+  demo.grid.html
+  demo.tree.grid.html
+  demo.hierarchy.map.html
+  demo.progress.html
+  demo.virtual.list.html
+  demo.scheduler.html
+  demo.timeline.html
+  demo.ui.html
+  demo.audio.html
+  demo.media.viewer.html
+  demo.nav.html
+  demo.stepper.html
+  demo.splitter.html
+  demo.inspector.html
+  demo.empty.state.html
+  demo.skeleton.html
+  demo.form.modal.html
 index.html
-demo.team.assignments.html
-demo.incident.types.html
-demo.grid.html
-demo.hierarchy.map.html
-demo.progress.html
-demo.virtual.list.html
-demo.scheduler.html
-demo.timeline.html
-demo.ui.html
-demo.audio.html
-demo.media.viewer.html
-demo.nav.html
-demo.stepper.html
-demo.splitter.html
-demo.inspector.html
-demo.empty.state.html
-demo.skeleton.html
 samples/
   samplehierarchy_cebu.json
   sampledata.json
@@ -196,7 +202,7 @@ Reusable shared UI utilities live under `js/ui`:
   - `getVoices()` returns available speech voices so UI can render a voice selector; per-toast `voiceName` override is supported in `show(message, { voiceName })`
 - `ui.form.modal.js`
   - `createFormModal(options)` schema-driven modal form helper for short login/re-auth/CRUD flows using a strict row-based body model over `createActionModal(...)`
-  - exposes helper-owned values, field errors, form error, and busy submit lifecycle without widening the base modal shell contract
+  - exposes helper-owned values, field errors, form error, busy submit lifecycle, declarative mode rules, hidden/display fields, and hosted `ui.select` integration without widening the base modal shell contract
 - `ui.form.modal.presets.js`
   - `createLoginFormModal(options)` opinionated login wrapper over `createFormModal(...)` with field-name remapping support
   - `createReauthFormModal(options)` opinionated re-auth wrapper over `createFormModal(...)` with locked identifier support and field-name remapping
@@ -1116,61 +1122,76 @@ console.log(bc.getItems());
 
 Open from a local server (Apache/WAMP/Nginx):
 
-- `index.html` -> library home page + demo links
-- `demo.team.assignments.html` -> two-column Team Assignments demo
+- `demos/index.html` -> demo catalog and documentation entry points
+- `demos/cookbook.html` -> workflow-first recipe guide for common operational UI patterns
+- `demos/guide.which-helper.html` -> helper decision guide for choosing the narrowest documented component
+- root `index.html` -> lightweight redirect into `demos/index.html`
+- `demos/demo.team.assignments.html` -> two-column Team Assignments demo
   - left: editable list helper
   - right: read-only list helper
   - right column mirrors left via `setList(items[])`
-- `demo.incident.types.html` -> Incident Types demo
+- `demos/demo.incident.types.html` -> Incident Types demo
   - left: editable list helper
   - right: viewer list helper
   - right column mirrors left via `setList(items[])`
-- `demo.grid.html` -> dedicated grid demo
+- `demos/demo.grid.html` -> dedicated grid demo
   - local grid (client search/sort/pagination)
   - remote grid (query-driven updates)
   - large virtualized grid with fixed-height scrolling
-- `demo.progress.html` -> progress styles demo
+- `demos/demo.tree.grid.html` -> dedicated tree-grid playground
+  - expandable hierarchy in tabular columns
+  - tree-aware search and lazy loading
+  - fixed-row-height virtualization
+- `demos/demo.hierarchy.map.html` -> dedicated hierarchy-map playground
+  - hierarchy-first visual exploration
+  - external entity lane and overlay links
+  - zoom/pan and search
+- `demos/demo.progress.html` -> progress styles demo
   - live configurable progress
   - style gallery for all rendering variants
-- `demo.virtual.list.html` -> dedicated virtual-list playground
+- `demos/demo.virtual.list.html` -> dedicated virtual-list playground
   - large row-set windowing
   - `scrollToIndex(...)` controls
   - visible-range callback logging
-- `demo.scheduler.html` -> dedicated scheduler/calendar playground
+- `demos/demo.scheduler.html` -> dedicated scheduler/calendar playground
   - month/week views
   - slot and event callback interactions
-- `demo.ui.html` -> UI utilities playground
+- `demos/demo.ui.html` -> UI utilities playground
   - modal, dialog, toast, select, datepicker, command palette, tree, kanban, file uploader, drawer, search, tabs, strips, media strip
-- `demo.media.viewer.html` -> dedicated media-viewer playground
+- `demos/demo.media.viewer.html` -> dedicated media-viewer playground
   - standalone image/video viewer
   - zoom/pan + fit modes
   - optional video audiograph
-- `demo.timeline.html` -> dedicated timeline playground
+- `demos/demo.timeline.html` -> dedicated timeline playground
   - vertical grouped timeline
   - horizontal timeline
   - timeline scrubber with seek/range/zoom
   - scrubber updates active timeline item (highlight + horizontal auto-scroll)
-- `demo.audio.html` -> audio player + stacked role audiographs
+- `demos/demo.audio.html` -> audio player + stacked role audiographs
   - sample selector for available `sampledata_*.json`
   - graph style selector
   - sensitivity slider
   - theme toggle
-- `demo.nav.html` -> navigation/menu utilities playground
+- `demos/demo.nav.html` -> navigation/menu utilities playground
   - navbar, sidebar, breadcrumbs, dropdown, dropup
-- `demo.stepper.html` -> dedicated stepper playground
+- `demos/demo.stepper.html` -> dedicated stepper playground
   - workflow progression states
   - orientation toggle + step navigation
-- `demo.splitter.html` -> dedicated splitter playground
+- `demos/demo.splitter.html` -> dedicated splitter playground
   - horizontal and vertical pane resizing
   - pointer + keyboard resize behavior
-- `demo.inspector.html` -> dedicated data inspector playground
+- `demos/demo.inspector.html` -> dedicated data inspector playground
   - nested object/array inspection
   - copy-path interactions
-- `demo.empty.state.html` -> dedicated empty-state playground
+- `demos/demo.empty.state.html` -> dedicated empty-state playground
   - action callbacks and icon/title/description variants
-- `demo.skeleton.html` -> dedicated skeleton playground
+- `demos/demo.skeleton.html` -> dedicated skeleton playground
   - lines/card/grid variants
   - animation toggle
+- `demos/demo.form.modal.html` -> dedicated form-modal playground
+  - base `createFormModal(...)`
+  - login / re-auth / status / reason presets
+  - remapped payload previews
 
 Demo pages load:
 
@@ -1431,45 +1452,83 @@ const drawer = createBottomDrawer({
 drawer.open(document.body);
 ```
 
+Related demos:
+
+- `demos/demo.drawers.html`
+
 ### `createModal(options)` (`js/ui/ui.modal.js`)
 
 Purpose:
 
 - General-purpose modal shell for custom content, forms, media, and reusable overlays.
 
-Key options:
+Factory:
 
+```js
+import { createModal } from "./js/ui/ui.modal.js";
+
+const modal = createModal(options);
+```
+
+Options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `title` | `string` | `""` | no | Header title text. |
+| `content` | `string \| HTMLElement \| (() => HTMLElement)` | `""` | no | Body content source. |
+| `headerActions` | `string \| HTMLElement \| HTMLElement[] \| (() => HTMLElement)` | `null` | no | Custom header action content. |
+| `footer` | `string \| HTMLElement \| (() => HTMLElement)` | `null` | no | Custom footer content. |
+| `size` | `"sm" \| "md" \| "lg" \| "xl" \| "full"` | `"md"` | no | Modal width preset. |
+| `position` | `"center" \| "top"` | `"center"` | no | Vertical placement. |
+| `showHeader` | `boolean` | `true` | no | Shows modal header shell. |
+| `showCloseButton` | `boolean` | `true` | no | Shows header close button. |
+| `closeOnBackdrop` | `boolean` | `true` | no | Allows backdrop click close. |
+| `closeOnEscape` | `boolean` | `true` | no | Allows `Esc` close. |
+| `busy` | `boolean` | `false` | no | Opens the modal in busy state. |
+| `busyMessage` | `string` | `""` | no | Busy overlay status text. |
+| `closeWhileBusy` | `boolean` | `false` | no | Allows explicit close while busy. |
+| `backdropCloseWhileBusy` | `boolean` | `false` | no | Allows backdrop close while busy. |
+| `escapeCloseWhileBusy` | `boolean` | `false` | no | Allows `Esc` close while busy. |
+| `trapFocus` | `boolean` | `true` | no | Keeps keyboard focus inside the modal while open. |
+| `lockScroll` | `boolean` | `true` | no | Locks page scroll while open. |
+| `initialFocus` | `string \| HTMLElement \| ((panel) => HTMLElement)` | `null` | no | Initial focus target on open. |
+| `className` | `string` | `""` | no | Extra panel/root classes. |
+| `onOpen` | `(ctx) => void` | `null` | no | Fires after open completes. |
+| `onBeforeClose` | `(meta) => boolean \| Promise<boolean>` | `null` | no | Can veto close by returning `false`. |
+| `onClose` | `(meta) => void` | `null` | no | Fires after close completes. |
+
+Events / callbacks:
+
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onOpen` | `{ modal, refs, state }` | `void` | Fired after the modal opens. |
+| `onBeforeClose` | `meta` | `boolean \| Promise<boolean>` | Return `false` to block close. |
+| `onClose` | `meta` | `void` | Fired after the modal closes. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `open` | `content?, nextOptions?` | `Promise<void>` | Opens the modal and optionally swaps content/options first. |
+| `close` | `meta?` | `Promise<boolean>` | Attempts to close and respects `onBeforeClose`. |
+| `update` | `nextOptions?` | `void` | Updates modal options without remounting. |
+| `setContent` | `content` | `void` | Replaces body content. |
+| `setHeaderActions` | `headerActions` | `void` | Replaces header actions. |
+| `setFooter` | `footer` | `void` | Replaces footer content. |
+| `setTitle` | `title` | `void` | Updates header title. |
+| `setBusy` | `isBusy, { message? }` | `void` | Toggles helper-owned busy lock state. |
+| `isBusy` | none | `boolean` | Returns current busy state. |
+| `getState` | none | `object` | Returns current modal state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Returned refs:
+
+- `panel`
+- `body`
+- `header`
 - `title`
-- `content` (`string | HTMLElement | () => HTMLElement`)
-- `headerActions` (`string | HTMLElement | HTMLElement[] | () => HTMLElement`)
-- `footer` (`string | HTMLElement | () => HTMLElement`)
-- `size`: `"sm" | "md" | "lg" | "xl" | "full"`
-- `position`: `"center" | "top"`
-- `showHeader`, `showCloseButton`
-- `closeOnBackdrop`, `closeOnEscape`
-- `busy`
-- `busyMessage`
-- `closeWhileBusy`
-- `backdropCloseWhileBusy`
-- `escapeCloseWhileBusy`
-- `trapFocus`, `lockScroll`
-- `initialFocus` (`selector | HTMLElement | (panel) => HTMLElement`)
-- `className`
-- `onOpen(ctx)`, `onBeforeClose(meta)`, `onClose(meta)`
-
-Methods:
-
-- `open(content?, nextOptions?)`
-- `close(meta?)`
-- `update(nextOptions?)`
-- `setContent(content)`
-- `setHeaderActions(headerActions)`
-- `setFooter(footer)`
-- `setTitle(title)`
-- `setBusy(isBusy, { message? })`
-- `isBusy()`
-- `destroy()`
-- `getState()`
+- `closeButton`
+- `backdrop`
 
 Busy-state behavior:
 
@@ -1505,36 +1564,63 @@ modal.setBusy(false);
 modal.close({ reason: "done" });
 ```
 
+Related demos:
+
+- `demos/demo.modal.html`
+
 ### `createActionModal(options)` (`js/ui/ui.modal.js`)
 
 Purpose:
 
 - Faster modal setup when footer buttons are known up front.
 
-Key options:
+Factory:
 
-- all `createModal(...)` options
-- `autoBusy` (default `true`)
-- `headerActions`: array of button actions using the same action object contract as footer `actions`
-- `actions`: array of button actions
-  - `id`
-  - `label` (required)
-  - `variant`: `"default" | "primary" | "danger" | "ghost"`
-  - `icon`: SVG/HTML string
-  - `iconPosition`: `"start" | "end"`
-  - `iconOnly`
-  - `ariaLabel` (recommended when `iconOnly: true`)
-  - `busyMessage`
-  - `closeOnClick` (default `true`)
-  - `disabled`
-  - `autoFocus`
-  - `onClick({ action, modal, event, placement })` (can return `false` to prevent close)
+```js
+import { createActionModal } from "./js/ui/ui.modal.js";
 
-Methods:
+const modal = createActionModal(options);
+```
 
-- all `createModal(...)` methods
-- `setHeaderActions(actions[])`
-- `setActions(actions[])`
+Options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| All `createModal(...)` options | inherited | inherited | no | Base modal-shell options remain available. |
+| `autoBusy` | `boolean` | `true` | no | Automatically enters busy state for promise-returning actions. |
+| `headerActions` | `Action[]` | `[]` | no | Declarative header action buttons. |
+| `actions` | `Action[]` | `[]` | no | Declarative footer action buttons. |
+
+Action object contract:
+
+| Property | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `id` | `string` | `""` | no | Stable action identifier. |
+| `label` | `string` | - | yes | Visible button label. |
+| `variant` | `"default" \| "primary" \| "danger" \| "ghost"` | `"default"` | no | Shared button emphasis preset. |
+| `icon` | `string` | `null` | no | SVG/HTML icon markup. |
+| `iconPosition` | `"start" \| "end"` | `"start"` | no | Icon placement relative to label. |
+| `iconOnly` | `boolean` | `false` | no | Renders icon-only action. |
+| `ariaLabel` | `string` | `""` | no | Accessible label for icon-only actions. |
+| `busyMessage` | `string` | `""` | no | Per-action busy text when auto-busy is active. |
+| `closeOnClick` | `boolean` | `true` | no | Controls default close on truthy result. |
+| `disabled` | `boolean` | `false` | no | Starts the action disabled. |
+| `autoFocus` | `boolean` | `false` | no | Autofocuses the action on open. |
+| `onClick` | `({ action, modal, event, placement }) => any` | `null` | no | Action click handler; can return `false` to keep the modal open. |
+
+Events / callbacks:
+
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `action.onClick` | `{ action, modal, event, placement }` | `any \| Promise<any>` | Action handler for header/footer buttons. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| All `createModal(...)` methods | inherited | inherited | Base modal API remains available. |
+| `setHeaderActions` | `actions[]` | `void` | Replaces declarative header actions. |
+| `setActions` | `actions[]` | `void` | Replaces declarative footer actions. |
 
 Auto-busy behavior:
 
@@ -1546,6 +1632,10 @@ Auto-busy behavior:
   - resolved `false` keeps the modal open
   - rejected promise keeps the modal open
   - resolved truthy value closes when `closeOnClick !== false`
+
+Related demos:
+
+- `demos/demo.action.modal.html`
 
 ### `createFormModal(options)` (`js/ui/ui.form.modal.js`)
 
@@ -1559,28 +1649,40 @@ Architecture:
 - Reuses helper-owned modal busy-state, close, and focus behavior
 - Keeps the public action contract narrow to standard cancel/submit flows in V1
 
-Key options:
+Factory:
 
-- safe applicable modal options such as `title`, `size`, `className`, `showCloseButton`, `closeOnBackdrop`, `closeOnEscape`, `busyMessage`
-- `rows`: array of row arrays
-  - one item in a row => full width
-  - two items in a row => equal-width columns
-  - more than two items => rejected or normalized conservatively
-- `initialValues`
-- `submitLabel`
-- `cancelLabel`
-- `submitVariant`
-- `submitIcon`
-- `cancelIcon`
-- `closeOnSuccess` (default `true`)
-- `onSubmit(values, ctx)`
-- `onChange(values, ctx)` optional
+```js
+import { createFormModal } from "./js/ui/ui.form.modal.js";
+
+const formModal = createFormModal(options);
+```
+
+Options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| Safe modal options | inherited | inherited | no | Accepts modal-shell options such as `title`, `size`, `className`, `showCloseButton`, `closeOnBackdrop`, `closeOnEscape`, `busyMessage`. |
+| `rows` | `Array<Array<FormItem>>` | `[]` | yes | Strict V1 row model for form body layout. |
+| `initialValues` | `object` | `{}` | no | Initial field values keyed by field name. |
+| `context` | `{ badge?, summary?, kind? }` | `null` | no | Narrow top-level context strip for acceptance-target flows such as geodata-driven hub editing. |
+| `mode` | `string` | `""` | no | Declarative form mode used by first-pass rule evaluation. |
+| `submitLabel` | `string` | `"Submit"` | no | Submit action label. |
+| `cancelLabel` | `string` | `"Cancel"` | no | Cancel action label. |
+| `submitVariant` | `string` | `"primary"` | no | Submit button variant. |
+| `submitIcon` | `string` | `null` | no | Submit button icon markup. |
+| `cancelIcon` | `string` | `null` | no | Cancel button icon markup. |
+| `closeOnSuccess` | `boolean` | `true` | no | Closes modal on truthy submit result. |
+| `onSubmit` | `(values, ctx) => any` | `null` | no | Submit handler. |
+| `onChange` | `(values, ctx) => void` | `null` | no | Fires on form value change. |
 
 Supported V1 item types:
 
 - `text`
 - `alert`
 - `divider`
+- `hidden`
+- `display`
+- `ui.select`
 - `input`
 - `textarea`
 - `select`
@@ -1603,24 +1705,73 @@ Field properties:
 - `value`
 - `placeholder`
 - `required`
+- `requiredOn`
 - `disabled`
 - `readonly`
+- `readonlyOn`
+- `hiddenOn`
 - `autocomplete`
 - `min`
 - `max`
 - `step`
 - `options`
 - `help`
+- `span`
 
-Methods:
+`ui.select` field properties:
 
-- all modal-instance methods such as `open()`, `close()`, `destroy()`, `setBusy()`, `isBusy()`
-- `getValues()`
-- `setValues(values)`
-- `setErrors(fieldErrors)`
-- `clearErrors()`
-- `setFormError(message)`
-- `clearFormError()`
+- `options` or `items`
+- `placeholder`
+- `emptyText`
+- `searchable`
+- `multiple`
+- `closeOnSelect`
+- `selectOnTab`
+- `clearable`
+
+Row model:
+
+| Row shape | Behavior |
+|---|---|
+| 1 item | Full-width row |
+| 2 items | Equal-width two-column row |
+| More than 2 items | Rejected or normalized conservatively in V1 |
+
+Layout notes:
+
+- `span: 2` allows an item to span both row columns while preserving the narrow two-column model.
+- `hidden` items do not count toward the visible row-column layout.
+
+Events / callbacks:
+
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onSubmit` | `values, ctx` | `any \| Promise<any>` | Submit handler. Truthy result closes by default. |
+| `onChange` | `values, ctx` | `void` | Fires on field changes. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| Modal instance methods | inherited | inherited | Includes `open()`, `close()`, `destroy()`, `setBusy()`, `isBusy()`. |
+| `update` | `nextOptions` | `void` | Re-renders form rows/options and updates the composed action modal. |
+| `getState` | none | `object` | Returns modal state plus current `mode` and current form `values`. |
+| `getValues` | none | `object` | Returns current form values. |
+| `setValues` | `values` | `void` | Updates current form values. |
+| `setErrors` | `fieldErrors` | `void` | Applies field-level errors by field name. |
+| `clearErrors` | none | `void` | Clears field-level errors. |
+| `setFormError` | `message` | `void` | Applies a form-level error message. |
+| `clearFormError` | none | `void` | Clears the form-level error message. |
+| `applyApiErrors` | `response` | `{ fieldErrors, formError }` | Maps common backend error payloads onto helper field/form errors. |
+
+Submit context helpers:
+
+| Helper | Arguments | Returns | Description |
+|---|---|---|---|
+| `ctx.setErrors` | `fieldErrors` | `void` | Applies field errors from submit logic. |
+| `ctx.setFormError` | `message` | `void` | Applies a form-level error from submit logic. |
+| `ctx.applyApiErrors` | `response` | `{ fieldErrors, formError }` | Maps common backend error shapes into helper field/form errors. |
+| `ctx.mode` | none | `string` | Current declarative form mode. |
 
 Validation and submit behavior:
 
@@ -1629,6 +1780,13 @@ Validation and submit behavior:
 - first invalid field receives focus on helper validation failure
 - truthy async submit result closes by default
 - falsy or rejected submit keeps the modal open
+- `requiredOn`, `hiddenOn`, and `readonlyOn` are first-pass declarative mode rules
+- `context` is intentionally narrow and exists to cover real acceptance-target header/context needs without reopening a larger form-builder surface
+- `display` is visual-only and does not participate in payload output
+- `hidden` participates in payload output without rendering visible validation UI
+- dotted backend error keys such as `uplink_hub_ids.0` map back onto the base field when possible
+- `ui.select` hosts the existing shared select helper inside the form modal instead of introducing a second select system
+- hosted `ui.select` menus render in a floating body-level layer so they are not clipped by modal or drawer overflow containers
 
 Example:
 
@@ -1657,6 +1815,12 @@ const formModal = createFormModal({
 formModal.open();
 ```
 
+Related demos:
+
+- `demos/demo.dialog.alert.html`
+- `demos/demo.dialog.confirm.html`
+- `demos/demo.dialog.prompt.html`
+
 ### `createLoginFormModal(options)`, `createReauthFormModal(options)`, `createStatusUpdateFormModal(options)`, `createReasonFormModal(options)` (`js/ui/ui.form.modal.presets.js`)
 
 Purpose:
@@ -1668,81 +1832,38 @@ Design rule:
 - wrappers own structure and defaults
 - engineers can still provide field-name mappings and submit behavior
 
-`createLoginFormModal(options)` supports:
+Preset summary:
 
-- `title`
-- `message`
-- `submitLabel`
-- `busyMessage`
-- `identifierKind: "email" | "username"`
-- `identifierLabel`
-- `identifierPlaceholder`
-- `identifierAutocomplete`
-- `passwordLabel`
-- `passwordPlaceholder`
-- `fields`
-  - `identifier`
-  - `password`
-- `initialValues`
-- `onSubmit(values, ctx)`
+| Factory | Primary use | App-supplied vocabulary | Field remapping |
+|---|---|---|---|
+| `createLoginFormModal(...)` | Shared login flow | no | `identifier`, `password` |
+| `createReauthFormModal(...)` | Re-auth/session confirmation | no | `identifier`, `password` |
+| `createStatusUpdateFormModal(...)` | Operational status update | `statusOptions` | `status`, `remarks`, `notify` |
+| `createReasonFormModal(...)` | Categorized reason-required flow | `reasonOptions` | `reasonCode`, `reasonDetails`, `confirmText`, `notify` |
 
-`createReauthFormModal(options)` supports:
+Common preset rules:
 
-- `title`
-- `message`
-- `submitLabel`
-- `busyMessage`
-- `identifierKind: "email" | "username"`
-- `identifierLabel`
-- `identifierValue`
-- `passwordLabel`
-- `passwordPlaceholder`
-- `fields`
-  - `identifier`
-  - `password`
-- `initialValues`
-- `onSubmit(values, ctx)`
+| Rule | Description |
+|---|---|
+| Structure ownership | Helper owns row structure, ordering, and validation defaults. |
+| Field-name mapping | Engineers can remap payload field names to match project backends. |
+| Busy behavior | Presets reuse `createFormModal(...)` busy submit handling. |
+| Submit behavior | App code still owns the actual `onSubmit(values, ctx)` implementation. |
 
-`createStatusUpdateFormModal(options)` supports:
+Preset options:
 
-- `title`
-- `message`
-- `submitLabel`
-- `busyMessage`
-- `statusOptions`
-- `statusLabel`
-- `remarksLabel`
-- `remarksPlaceholder`
-- `showNotify`
-- `notifyLabel`
-- `fields`
-  - `status`
-  - `remarks`
-  - `notify`
-- `initialValues`
-- `onSubmit(values, ctx)`
+| Factory | Notable options |
+|---|---|
+| `createLoginFormModal(...)` | `title`, `message`, `submitLabel`, `busyMessage`, `identifierKind`, `identifierLabel`, `identifierPlaceholder`, `identifierAutocomplete`, `passwordLabel`, `passwordPlaceholder`, `fields`, `initialValues`, `onSubmit` |
+| `createReauthFormModal(...)` | `title`, `message`, `submitLabel`, `busyMessage`, `identifierKind`, `identifierLabel`, `identifierValue`, `passwordLabel`, `passwordPlaceholder`, `fields`, `initialValues`, `onSubmit` |
+| `createStatusUpdateFormModal(...)` | `title`, `message`, `submitLabel`, `busyMessage`, `statusOptions`, `statusLabel`, `remarksLabel`, `remarksPlaceholder`, `showNotify`, `notifyLabel`, `fields`, `initialValues`, `onSubmit` |
+| `createReasonFormModal(...)` | `title`, `message`, `submitLabel`, `busyMessage`, `reasonOptions`, `reasonLabel`, `detailsLabel`, `detailsPlaceholder`, `confirmPhrase`, `confirmLabel`, `showNotify`, `notifyLabel`, `fields`, `initialValues`, `onSubmit` |
 
-`createReasonFormModal(options)` supports:
+Returned API:
 
-- `title`
-- `message`
-- `submitLabel`
-- `busyMessage`
-- `reasonOptions`
-- `reasonLabel`
-- `detailsLabel`
-- `detailsPlaceholder`
-- `confirmPhrase`
-- `confirmLabel`
-- `showNotify`
-- `notifyLabel`
-- `fields`
-  - `reasonCode`
-  - `reasonDetails`
-  - `confirmText`
-  - `notify`
-- `initialValues`
-- `onSubmit(values, ctx)`
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| Preset instance methods | inherited | inherited | Presets return the same API shape as `createFormModal(...)`. |
 
 Example:
 
@@ -1770,58 +1891,64 @@ const modal = createLoginFormModal({
 modal.open();
 ```
 
+Related demos:
+
+- `demos/demo.form.modal.html`
+
 ### `uiAlert(message, options)`, `uiConfirm(message, options)`, `uiPrompt(message, options)` (`js/ui/ui.dialog.js`)
 
 Purpose:
 
 - Promise-based convenience dialogs built on top of `createActionModal(...)`.
 
+Factory:
+
+```js
+const result = await uiConfirm(message, options);
+```
+
 Shared options:
 
-- modal shell options such as `title`, `size`, `className`, `showCloseButton`, `allowBackdropClose`, `allowEscClose`
-- `headerActions`: declarative header action objects using the same contract as `createActionModal(...)`
-- `variant`: `default | success | info | warning | error`
-  - applies semantic dialog styling without changing the underlying modal shell contract
-  - `uiConfirm(...)` and `uiPrompt(...)` also use the dialog variant to choose a safer default emphasis for the primary action:
-    - `warning` / `error` => default primary action emphasis becomes `danger`
-    - `success` / `info` => default primary action emphasis remains `primary`
-- `description`: optional secondary guidance text shown below the main dialog message
-- semantic icon options:
-  - `showVariantIcon`: `false` to suppress the built-in status icon
-  - `variantIcon`: custom SVG markup to replace the built-in status icon for non-`default` variants
-- optional speech options:
-  - `speak`: `true` to read the dialog after open
-  - `speakText`: custom text to read instead of the default title/message/description composition
-  - `voiceName`: preferred speech-synthesis voice name
-  - `speakRate`
-  - `speakPitch`
-  - `speakVolume`
+| Option | Type | Default | Applies to | Description |
+|---|---|---:|---|---|
+| Modal shell options | inherited | inherited | all | Supports shell options such as `title`, `size`, `className`, `showCloseButton`, `allowBackdropClose`, `allowEscClose`. |
+| `headerActions` | `Action[]` | `[]` | all | Declarative header actions using the same contract as `createActionModal(...)`. |
+| `variant` | `"default" \| "success" \| "info" \| "warning" \| "error"` | `"default"` | all | Dialog-level semantic styling. |
+| `description` | `string` | `""` | all | Secondary guidance text shown below the main message. |
+| `showVariantIcon` | `boolean` | `true` for non-default variants | all | Suppresses built-in semantic status icon when `false`. |
+| `variantIcon` | `string` | `null` | all | Custom SVG markup replacing the built-in semantic icon. |
+| `speak` | `boolean` | `false` | all | Speaks dialog content after open. |
+| `speakText` | `string` | `""` | all | Custom speech text override. |
+| `voiceName` | `string` | `""` | all | Preferred speech-synthesis voice. |
+| `speakRate` | `number` | speech default | all | Speech rate override. |
+| `speakPitch` | `number` | speech default | all | Speech pitch override. |
+| `speakVolume` | `number` | speech default | all | Speech volume override. |
 
-Icon-capable action options:
+Variant behavior:
 
-- `uiAlert(...)`
-  - `okIcon`
-  - `okIconPosition`
-  - `okIconOnly`
-  - `okAriaLabel`
-- `uiConfirm(...)`
-  - `cancelIcon`
-  - `cancelIconPosition`
-  - `cancelIconOnly`
-  - `cancelAriaLabel`
-  - `confirmIcon`
-  - `confirmIconPosition`
-  - `confirmIconOnly`
-  - `confirmAriaLabel`
-- `uiPrompt(...)`
-  - `cancelIcon`
-  - `cancelIconPosition`
-  - `cancelIconOnly`
-  - `cancelAriaLabel`
-  - `submitIcon`
-  - `submitIconPosition`
-  - `submitIconOnly`
-  - `submitAriaLabel`
+| Variant | Default primary emphasis |
+|---|---|
+| `default` | standard button emphasis |
+| `success` | `primary` |
+| `info` | `primary` |
+| `warning` | `danger` for confirm/prompt primary action |
+| `error` | `danger` for confirm/prompt primary action |
+
+Action-icon options:
+
+| Helper | Icon options |
+|---|---|
+| `uiAlert(...)` | `okIcon`, `okIconPosition`, `okIconOnly`, `okAriaLabel` |
+| `uiConfirm(...)` | `cancelIcon`, `cancelIconPosition`, `cancelIconOnly`, `cancelAriaLabel`, `confirmIcon`, `confirmIconPosition`, `confirmIconOnly`, `confirmAriaLabel` |
+| `uiPrompt(...)` | `cancelIcon`, `cancelIconPosition`, `cancelIconOnly`, `cancelAriaLabel`, `submitIcon`, `submitIconPosition`, `submitIconOnly`, `submitAriaLabel` |
+
+Returned values:
+
+| Helper | Returns |
+|---|---|
+| `uiAlert(...)` | `Promise<void>` |
+| `uiConfirm(...)` | `Promise<boolean>` |
+| `uiPrompt(...)` | `Promise<string \| null>` |
 
 Example:
 
@@ -1845,41 +1972,89 @@ const confirmed = await uiConfirm("Proceed with dispatch?", {
 });
 ```
 
+Related demos:
+
+- `demos/demo.command.palette.html`
+
+### `createToastStack(options)` (`js/ui/ui.toast.js`)
+
+Purpose:
+
+- Global toast-notification stack for transient feedback, semantic status messaging, and optional speech synthesis.
+
+Factory:
+
+```js
+import { createToastStack } from "./js/ui/ui.toast.js";
+
+const toasts = createToastStack(options);
+```
+
+Options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `position` | `string` | `"top-right"` | no | Toast stack placement. |
+| `maxVisible` | `number` | `4` | no | Maximum visible toasts before queueing. |
+| `duration` | `number` | `4000` | no | Default auto-dismiss duration in milliseconds. |
+| `speak` | `boolean` | `false` | no | Enables speech synthesis for matching toasts. |
+| `speakTypes` | `string[]` | `[]` | no | Restricts speech to selected toast variants. |
+| `voiceName` | `string` | `""` | no | Preferred speech voice. |
+| `speakRate` | `number` | speech default | no | Speech rate override. |
+| `speakPitch` | `number` | speech default | no | Speech pitch override. |
+| `speakVolume` | `number` | speech default | no | Speech volume override. |
+| `speakFormatter` | `(toast) => string` | `null` | no | Custom speech text formatter. |
+| `speakCooldownMs` | `number` | `0` | no | Prevents repeated speech in quick succession. |
+| `waitForSpeechBeforeDismiss` | `boolean` | `true` | no | Defers auto-dismiss countdown until speech ends. |
+| `showVariantIcon` | `boolean` | `true` | no | Shows built-in semantic icons by default. |
+| `variantIcon` | `string` | `null` | no | Replaces built-in semantic icon globally. |
+
+Per-toast `show(...)` options:
+
+| Option | Type | Default | Description |
+|---|---|---:|---|
+| `type` | `"info" \| "success" \| "warning" \| "error"` | `"info"` | Semantic toast variant. |
+| `title` | `string` | `""` | Optional toast heading. |
+| `duration` | `number` | stack default | Per-toast auto-dismiss duration. |
+| `showVariantIcon` | `boolean` | stack/default behavior | Suppresses semantic icon per toast. |
+| `variantIcon` | `string` | `null` | Custom icon per toast. |
+| `speak` | `boolean` | stack/default behavior | Enables or suppresses speech per toast. |
+| `voiceName` | `string` | stack/default behavior | Per-toast voice override. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `show` | `message, options?` | `string \| object` | Adds a toast and returns a handle/id. |
+| `dismiss` | `id` | `void` | Removes a single toast. |
+| `clear` | none | `void` | Clears all toasts. |
+| `getVoices` | none | `SpeechSynthesisVoice[]` | Returns available voices for UI selection. |
+| `getState` | none | `object` | Returns current queue/visible state. |
+| `destroy` | none | `void` | Removes stack DOM and listeners. |
+
+Behavior notes:
+
+- Dialog and toast semantic icons share the same helper-owned icon language.
+- Speech is opt-in and should remain explicit in app integrations.
+- When `waitForSpeechBeforeDismiss` is enabled, spoken toasts remain visible until narration completes.
+
 Example:
 
 ```js
-import { createActionModal } from "./js/ui/ui.modal.js";
+import { createToastStack } from "./js/ui/ui.toast.js";
 
-const modal = createActionModal({
-  title: "Delete Record",
-  content: "This action cannot be undone.",
-  headerActions: [
-    {
-      id: "preview",
-      label: "Preview",
-      variant: "ghost",
-      onClick() {
-        return false;
-      },
-    },
-  ],
-  actions: [
-    { id: "cancel", label: "Cancel", variant: "ghost" },
-    {
-      id: "delete",
-      label: "Delete",
-      variant: "danger",
-      icon: "<svg viewBox='0 0 24 24'><path d='M9 3h6l1 2h4v2H4V5h4l1-2Zm1 7h2v8h-2v-8Zm4 0h2v8h-2v-8ZM7 10h2v8H7v-8Z'/></svg>",
-      autoFocus: true,
-      async onClick() {
-        await apiDeleteRecord();
-      },
-    },
-  ],
+const toasts = createToastStack({
+  speak: true,
+  speakTypes: ["error"],
 });
 
-modal.open();
+toasts.show("Settings saved.", { type: "success", title: "Saved" });
+toasts.show("Unable to reach gateway.", { type: "error", speak: true });
 ```
+
+Related demos:
+
+- `demos/demo.tree.html`
 
 ### `createGrid(container, rows, options)` (`js/ui/ui.grid.js`)
 
@@ -1889,58 +2064,83 @@ Purpose:
 
 Modes:
 
-- `mode: "local"`: grid applies search/sort/pagination in component.
-- `mode: "remote"`: grid emits query changes; parent fetches and updates rows.
+| Mode | Behavior |
+|---|---|
+| `local` | Grid applies search, sort, and pagination internally. |
+| `remote` | Grid emits query changes; parent fetches and updates rows. |
 
-Core options:
+Factory:
 
-- `columns`: array of column definitions
-  - `key`, `label`
-  - optional: `width`, `align`, `sortable`
-  - optional render hooks: `format(value, row)`, `renderCell({ row, value, key, column })`
-- `rowKey`: string key or function `(row, index) => key`
-- `selectable`: `"none" | "single" | "multi"`
-- `selectedKeys`: initial selected row keys
-- capability toggles:
-  - `enableSort`
-  - `enableSearch`
-  - `enablePagination`
-  - `enableColumnResize`
-  - `enableVirtualization`
-- column resize options:
-  - `minColumnWidth` (default `72`)
-  - `columnWidths` (object map by `column.key`, e.g. `{ status: 160 }`)
-- content wrapping options:
-  - `wrapCellContent` (default `true`) global cell wrapping behavior
-  - per-column override: `column.wrap` (`true|false`)
-- search options:
-  - `search`, `searchPlaceholder`
-- paging options:
-  - `page`, `pageSize`, `pageSizeOptions`, `totalRows` (remote)
-- virtualization options:
-  - `virtualRowHeight` (default `40`)
-  - `virtualOverscan` (default `8`)
-  - `virtualThreshold` (default `80`)
-- state display:
-  - `loading`, `errorText`, `emptyText`
+```js
+import { createGrid } from "./js/ui/ui.grid.js";
 
-Events:
+const grid = createGrid(container, rows, options);
+```
 
-- `onRowClick(row, meta)`
-- `onSelectionChange(selectedRows, selectedKeys)`
-- `onQueryChange(query)` (remote mode)
-- `onColumnResize({ key, width, columnWidths })`
+Options:
 
-Methods:
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `mode` | `"local" \| "remote"` | `"local"` | no | Chooses internal vs app-owned querying behavior. |
+| `columns` | `Column[]` | `[]` | yes | Column definitions. |
+| `rowKey` | `string \| ((row, index) => key)` | `"id"` | no | Stable row identifier. |
+| `selectable` | `"none" \| "single" \| "multi"` | `"none"` | no | Selection mode. |
+| `selectedKeys` | `Array<string \| number>` | `[]` | no | Initial selected rows. |
+| `enableSort` | `boolean` | `false` | no | Enables sorting UI and state. |
+| `enableSearch` | `boolean` | `false` | no | Enables search UI and query state. |
+| `enablePagination` | `boolean` | `false` | no | Enables paging UI and state. |
+| `enableColumnResize` | `boolean` | `false` | no | Enables resizable columns. |
+| `enableVirtualization` | `boolean` | `false` | no | Enables row virtualization for large sets. |
+| `minColumnWidth` | `number` | `72` | no | Minimum resizable column width. |
+| `columnWidths` | `object` | `{}` | no | Per-column width overrides keyed by `column.key`. |
+| `wrapCellContent` | `boolean` | `true` | no | Global cell wrapping behavior. |
+| `search` | `string` | `""` | no | Initial search term. |
+| `searchPlaceholder` | `string` | `"Search"` | no | Search field placeholder. |
+| `page` | `number` | `1` | no | Current page. |
+| `pageSize` | `number` | `20` | no | Rows per page. |
+| `pageSizeOptions` | `number[]` | component default | no | Page-size choices. |
+| `totalRows` | `number` | local row count | no | Remote-mode total row count. |
+| `virtualRowHeight` | `number` | `40` | no | Virtualized row height. |
+| `virtualOverscan` | `number` | `8` | no | Extra rows rendered outside viewport. |
+| `virtualThreshold` | `number` | `80` | no | Row-count threshold before virtualization becomes active. |
+| `loading` | `boolean` | `false` | no | Loading state. |
+| `errorText` | `string` | `""` | no | Error state copy. |
+| `emptyText` | `string` | `"No rows."` | no | Empty state copy. |
 
-- `destroy()`
-- `update(nextRows, nextOptions?)`
-- `setRows(rows[])`
-- `setQuery(query)`
-- `getQuery()`
-- `getSelectedRows()`
-- `clearSelection()`
-- `getState()`
+Column definition:
+
+| Property | Type | Default | Description |
+|---|---|---:|---|
+| `key` | `string` | - | Required stable column id. |
+| `label` | `string` | - | Header label. |
+| `width` | `number \| string` | auto | Initial width. |
+| `align` | `"left" \| "center" \| "right"` | `"left"` | Cell alignment. |
+| `sortable` | `boolean` | inherited | Enables sorting for the column. |
+| `wrap` | `boolean` | inherited | Per-column wrapping override. |
+| `format` | `(value, row) => string` | `null` | Simple text formatting hook. |
+| `renderCell` | `({ row, value, key, column }) => any` | `null` | Full custom cell rendering hook. |
+
+Events / callbacks:
+
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onRowClick` | `row, meta` | `void` | Fires when a row is clicked. |
+| `onSelectionChange` | `selectedRows, selectedKeys` | `void` | Fires when selection changes. |
+| `onQueryChange` | `query` | `void` | Remote-mode query change callback. |
+| `onColumnResize` | `{ key, width, columnWidths }` | `void` | Fires after a resize interaction. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextRows, nextOptions?` | `void` | Re-renders rows/options without remounting. |
+| `setRows` | `rows[]` | `void` | Replaces current rows. |
+| `setQuery` | `query` | `void` | Updates grid query state. |
+| `getQuery` | none | `object` | Returns current grid query. |
+| `getSelectedRows` | none | `array` | Returns selected rows. |
+| `clearSelection` | none | `void` | Clears selected rows. |
+| `getState` | none | `object` | Returns grid state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
 
 Example (remote mode with optional features enabled):
 
@@ -1964,38 +2164,225 @@ const grid = createGrid(container, [], {
 });
 ```
 
+Related demos:
+
+- `demos/demo.grid.html`
+
+### `createTreeGrid(container, options)` (`js/ui/ui.tree.grid.js`)
+
+Purpose:
+
+- Hierarchical grid with tree indentation in the first column, aligned tabular columns, tree-aware search, and optional virtualization.
+
+Factory:
+
+```js
+import { createTreeGrid } from "./js/ui/ui.tree.grid.js";
+
+const treeGrid = createTreeGrid(container, options);
+```
+
+Options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `columns` | `Column[]` | `[]` | yes | Column definitions for the tabular layout. |
+| `rows` | `TreeRow[]` | `[]` | no | Initial tree rows. |
+| `rowKey` | `string \| ((row) => key)` | `"id"` | no | Stable row identifier. |
+| `expandAll` | `boolean` | `false` | no | Starts with all loaded nodes expanded. |
+| `lazyLoadChildren` | `(node) => Promise<TreeRow[]>` | `null` | no | Loads children on demand for nodes with `hasChildren`. |
+| `enableColumnResize` | `boolean` | `false` | no | Enables column resize behavior. |
+| `enableVirtualization` | `boolean` | `false` | no | Enables fixed-row-height virtualization. |
+| `virtualRowHeight` | `number` | component default | no | Virtualized row height. |
+| `searchTerm` | `string` | `""` | no | Current tree-aware search term. |
+| `searchFields` | `string[]` | `["label"]` | no | Fields included in search matching. |
+| `autoExpandMatches` | `boolean` | `true` | no | Temporarily expands matching ancestor paths. |
+| `highlightMatches` | `boolean` | `true` | no | Highlights all occurrences in rendered text. |
+| `emptyText` | `string` | `"No rows."` | no | Normal empty state copy. |
+| `emptySearchText` | `string` | `"No matching results."` | no | Empty state while search is active. |
+| `chrome` | `boolean` | `true` | no | Removes outer shell when `false`. |
+
+Events / callbacks:
+
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onRowClick` | `row, meta` | `void` | Fires when a visible tree row is clicked. |
+| `onToggle` | `row, expanded` | `void` | Fires on expand/collapse. |
+| `onSelectionChange` | `selectedRows, selectedKeys` | `void` | Fires when selection changes. |
+| `onColumnResize` | `{ key, width, columnWidths }` | `void` | Fires after a resize interaction. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextOptions?` | `void` | Updates tree-grid options/state. |
+| `setRows` | `rows[]` | `void` | Replaces current tree data. |
+| `setSearchTerm` | `term` | `void` | Applies tree-aware search term. |
+| `clearSearch` | none | `void` | Clears current search state. |
+| `expandAll` | none | `void` | Expands loaded nodes. |
+| `collapseAll` | none | `void` | Collapses all nodes. |
+| `getState` | none | `object` | Returns tree-grid state, including `search`. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- Search is tree-aware rather than flat filtering.
+- Matching descendants keep their ancestor path visible.
+- `getState().search` includes:
+  - `active`
+  - `term`
+  - `matchCount`
+  - `visibleCount`
+
+Related demos:
+
+- `demos/demo.tree.grid.html`
+
+### `createHierarchyMap(container, options)` (`js/ui/ui.hierarchy.map.js`)
+
+Purpose:
+
+- Hierarchy-first visual explorer for rooted structures with optional external-entity lane and overlay relationship links.
+
+Factory:
+
+```js
+import { createHierarchyMap } from "./js/ui/ui.hierarchy.map.js";
+
+const map = createHierarchyMap(container, options);
+```
+
+Options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `data` | `{ root, externals?, links? }` | `null` | yes | Rooted hierarchy plus optional overlay relationships. |
+| `chrome` | `boolean` | `true` | no | Removes outer shell when `false`. |
+| `layout` | `"org"` | `"org"` | no | Current hierarchy layout mode. |
+| `orientation` | `"vertical" \| "horizontal"` | `"vertical"` | no | Primary hierarchy direction. |
+| `nodeWidth` | `number` | component default | no | Node-card width. |
+| `nodeHeight` | `number` | component default | no | Node-card height basis. |
+| `levelGap` | `number` | component default | no | Gap between hierarchy levels. |
+| `siblingGap` | `number` | component default | no | Gap between sibling nodes. |
+| `externalLane` | `"right" \| "left"` | `"right"` | no | Side used for external entities. |
+| `showOverlayLinks` | `boolean` | `true` | no | Shows secondary relationship links. |
+| `showExternalNodes` | `boolean` | `true` | no | Shows external-entity lane. |
+| `collapsible` | `boolean` | `true` | no | Enables node expand/collapse. |
+| `lazyLoadChildren` | `(node) => Promise<Node[]>` | `null` | no | Loads node children on demand. |
+| `searchTerm` | `string` | `""` | no | Tree-aware hierarchy search term. |
+| `searchFields` | `string[]` | `["label", "type"]` | no | Fields included in matching. |
+| `autoExpandMatches` | `boolean` | `true` | no | Expands matching paths while search is active. |
+| `highlightMatches` | `boolean` | `true` | no | Highlights matching text in node labels. |
+| `selectable` | `boolean` | `true` | no | Enables node/link selection. |
+| `pan` | `boolean` | `true` | no | Enables viewport panning. |
+| `zoom` | `boolean` | `true` | no | Enables zoom controls/gestures. |
+| `fitOnOpen` | `boolean` | `true` | no | Fits hierarchy into viewport on open. |
+| `minZoom` | `number` | `0.5` | no | Minimum zoom factor. |
+| `maxZoom` | `number` | `2.5` | no | Maximum zoom factor. |
+| `zoomStep` | `number` | `0.1` | no | Zoom increment size. |
+
+Events / callbacks:
+
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onNodeClick` | `{ node, path }` | `void` | Fires when a node card is selected. |
+| `onNodeToggle` | `{ node, expanded }` | `void` | Fires on expand/collapse. |
+| `onLinkClick` | `{ link }` | `void` | Fires when an overlay link is selected. |
+| `onSelectionChange` | `{ selectedNode, selectedLink }` | `void` | Fires on selection changes. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `getData` | none | `object` | Returns current hierarchy data. |
+| `getState` | none | `object` | Returns zoom, pan, selection, expansion, and search state. |
+| `setData` | `nextData` | `void` | Replaces hierarchy data. |
+| `update` | `nextOptions` | `void` | Updates map options. |
+| `setSearchTerm` | `term` | `void` | Applies hierarchy search term. |
+| `clearSearch` | none | `void` | Clears search state. |
+| `expandNode` | `nodeId` | `void` | Expands a specific node. |
+| `collapseNode` | `nodeId` | `void` | Collapses a specific node. |
+| `toggleNode` | `nodeId` | `void` | Toggles a specific node. |
+| `expandAll` | none | `void` | Expands loaded nodes. |
+| `collapseAll` | none | `void` | Collapses all nodes. |
+| `focusNode` | `nodeId` | `void` | Focuses/centers a node if possible. |
+| `selectNode` | `nodeId` | `void` | Selects a node. |
+| `selectLink` | `linkId` | `void` | Selects an overlay link. |
+| `zoomIn` | none | `void` | Increases zoom. |
+| `zoomOut` | none | `void` | Decreases zoom. |
+| `resetView` | none | `void` | Resets pan/zoom. |
+| `fitToView` | none | `void` | Fits current hierarchy into the viewport. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- Primary hierarchy uses one parent per node.
+- Secondary cross-relationships belong in `links`, not as second tree parents.
+- External entities render in a side lane and overlay links remain secondary to the tree structure.
+
+Related demos:
+
+- `demos/demo.hierarchy.map.html`
+
 ### `createProgress(container, data, options)` (`js/ui/ui.progress.js`)
 
 Purpose:
 
 - General-purpose progress indicator with multiple rendering styles.
+- Useful for upload, sync, workflow, and status-progress surfaces.
 
-Data:
+Factory:
 
-- `value`
-- `label`
-- `currentStep` (for `steps`)
-- `totalSteps` (for `steps`)
+```js
+import { createProgress } from "./js/ui/ui.progress.js";
+
+const progress = createProgress(container, data, options);
+```
+
+Data shape:
+
+| Property | Type | Description |
+|---|---|---|
+| `value` | `number` | Current numeric value. |
+| `label` | `string` | Display label. |
+| `currentStep` | `number` | Current step for `steps` style. |
+| `totalSteps` | `number` | Total steps for `steps` style. |
 
 Options:
 
-- `style`: `linear | striped | gradient | segmented | steps | radial | ring | indeterminate`
-- `size`: `sm | md | lg`
-- `showLabel`, `showPercent`
-- `animate`, `rounded`, `glow`
-- `indeterminate`
-- `min`, `max`
-- `segments` (for `segmented`)
-- `totalSteps` (default for `steps`)
-- `color`, `trackColor`
-- `ariaLabel`, `className`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `style` | `"linear" \| "striped" \| "gradient" \| "segmented" \| "steps" \| "radial" \| "ring" \| "indeterminate"` | `"linear"` | no | Progress render style. |
+| `size` | `"sm" \| "md" \| "lg"` | `"md"` | no | Component size preset. |
+| `showLabel` | `boolean` | `true` | no | Shows label text. |
+| `showPercent` | `boolean` | `false` | no | Shows percent display. |
+| `animate` | `boolean` | `false` | no | Enables animated progress updates. |
+| `rounded` | `boolean` | `true` | no | Rounds track corners. |
+| `glow` | `boolean` | `false` | no | Adds glow emphasis. |
+| `indeterminate` | `boolean` | `false` | no | Forces indeterminate mode. |
+| `min` | `number` | `0` | no | Minimum progress value. |
+| `max` | `number` | `100` | no | Maximum progress value. |
+| `segments` | `number` | component default | no | Segment count for segmented style. |
+| `totalSteps` | `number` | data/default | no | Total steps fallback. |
+| `color` | `string` | theme default | no | Track fill color override. |
+| `trackColor` | `string` | theme default | no | Track background color override. |
+| `ariaLabel` | `string` | `""` | no | Accessibility label. |
+| `className` | `string` | `""` | no | Extra container class. |
 
-Methods:
+Returned API:
 
-- `destroy()`
-- `update(nextData, nextOptions?)`
-- `setValue(value)`
-- `getState()`
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextData, nextOptions?` | `void` | Re-renders progress data/options. |
+| `setValue` | `value` | `void` | Updates numeric value. |
+| `getState` | none | `object` | Returns progress state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- `data.value` is normalized against `min` / `max` for percent-based styles.
+- `steps` style prefers `data.currentStep` / `data.totalSteps` and falls back to `options.totalSteps`.
+- `indeterminate` rendering can be requested either by style or by `options.indeterminate`.
 
 Example:
 
@@ -2014,28 +2401,49 @@ const progress = createProgress(container, {
 progress.setValue(70);
 ```
 
+Related demos:
+
+- `demos/demo.progress.html`
+
 ### `createVirtualList(container, items, options)` (`js/ui/ui.virtual.list.js`)
 
 Purpose:
 
 - Render large lists with stable performance via viewport virtualization/windowing.
 
+Factory:
+
+```js
+import { createVirtualList } from "./js/ui/ui.virtual.list.js";
+
+const list = createVirtualList(container, items, options);
+```
+
 Options:
 
-- `height`
-- `rowHeight`
-- `overscan`
-- `emptyText`, `className`
-- `renderItem(item, index)` returns `HTMLElement | string`
-- `onRangeChange({ start, end }, state)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `height` | `number \| string` | component default | no | Viewport height. |
+| `rowHeight` | `number` | component default | no | Fixed row height used for virtualization math. |
+| `overscan` | `number` | component default | no | Extra rows rendered outside the viewport. |
+| `emptyText` | `string` | `"No items."` | no | Empty state copy. |
+| `className` | `string` | `""` | no | Extra container class. |
+| `renderItem` | `(item, index) => HTMLElement \| string` | required in practice | no | Row renderer. |
+| `onRangeChange` | `({ start, end }, state) => void` | `null` | no | Fires when visible window changes. |
 
-Methods:
+Returned API:
 
-- `update(nextItems, nextOptions?)`
-- `setItems(items)`
-- `scrollToIndex(index, behavior?)`
-- `getState()`
-- `destroy()`
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextItems, nextOptions?` | `void` | Re-renders items/options. |
+| `setItems` | `items` | `void` | Replaces current items. |
+| `scrollToIndex` | `index, behavior?` | `void` | Scrolls the list to a given item index. |
+| `getState` | none | `object` | Returns virtualization state. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Related demos:
+
+- `demos/demo.virtual.list.html`
 
 ### `createScheduler(container, data, options)` (`js/ui/ui.scheduler.js`)
 
@@ -2043,29 +2451,47 @@ Purpose:
 
 - Render reusable scheduler/calendar primitives with month/week views.
 
+Factory:
+
+```js
+import { createScheduler } from "./js/ui/ui.scheduler.js";
+
+const scheduler = createScheduler(container, data, options);
+```
+
 Data shape:
 
-- `date` (current focus date)
-- `events[]`: `{ id, title, start, end?, color? }`
+| Property | Type | Description |
+|---|---|---|
+| `date` | `Date \| string` | Current focused date. |
+| `events` | `Array<{ id, title, start, end?, color? }>` | Scheduler events. |
 
 Options:
 
-- `view`: `month | week`
-- `locale`
-- `weekStartsOn` (`0..6`)
-- `events[]` (default source if not passed in `data`)
-- `onViewChange(view, state)`
-- `onDateChange(date, state)`
-- `onSlotClick({ date, view }, state)`
-- `onEventClick(event, state)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `view` | `"month" \| "week"` | `"month"` | no | Current scheduler view. |
+| `locale` | `string` | browser default | no | Locale for date formatting. |
+| `weekStartsOn` | `number` | `0` | no | First day of week (`0..6`). |
+| `events` | `array` | `[]` | no | Default event source if not passed in `data`. |
+| `onViewChange` | `(view, state) => void` | `null` | no | Fires when view changes. |
+| `onDateChange` | `(date, state) => void` | `null` | no | Fires when focused date changes. |
+| `onSlotClick` | `({ date, view }, state) => void` | `null` | no | Fires when a slot is clicked. |
+| `onEventClick` | `(event, state) => void` | `null` | no | Fires when an event is clicked. |
 
-Methods:
+Returned API:
 
-- `update(nextData, nextOptions?)`
-- `setView(view)`
-- `setDate(date)`
-- `getState()`
-- `destroy()`
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextData, nextOptions?` | `void` | Re-renders scheduler data/options. |
+| `setView` | `view` | `void` | Changes active view. |
+| `setDate` | `date` | `void` | Changes focused date. |
+| `getState` | none | `object` | Returns scheduler state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Related demos:
+
+- `demos/demo.scheduler.html`
 
 ### `createDatepicker(container, options)` (`js/ui/ui.datepicker.js`)
 
@@ -2073,26 +2499,42 @@ Purpose:
 
 - Render a reusable date picker for single or range selection with optional time inputs.
 
+Factory:
+
+```js
+import { createDatepicker } from "./js/ui/ui.datepicker.js";
+
+const picker = createDatepicker(container, options);
+```
+
 Options:
 
-- `mode`: `single | range`
-- `value`: single date (`Date|string|null`) or range (`{ start, end } | [start, end]`)
-- `showTime`: `boolean`
-- `closeOnSelect`: `boolean`
-- `weekStartsOn`: `0-6`
-- `yearRangePast`, `yearRangeFuture`: year jump range around current view year
-- `min`, `max`: date bounds
-- `disabledDates(date)`: callback to disable custom dates
-- `locale`, `placeholder`, `className`
-- `onChange(value, state)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `mode` | `"single" \| "range"` | `"single"` | no | Selection mode. |
+| `value` | `Date \| string \| null \| { start, end } \| [start, end]` | `null` | no | Initial selected value. |
+| `showTime` | `boolean` | `false` | no | Enables time inputs. |
+| `closeOnSelect` | `boolean` | `true` | no | Closes picker after selection when possible. |
+| `weekStartsOn` | `number` | `0` | no | First day of week (`0..6`). |
+| `yearRangePast` | `number` | component default | no | Year range backward from current year. |
+| `yearRangeFuture` | `number` | component default | no | Year range forward from current year. |
+| `min` | `Date \| string \| null` | `null` | no | Minimum selectable date. |
+| `max` | `Date \| string \| null` | `null` | no | Maximum selectable date. |
+| `disabledDates` | `(date) => boolean` | `null` | no | Custom date-disable callback. |
+| `locale` | `string` | browser default | no | Locale for formatting. |
+| `placeholder` | `string` | `""` | no | Input placeholder. |
+| `className` | `string` | `""` | no | Extra container class. |
+| `onChange` | `(value, state) => void` | `null` | no | Fires when the selected value changes. |
 
-Methods:
+Returned API:
 
-- `update(nextOptions?)`
-- `setValue(nextValue)`
-- `getValue()`
-- `getState()`
-- `destroy()`
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextOptions?` | `void` | Updates picker options. |
+| `setValue` | `nextValue` | `void` | Replaces selected value. |
+| `getValue` | none | `any` | Returns selected value. |
+| `getState` | none | `object` | Returns datepicker state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
 
 Example:
 
@@ -2114,44 +2556,65 @@ const range = createDatepicker(rangeContainer, {
 });
 ```
 
+Related demos:
+
+- `demos/demo.kanban.html`
+
 ### `createTimeline(container, items, options)` (`js/ui/ui.timeline.js`)
 
 Purpose:
 
 - Render incident/activity events in vertical log mode or horizontal milestone mode.
 
-Item shape (recommended):
+Factory:
 
-- `id`, `timestamp`, `title`
-- optional `subtitle`, `description`, `status`
-- `status` recommended values: `assigned | requested | accepted | en_route | on_scene | completed | cancelled`
-- optional `meta[]` tag strings
-- optional `actions[]` with `{ id, label, className? }`
+```js
+import { createTimeline } from "./js/ui/ui.timeline.js";
+
+const timeline = createTimeline(container, items, options);
+```
+
+Recommended item shape:
+
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | Stable event identifier. |
+| `timestamp` | `string \| number \| Date` | Event time. |
+| `title` | `string` | Primary event label. |
+| `subtitle` | `string` | Secondary event label. |
+| `description` | `string` | Longer body copy. |
+| `status` | `string` | Suggested values: `assigned`, `requested`, `accepted`, `en_route`, `on_scene`, `completed`, `cancelled`. |
+| `meta` | `string[]` | Optional tag list. |
+| `actions` | `Array<{ id, label, className? }>` | Optional per-item actions. |
 
 Options:
 
-- `ariaLabel`
-- `orientation`: `vertical | horizontal`
-- `density`: `compact | comfortable`
-- `groupByDate`: `boolean` (vertical only)
-- `showConnector`: `boolean`
-- `linkedRange`: `{ startMs, endMs, anchorMs? } | null`
-  - filters visible events by relative timestamp range
-  - `anchorMs` is optional; when omitted, timeline uses the earliest event timestamp as anchor
-- `includeUndatedInRange`: `boolean`
-- `emptyText`, `className`
-- `locale`, `timeZone`
-- `onItemClick(item)`
-- `onActionClick(action, item)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `ariaLabel` | `string` | `""` | no | Accessible label for the timeline. |
+| `orientation` | `"vertical" \| "horizontal"` | `"vertical"` | no | Timeline orientation. |
+| `density` | `"compact" \| "comfortable"` | `"comfortable"` | no | Item density preset. |
+| `groupByDate` | `boolean` | `false` | no | Groups vertical timeline items by date. |
+| `showConnector` | `boolean` | `true` | no | Shows connector lines between items. |
+| `linkedRange` | `{ startMs, endMs, anchorMs? } \| null` | `null` | no | Filters visible items by relative timestamp range. |
+| `includeUndatedInRange` | `boolean` | `false` | no | Keeps undated items while a linked range is active. |
+| `emptyText` | `string` | `"No events."` | no | Empty state copy. |
+| `className` | `string` | `""` | no | Extra container class. |
+| `locale` | `string` | browser default | no | Locale used for date formatting. |
+| `timeZone` | `string` | browser default | no | Time zone used for date formatting. |
+| `onItemClick` | `(item) => void` | `null` | no | Fires when an item is clicked. |
+| `onActionClick` | `(action, item) => void` | `null` | no | Fires when an item action is clicked. |
 
-Methods:
+Returned API:
 
-- `update(nextItems, nextOptions?)`
-- `append(items)`
-- `prepend(items)`
-- `setLinkedRange(range|null)`
-- `destroy()`
-- `getState()`
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextItems, nextOptions?` | `void` | Re-renders timeline items/options. |
+| `append` | `items` | `void` | Appends items to the end of the timeline. |
+| `prepend` | `items` | `void` | Prepends items to the start of the timeline. |
+| `setLinkedRange` | `range \| null` | `void` | Applies or clears linked range filtering. |
+| `getState` | none | `object` | Returns timeline state, including visible items. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
 
 `getState()` returns both:
 - `items` (full normalized timeline list)
@@ -2171,6 +2634,10 @@ const timeline = createTimeline(container, events, {
 });
 ```
 
+Related demos:
+
+- `demos/demo.timeline.html`
+
 ### `createTimelineScrubber(container, options)` (`js/ui/ui.timeline.scrubber.js`)
 
 Purpose:
@@ -2181,32 +2648,59 @@ Purpose:
   - `>= 1h` -> `hh:mm:ss`
   - `>= 1 day` -> `dd:hh:mm:ss`
 
+Factory:
+
+```js
+import { createTimelineScrubber } from "./js/ui/ui.timeline.scrubber.js";
+
+const scrubber = createTimelineScrubber(container, options);
+```
+
 Options:
 
-- `ariaLabel`
-- `valueLabel`, `rangeStartLabel`, `rangeEndLabel`
-- `durationMs`, `valueMs`
-- `enableRange`
-- `range`: `{ startMs, endMs }`
-- `zoom`, `zoomLevels`
-- `showZoomControls`
-- `seekStepMs` (keyboard seek step, default `1000`)
-- `seekStepMsFast` (Shift+keyboard seek step, default `10000`)
-- `preventPageScrollOnInteract` (default `true`)
-- `onSeek(valueMs, state)`
-- `onRangeChange({ startMs, endMs }, state)`
-- `onZoomChange(zoom, state)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `ariaLabel` | `string` | `""` | no | Accessible scrubber label. |
+| `valueLabel` | `string` | component default | no | Current-value label text. |
+| `rangeStartLabel` | `string` | component default | no | Range-start label text. |
+| `rangeEndLabel` | `string` | component default | no | Range-end label text. |
+| `durationMs` | `number` | `0` | no | Total duration. |
+| `valueMs` | `number` | `0` | no | Current seek position. |
+| `enableRange` | `boolean` | `false` | no | Enables range handles. |
+| `range` | `{ startMs, endMs }` | `null` | no | Selected range. |
+| `zoom` | `number` | `1` | no | Current zoom level. |
+| `zoomLevels` | `number[]` | component default | no | Available zoom levels. |
+| `showZoomControls` | `boolean` | `true` | no | Shows zoom controls. |
+| `seekStepMs` | `number` | `1000` | no | Keyboard seek step. |
+| `seekStepMsFast` | `number` | `10000` | no | Shift+keyboard seek step. |
+| `preventPageScrollOnInteract` | `boolean` | `true` | no | Prevents page scroll during interaction. |
 
-Methods:
+Events / callbacks:
 
-- `update(nextOptions?)`
-- `setTime(ms)`
-- `setRange(startMs, endMs)`
-- `setDuration(ms)`
-- `setZoom(zoom)`
-- `getValue()`
-- `getState()`
-- `destroy()`
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onSeek` | `(valueMs, state)` | `void` | Fires when the current playhead position changes. |
+| `onRangeChange` | `({ startMs, endMs }, state)` | `void` | Fires when range handles move. |
+| `onZoomChange` | `(zoom, state)` | `void` | Fires when zoom changes. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextOptions?` | `void` | Updates scrubber options. |
+| `setTime` | `ms` | `void` | Sets current time. |
+| `setRange` | `startMs, endMs` | `void` | Sets selected range. |
+| `setDuration` | `ms` | `void` | Updates total duration. |
+| `setZoom` | `zoom` | `void` | Sets zoom level. |
+| `getValue` | none | `number` | Returns current time. |
+| `getState` | none | `object` | Returns scrubber state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- `enableRange` should be enabled when the scrubber is linked to range-aware surfaces like `createTimeline(...)`.
+- Keyboard seeking uses `seekStepMs`, and `Shift` uses `seekStepMsFast`.
+- Time label formatting automatically changes with total duration so the same control can cover short clips and multi-day ranges.
 
 Example:
 
@@ -2225,6 +2719,10 @@ const scrubber = createTimelineScrubber(container, {
 });
 ```
 
+Related demos:
+
+- `demos/demo.timeline.html`
+
 ### `createCommandPalette(options)` (`js/ui/ui.command.palette.js`)
 
 Purpose:
@@ -2232,30 +2730,65 @@ Purpose:
 - Global quick-action launcher (`Ctrl/Cmd + K`) with search and keyboard navigation.
 - Supports static + async command sources with grouped/pinned/recent views.
 
+Factory:
+
+```js
+import { createCommandPalette } from "./js/ui/ui.command.palette.js";
+
+const palette = createCommandPalette(options);
+```
+
 Options:
 
-- `commands[]`: `{ id, label, section?, keywords?, shortcut?, icon?, disabled?, run? }`
-- `providers[]`: async/static providers `(ctx) => commands[] | Promise<commands[]>`
-  - `ctx = { query, state, open }`
-- `providerDebounceMs`
-- `title`, `placeholder`, `emptyText`
-- `loadingText`
-- `shortcut` (default `"k"`), `metaKey`, `ctrlKey`
-- `groupBySection` (default `true`)
-- `showPinned`, `showRecent`
-- `pinnedCommandIds[]`
-- `recentCommandIds[]`, `maxRecent`
-- `historyStorageKey` (optional localStorage key)
-- `onRun(command)`
-- `onHistoryChange(recentCommandIds, state)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `commands` | `Command[]` | `[]` | no | Static command list. |
+| `providers` | `Array<(ctx) => Command[] \| Promise<Command[]>>` | `[]` | no | Static/async providers. |
+| `providerDebounceMs` | `number` | component default | no | Debounce before running providers. |
+| `title` | `string` | `"Command Palette"` | no | Dialog title. |
+| `placeholder` | `string` | `"Search commands"` | no | Search input placeholder. |
+| `emptyText` | `string` | `"No commands found."` | no | Empty state copy. |
+| `loadingText` | `string` | `"Loading..."` | no | Provider loading copy. |
+| `shortcut` | `string` | `"k"` | no | Keyboard shortcut key. |
+| `metaKey` | `boolean` | `true` | no | Requires `Meta` / `Cmd`. |
+| `ctrlKey` | `boolean` | `true` | no | Requires `Ctrl`. |
+| `groupBySection` | `boolean` | `true` | no | Groups commands by section. |
+| `showPinned` | `boolean` | `true` | no | Shows pinned commands section. |
+| `showRecent` | `boolean` | `true` | no | Shows recent commands section. |
+| `pinnedCommandIds` | `string[]` | `[]` | no | Initial pinned commands. |
+| `recentCommandIds` | `string[]` | `[]` | no | Initial recent commands. |
+| `maxRecent` | `number` | component default | no | Maximum stored recent commands. |
+| `historyStorageKey` | `string` | `""` | no | Optional localStorage key for recent history. |
+| `onRun` | `(command) => void` | `null` | no | Fires when a command runs. |
+| `onHistoryChange` | `(recentCommandIds, state) => void` | `null` | no | Fires when recent-history state changes. |
 
-Methods:
+Command shape:
 
-- `open()`, `close()`
-- `update(nextOptions?)`
-- `setQuery(text)`
-- `getState()`
-- `destroy()`
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | Stable command id. |
+| `label` | `string` | Visible command text. |
+| `section` | `string` | Optional grouping section. |
+| `keywords` | `string[]` | Optional search keywords. |
+| `shortcut` | `string` | Optional visible shortcut hint. |
+| `icon` | `string` | Optional icon markup. |
+| `disabled` | `boolean` | Prevents execution when `true`. |
+| `run` | `() => any` | Local command execution handler. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `open` | none | `void` | Opens the palette. |
+| `close` | none | `void` | Closes the palette. |
+| `update` | `nextOptions?` | `void` | Updates palette options. |
+| `setQuery` | `text` | `void` | Applies search text. |
+| `getState` | none | `object` | Returns palette state. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Related demos:
+
+- `demos/demo.media.strip.html`
 
 ### `createTree(container, data, options)` (`js/ui/ui.tree.js`)
 
@@ -2264,63 +2797,116 @@ Purpose:
 - Expandable/selectable hierarchical view with optional checkboxes.
 - Supports lazy async child loading and optional virtualization for very large node sets.
 
+Factory:
+
+```js
+import { createTree } from "./js/ui/ui.tree.js";
+
+const tree = createTree(container, data, options);
+```
+
 Options:
 
-- `expandAll`, `selectable`, `checkable`, `className`
-- `lazyLoadChildren(node, state)` async loader for nodes with `hasChildren: true`
-- `onLoadChildren(node, children, state)`
-- virtualization:
-  - `enableVirtualization`
-  - `virtualHeight`
-  - `virtualRowHeight`
-  - `virtualOverscan`
-- `onToggle(node, isExpanded)`
-- `onSelect(node)`
-- `onCheck(node, checked, checkedIds)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `expandAll` | `boolean` | `false` | no | Starts with all loaded nodes expanded. |
+| `selectable` | `boolean` | `true` | no | Enables node selection. |
+| `checkable` | `boolean` | `false` | no | Enables checkbox state. |
+| `className` | `string` | `""` | no | Extra container class. |
+| `lazyLoadChildren` | `(node, state) => Promise<Node[]>` | `null` | no | Loads children for nodes with `hasChildren`. |
+| `onLoadChildren` | `(node, children, state) => void` | `null` | no | Fires after lazy children load. |
+| `enableVirtualization` | `boolean` | `false` | no | Enables virtualization for large trees. |
+| `virtualHeight` | `number \| string` | component default | no | Virtualized viewport height. |
+| `virtualRowHeight` | `number` | component default | no | Virtualized row height. |
+| `virtualOverscan` | `number` | component default | no | Extra rows rendered outside viewport. |
+| `onToggle` | `(node, isExpanded) => void` | `null` | no | Fires on expand/collapse. |
+| `onSelect` | `(node) => void` | `null` | no | Fires on node selection. |
+| `onCheck` | `(node, checked, checkedIds) => void` | `null` | no | Fires on checkbox changes. |
 
-Methods:
+Returned API:
 
-- `update(nextData, nextOptions?)`
-- `expandAll()`
-- `collapseAll()`
-- `setSelected(nodeId)`
-- `getState()`
-- `destroy()`
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextData, nextOptions?` | `void` | Re-renders tree data/options. |
+| `expandAll` | none | `void` | Expands loaded nodes. |
+| `collapseAll` | none | `void` | Collapses all nodes. |
+| `setSelected` | `nodeId` | `void` | Selects a node by id. |
+| `getState` | none | `object` | Returns tree state. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
 
 `getState()` includes:
 - `visibleRows[]` (`{ id, level }`) for current expanded/filter view
+
+Related demos:
+
+- `demos/demo.datepicker.html`
 
 ### `createKanban(container, lanes, options)` (`js/ui/ui.kanban.js`)
 
 Purpose:
 
 - Lane/card board for dispatch/incident workflow with drag-and-drop card moves.
+- Suitable for workflow, incident, and queue movement where lane transitions matter.
 
-Data shape:
+Factory:
 
-- `lanes[]`: `{ id, title, cards[] }`
-- `cards[]`: `{ id, title, meta? }`
+```js
+import { createKanban } from "./js/ui/ui.kanban.js";
+
+const board = createKanban(container, lanes, options);
+```
+
+Lane/card shape:
+
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | Stable lane/card identifier. |
+| `title` | `string` | Default lane/card title field. |
+| `cards` | `Array<object>` | Card collection for each lane. |
+| `meta` | `object / any` | Optional extra card metadata. |
 
 Options:
 
-- `draggable`, `className`, `ariaLabel`
-- `keyboardMoves` (default `true`)
-- key mapping options:
-  - `laneIdKey`, `laneTitleKey`
-  - `cardIdKey`, `cardTitleKey`, `cardMetaKey`
-- `wipLimits`: `{ [laneId]: number }`
-- `validateMove({ card, fromLaneId, toLaneId, fromIndex, toIndex, lanes })`
-  - return `false` or `{ ok:false, reason }` to block move
-- `onCardClick(card, laneId)`
-- `onCardMove({ card, fromLaneId, toLaneId, fromIndex, toIndex, lanes })`
-- `onMoveRejected({ reason, card, fromLaneId, toLaneId, fromIndex, toIndex })`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `draggable` | `boolean` | `true` | no | Enables drag-and-drop. |
+| `className` | `string` | `""` | no | Extra container class. |
+| `ariaLabel` | `string` | `""` | no | Accessibility label. |
+| `keyboardMoves` | `boolean` | `true` | no | Enables keyboard move interactions. |
+| `laneIdKey` | `string` | `"id"` | no | Lane id key override. |
+| `laneTitleKey` | `string` | `"title"` | no | Lane title key override. |
+| `cardIdKey` | `string` | `"id"` | no | Card id key override. |
+| `cardTitleKey` | `string` | `"title"` | no | Card title key override. |
+| `cardMetaKey` | `string` | `"meta"` | no | Card metadata key override. |
+| `wipLimits` | `object` | `{}` | no | Per-lane WIP limits. |
+| `validateMove` | `(payload) => boolean \| { ok: false, reason }` | `null` | no | Move validation hook. |
 
-Methods:
+Events / callbacks:
 
-- `update(nextLanes, nextOptions?)`
-- `moveCard(cardId, fromLaneId, toLaneId, toIndex?)`
-- `getState()`
-- `destroy()`
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onCardClick` | `(card, laneId)` | `void` | Fires when a card is selected. |
+| `onCardMove` | `(payload)` | `void` | Fires after a successful move. |
+| `onMoveRejected` | `(payload)` | `void` | Fires when a move is blocked by validation or WIP rules. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextLanes, nextOptions?` | `void` | Re-renders lanes/options. |
+| `moveCard` | `cardId, fromLaneId, toLaneId, toIndex?` | `void` | Moves a card programmatically. |
+| `getState` | none | `object` | Returns board state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- Key override options let projects reuse existing lane/card payloads without reshaping all field names.
+- `validateMove` should hold business rules such as lane restrictions or prerequisite states.
+- `wipLimits` are presentation-time constraints; keep authoritative workflow validation in app logic as well.
+
+Related demos:
+
+- `demos/demo.file.uploader.html`
 
 ### `createStepper(container, steps, options)` (`js/ui/ui.stepper.js`)
 
@@ -2328,19 +2914,55 @@ Purpose:
 
 - Render workflow steps with current/completed/future states.
 
+Factory:
+
+```js
+import { createStepper } from "./js/ui/ui.stepper.js";
+
+const stepper = createStepper(container, steps, options);
+```
+
+Recommended step shape:
+
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | Stable step identifier. |
+| `label` | `string` | Visible step label. |
+| `description` | `string` | Optional secondary copy. |
+| `status` | `"complete" \| "current" \| "upcoming" \| string` | Optional explicit status override. |
+
 Options:
 
-- `orientation`: `horizontal | vertical`
-- `clickable`: `boolean`
-- `currentStepId`
-- `onStepClick(step, index, state)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | no | Stepper orientation. |
+| `clickable` | `boolean` | `false` | no | Enables step click navigation. |
+| `currentStepId` | `string` | first step/default | no | Active step id. |
 
-Methods:
+Events / callbacks:
 
-- `update(nextSteps, nextOptions?)`
-- `setCurrentStep(stepId)`
-- `getState()`
-- `destroy()`
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onStepClick` | `(step, index, state)` | `void` | Fires when a step is selected in clickable mode. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextSteps, nextOptions?` | `void` | Re-renders steps/options. |
+| `setCurrentStep` | `stepId` | `void` | Marks a specific step as current. |
+| `getState` | none | `object` | Returns stepper state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- `currentStepId` should be a stable step id, not an array index, so state survives reordered step lists.
+- Use `clickable` only when the surrounding flow genuinely supports direct navigation.
+- Prefer `createProgress(...)` instead when the UI only needs a scalar progress meter rather than named workflow steps.
+
+Related demos:
+
+- `demos/demo.stepper.html`
 
 ### `createSplitter(container, options)` (`js/ui/ui.splitter.js`)
 
@@ -2348,19 +2970,48 @@ Purpose:
 
 - Provide a reusable two-pane resizable layout primitive.
 
+Factory:
+
+```js
+import { createSplitter } from "./js/ui/ui.splitter.js";
+
+const splitter = createSplitter(container, options);
+```
+
 Options:
 
-- `orientation`: `horizontal | vertical`
-- `initialRatio`, `minRatio`, `maxRatio`
-- `paneA`, `paneB` (`HTMLElement | string | function`)
-- `onResize(ratio, state)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | no | Split direction between pane A and pane B. |
+| `initialRatio` | `number` | component default | no | Starting pane ratio. |
+| `minRatio` | `number` | component default | no | Minimum allowed ratio. |
+| `maxRatio` | `number` | component default | no | Maximum allowed ratio. |
+| `paneA` | `HTMLElement \| string \| () => HTMLElement` | `null` | no | Pane A content source. |
+| `paneB` | `HTMLElement \| string \| () => HTMLElement` | `null` | no | Pane B content source. |
 
-Methods:
+Events / callbacks:
 
-- `update(nextOptions?)`
-- `setRatio(ratio)`
-- `getState()`
-- `destroy()`
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onResize` | `(ratio, state)` | `void` | Fires when the splitter ratio changes. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextOptions?` | `void` | Re-renders splitter options/content. |
+| `setRatio` | `ratio` | `void` | Sets pane ratio programmatically. |
+| `getState` | none | `object` | Returns splitter state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- Use `minRatio` / `maxRatio` to prevent unusable pane sizes.
+- Pane content can be passed as elements, strings, or factories; keep heavy child components mounted outside if state retention matters.
+
+Related demos:
+
+- `demos/demo.splitter.html`
 
 ### `createDataInspector(container, data, options)` (`js/ui/ui.data.inspector.js`)
 
@@ -2368,17 +3019,44 @@ Purpose:
 
 - Inspect nested objects/arrays with expand/collapse and path copy.
 
+Factory:
+
+```js
+import { createDataInspector } from "./js/ui/ui.data.inspector.js";
+
+const inspector = createDataInspector(container, data, options);
+```
+
 Options:
 
-- `expandDepth`
-- `emptyText`, `className`
-- `onCopyPath(path, value)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `expandDepth` | `number` | component default | no | Initial expansion depth. |
+| `emptyText` | `string` | component default | no | Empty-state copy. |
+| `className` | `string` | `""` | no | Extra container class. |
 
-Methods:
+Events / callbacks:
 
-- `update(nextData, nextOptions?)`
-- `getState()`
-- `destroy()`
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onCopyPath` | `(path, value)` | `void` | Fires when a path-copy action is triggered. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextData, nextOptions?` | `void` | Re-renders inspected data/options. |
+| `getState` | none | `object` | Returns inspector state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- Use `expandDepth` conservatively for large payloads to avoid overwhelming the initial render.
+- This is for inspection and debugging; prefer dedicated detail UIs for operational editing workflows.
+
+Related demos:
+
+- `demos/demo.inspector.html`
 
 ### `createEmptyState(container, data, options)` (`js/ui/ui.empty.state.js`)
 
@@ -2386,17 +3064,45 @@ Purpose:
 
 - Standardize empty/no-results/error views with optional actions.
 
-Data/Options:
+Factory:
 
-- `title`, `description`, `iconHtml`
-- `actions[]`: `{ id, label, className? }`
-- `onActionClick(action, state)`
+```js
+import { createEmptyState } from "./js/ui/ui.empty.state.js";
 
-Methods:
+const emptyState = createEmptyState(container, data, options);
+```
 
-- `update(nextData, nextOptions?)`
-- `getState()`
-- `destroy()`
+Data shape:
+
+| Property | Type | Description |
+|---|---|---|
+| `title` | `string` | Primary empty-state heading. |
+| `description` | `string` | Secondary explanation text. |
+| `iconHtml` | `string` | Optional icon markup. |
+| `actions` | `Array<{ id, label, className? }>` | Optional action list. |
+
+Events / callbacks:
+
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onActionClick` | `(action, state)` | `void` | Fires when an empty-state action is selected. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextData, nextOptions?` | `void` | Re-renders empty-state content/options. |
+| `getState` | none | `object` | Returns empty-state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- Use this for empty, filtered-empty, and recoverable error surfaces that still benefit from a consistent action block.
+- For loading states, prefer `createSkeleton(...)` instead of reusing empty-state messaging.
+
+Related demos:
+
+- `demos/demo.empty.state.html`
 
 ### `createSkeleton(container, data, options)` (`js/ui/ui.skeleton.js`)
 
@@ -2404,17 +3110,40 @@ Purpose:
 
 - Render loading placeholders while data is being fetched/rendered.
 
+Factory:
+
+```js
+import { createSkeleton } from "./js/ui/ui.skeleton.js";
+
+const skeleton = createSkeleton(container, data, options);
+```
+
 Options:
 
-- `variant`: `lines | card | grid`
-- `animated`
-- `lines`, `rows`, `columns`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `variant` | `"lines" \| "card" \| "grid"` | `"lines"` | no | Skeleton layout preset. |
+| `animated` | `boolean` | `true` | no | Enables shimmer/animation. |
+| `lines` | `number` | component default | no | Line count for `lines` variant. |
+| `rows` | `number` | component default | no | Row count for `grid` variant. |
+| `columns` | `number` | component default | no | Column count for `grid` variant. |
 
-Methods:
+Returned API:
 
-- `update(nextData, nextOptions?)`
-- `getState()`
-- `destroy()`
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextData, nextOptions?` | `void` | Re-renders skeleton configuration. |
+| `getState` | none | `object` | Returns skeleton state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
+
+- Match the skeleton variant to the real layout so loading and loaded states feel related.
+- Use restrained animation in dense dashboards where too many shimmering surfaces become distracting.
+
+Related demos:
+
+- `demos/demo.skeleton.html`
 
 ### `createFileUploader(container, options)` (`js/ui/ui.file.uploader.js`)
 
@@ -2422,88 +3151,145 @@ Purpose:
 
 - Handle drag/drop or browse file intake with queue state, validation, and upload lifecycle hooks.
 
+Factory:
+
+```js
+import { createFileUploader } from "./js/ui/ui.file.uploader.js";
+
+const uploader = createFileUploader(container, options);
+```
+
 Options:
 
-- input/queue:
-  - `accept`, `multiple`, `maxFiles`
-  - `maxFileSize`
-  - `allowedTypes` (`["image/", ".pdf", "video/mp4"]`)
-- behavior:
-  - `ariaLabel`, `dropzoneAriaLabel`
-  - `autoUpload`
-  - `smoothProgress` (default `true`)
-  - `progressAnimationMs` (default `220`)
-  - `useChunkUpload` (default `false`)
-  - `chunkSize` (default `1MB`)
-  - `uploadKeyPrefix` (default `"upload"`)
-  - UI text options (`dropText`, `emptyText`, `startText`, `clearText`, `browseText`)
-- hooks:
-  - `onUpload(item, controls)` async upload adapter
-  - chunk/resume hooks:
-    - `onGetResumeState({ item, uploadKey, state }) -> { uploadedBytes? }`
-    - `onCreateUploadSession({ item, uploadKey, state, signal })`
-    - `onUploadChunk(payload)` where payload includes:
-      - `item`, `uploadKey`, `session`
-      - `chunkIndex`, `totalChunks`
-      - `chunkStart`, `chunkEnd`, `chunkSize`, `chunk`
-      - `uploadedBytes`, `totalBytes`, `signal`
-      - `reportChunkProgress(ratio)`
-    - `onPersistResumeState({ item, uploadKey, uploadedBytes, totalBytes, chunkIndex, totalChunks, session })`
-    - `onFinalizeUpload({ item, uploadKey, session, totalBytes, totalChunks, state, signal })`
-    - `onClearResumeState({ item, uploadKey, session })`
-  - `onChange(state)`
-  - `onError(error, item, state)`
-  - `onComplete(state)`
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `accept` | `string` | `""` | no | Native input `accept` filter. |
+| `multiple` | `boolean` | `true` | no | Allows multiple file selection. |
+| `maxFiles` | `number` | component default | no | Maximum queued files. |
+| `maxFileSize` | `number` | `0` | no | Maximum bytes per file. |
+| `allowedTypes` | `string[]` | `[]` | no | Allowed MIME/prefix/extension filters. |
+| `ariaLabel` | `string` | `""` | no | Root accessibility label. |
+| `dropzoneAriaLabel` | `string` | `""` | no | Dropzone accessibility label. |
+| `autoUpload` | `boolean` | `false` | no | Starts upload immediately after intake. |
+| `smoothProgress` | `boolean` | `true` | no | Animates progress transitions. |
+| `progressAnimationMs` | `number` | `220` | no | Progress animation duration. |
+| `useChunkUpload` | `boolean` | `false` | no | Enables chunk/resume mode. |
+| `chunkSize` | `number` | `1048576` | no | Chunk size in bytes. |
+| `uploadKeyPrefix` | `string` | `"upload"` | no | Prefix for resume-state keys. |
+| `dropText` | `string` | component default | no | Dropzone primary text. |
+| `emptyText` | `string` | component default | no | Empty-queue copy. |
+| `startText` | `string` | component default | no | Start-upload button text. |
+| `clearText` | `string` | component default | no | Clear-queue button text. |
+| `browseText` | `string` | component default | no | Browse button text. |
+| `onUpload` | `(item, controls) => Promise<any>` | `null` | no | Basic async upload adapter. |
+| `onChange` | `(state) => void` | `null` | no | Fires on queue state changes. |
+| `onError` | `(error, item, state) => void` | `null` | no | Fires on upload/intake errors. |
+| `onComplete` | `(state) => void` | `null` | no | Fires when queue completes. |
 
-Methods:
+Chunk/resume hooks:
 
-- `addFiles(files)`
-- `start()`
-- `clear()`
-- `update(nextOptions?)`
-- `remove(itemId)`
-- `retry(itemId)`
-- `getState()`
-- `destroy()`
+| Hook | Description |
+|---|---|
+| `onGetResumeState({ item, uploadKey, state })` | Returns persisted upload progress. |
+| `onCreateUploadSession({ item, uploadKey, state, signal })` | Creates remote/local upload session. |
+| `onUploadChunk(payload)` | Uploads an individual chunk. |
+| `onPersistResumeState({ item, uploadKey, uploadedBytes, totalBytes, chunkIndex, totalChunks, session })` | Persists resume progress. |
+| `onFinalizeUpload({ item, uploadKey, session, totalBytes, totalChunks, state, signal })` | Finalizes upload after chunks complete. |
+| `onClearResumeState({ item, uploadKey, session })` | Clears stored resume state. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `addFiles` | `files` | `void` | Adds files into the queue. |
+| `start` | none | `Promise<void>` | Starts upload flow. |
+| `clear` | none | `void` | Clears the queue. |
+| `update` | `nextOptions?` | `void` | Updates uploader options. |
+| `remove` | `itemId` | `void` | Removes a queued item. |
+| `retry` | `itemId` | `Promise<void>` | Retries a failed item. |
+| `getState` | none | `object` | Returns queue state. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
 
 Note:
 
 - `ui.file.uploader` composes `ui.progress` per queued file row for consistent progress visuals and behavior.
+
+Related demos:
+
+- `demos/demo.ui.html`
 
 ### `createMediaStrip(container, items, options)` (`js/ui/ui.media.strip.js`)
 
 Purpose:
 
 - Render image/video thumbs and open the shared standalone media viewer.
+- Useful as the lightweight browsing surface paired with `createMediaViewer(...)`.
 
-Key options:
+Factory:
 
-- `layout`: `"scroll" | "wrap"`
-- `animationMs` (default `300`)
-- `autoplay`, `muted`, `loop`, `showControls`
-- `viewerAriaLabel`
-- `viewerFit`
-- `showViewerHeader`
-- `showViewerFooter`
-- `showViewerCounter`
-- `showViewerClose`
-- `showViewerPrevNext`
-- `showViewerToolbar`
-- `showViewerAudiograph`
-- `baseUrl`
-- `onOpen(item, index)`, `onClose(item, index)`
+```js
+import { createMediaStrip } from "./js/ui/ui.media.strip.js";
 
-Methods:
+const strip = createMediaStrip(container, items, options);
+```
 
-- `update(nextItems, nextOptions?)`
-- `openById(id)`
-- `openByIndex(index)`
-- `getState()`
-- `destroy()`
+Recommended item shape:
 
-Note:
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | Stable media identifier. |
+| `type` | `"image" \| "video"` | Media type. |
+| `src` | `string` | Full-size source URL. |
+| `thumb` | `string` | Thumbnail URL. |
+| `title` | `string` | Optional visible title/label. |
+
+Options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `layout` | `"scroll" \| "wrap"` | `"scroll"` | no | Thumbnail layout mode. |
+| `animationMs` | `number` | `300` | no | Transition duration. |
+| `autoplay` | `boolean` | `false` | no | Autoplay video thumbs/viewer as supported. |
+| `muted` | `boolean` | `false` | no | Starts media muted. |
+| `loop` | `boolean` | `false` | no | Loops video playback. |
+| `showControls` | `boolean` | `true` | no | Shows media controls where relevant. |
+| `viewerAriaLabel` | `string` | `""` | no | Accessibility label passed to the viewer. |
+| `viewerFit` | `"contain" \| "cover" \| "original"` | `"contain"` | no | Viewer fit mode. |
+| `showViewerHeader` | `boolean` | `true` | no | Shows viewer header. |
+| `showViewerFooter` | `boolean` | `true` | no | Shows viewer footer. |
+| `showViewerCounter` | `boolean` | `true` | no | Shows viewer counter. |
+| `showViewerClose` | `boolean` | `true` | no | Shows viewer close action. |
+| `showViewerPrevNext` | `boolean` | `true` | no | Shows viewer prev/next controls. |
+| `showViewerToolbar` | `boolean` | `true` | no | Shows viewer toolbar. |
+| `showViewerAudiograph` | `boolean` | `false` | no | Shows audiograph for video items. |
+| `baseUrl` | `string` | `""` | no | Base URL for relative media paths. |
+
+Events / callbacks:
+
+| Callback | Payload | Returns | Description |
+|---|---|---|---|
+| `onOpen` | `(item, index)` | `void` | Fires when viewer opens from the strip. |
+| `onClose` | `(item, index)` | `void` | Fires when viewer closes. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `update` | `nextItems, nextOptions?` | `void` | Re-renders strip items/options. |
+| `openById` | `id` | `void` | Opens a media item by id. |
+| `openByIndex` | `index` | `void` | Opens a media item by index. |
+| `getState` | none | `object` | Returns strip state snapshot. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Behavior notes:
 
 - `ui.media.strip` now delegates full-view behavior to `ui.media.viewer` so zoom/pan/video viewing stays centralized in one component.
+- Keep thumbnails lightweight; full-size assets belong in the viewer/player layer.
+- Use `baseUrl` when items carry relative asset paths from app APIs.
+
+Related demos:
+
+- `demos/demo.ui.html`
 
 ### `createMediaViewer(container, options)` (`js/ui/ui.media.viewer.js`)
 
@@ -2511,58 +3297,69 @@ Purpose:
 
 - Render a standalone modal/lightbox viewer for image/video items with transform-based zoom/pan.
 
-Key options:
+Factory:
 
-- data/state:
-  - `items`
-  - `index`
-  - `open`
-- viewing:
-  - `fit: "contain" | "cover" | "original"`
-  - `zoomStep`
-  - `minZoom`
-  - `maxZoom`
-  - `wheelZoom`
-  - `panWhenZoomed`
-  - `loop`
-- shell:
-  - `showHeader`
-  - `showFooter`
-  - `showCounter`
-  - `showClose`
-  - `showPrevNext`
-  - `showToolbar`
-  - `closeOnBackdrop`
-  - `closeOnEscape`
-  - `ariaLabel`
-- video:
-  - `autoplayVideo`
-  - `mutedVideo`
-  - `loopVideo`
-  - `showVideoControls`
-  - `showAudiograph`
-  - `audiographStyle`
-  - `audiographSensitivity`
-- hooks:
-  - `onOpen(item, index)`
-  - `onChange(item, index)`
-  - `onClose()`
-  - `onZoomChange(state)`
+```js
+import { createMediaViewer } from "./js/ui/ui.media.viewer.js";
 
-Methods:
+const viewer = createMediaViewer(container, options);
+```
 
-- `open(index?)`
-- `close()`
-- `next()`
-- `prev()`
-- `setIndex(index)`
-- `zoomIn()`
-- `zoomOut()`
-- `resetView()`
-- `setFit(fit)`
-- `update(nextOptions?)`
-- `getState()`
-- `destroy()`
+Options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `items` | `array` | `[]` | no | Media items available to the viewer. |
+| `index` | `number` | `0` | no | Initial active item index. |
+| `open` | `boolean` | `false` | no | Starts viewer open when `true`. |
+| `fit` | `"contain" \| "cover" \| "original"` | `"contain"` | no | Fit mode for the active media. |
+| `zoomStep` | `number` | component default | no | Zoom increment size. |
+| `minZoom` | `number` | component default | no | Minimum zoom. |
+| `maxZoom` | `number` | component default | no | Maximum zoom. |
+| `wheelZoom` | `boolean` | `true` | no | Enables mouse-wheel zoom. |
+| `panWhenZoomed` | `boolean` | `true` | no | Enables panning while zoomed. |
+| `loop` | `boolean` | `false` | no | Loops prev/next navigation. |
+| `showHeader` | `boolean` | `true` | no | Shows header chrome. |
+| `showFooter` | `boolean` | `true` | no | Shows footer chrome. |
+| `showCounter` | `boolean` | `true` | no | Shows active-item counter. |
+| `showClose` | `boolean` | `true` | no | Shows close control. |
+| `showPrevNext` | `boolean` | `true` | no | Shows prev/next controls. |
+| `showToolbar` | `boolean` | `true` | no | Shows zoom/fit toolbar. |
+| `closeOnBackdrop` | `boolean` | `true` | no | Allows backdrop close. |
+| `closeOnEscape` | `boolean` | `true` | no | Allows `Esc` close. |
+| `ariaLabel` | `string` | `""` | no | Accessible viewer label. |
+| `autoplayVideo` | `boolean` | `false` | no | Starts video playback automatically. |
+| `mutedVideo` | `boolean` | `false` | no | Starts video muted. |
+| `loopVideo` | `boolean` | `false` | no | Loops video playback. |
+| `showVideoControls` | `boolean` | `true` | no | Shows native/custom video controls. |
+| `showAudiograph` | `boolean` | `false` | no | Shows video audiograph when supported. |
+| `audiographStyle` | `string` | component default | no | Audiograph render style. |
+| `audiographSensitivity` | `number` | component default | no | Audiograph sensitivity multiplier. |
+| `onOpen` | `(item, index) => void` | `null` | no | Fires when viewer opens. |
+| `onChange` | `(item, index) => void` | `null` | no | Fires when active item changes. |
+| `onClose` | `() => void` | `null` | no | Fires when viewer closes. |
+| `onZoomChange` | `(state) => void` | `null` | no | Fires on zoom state changes. |
+
+Returned API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `open` | `index?` | `void` | Opens the viewer at a given index. |
+| `close` | none | `void` | Closes the viewer. |
+| `next` | none | `void` | Advances to the next item. |
+| `prev` | none | `void` | Moves to the previous item. |
+| `setIndex` | `index` | `void` | Sets the active item. |
+| `zoomIn` | none | `void` | Increases zoom. |
+| `zoomOut` | none | `void` | Decreases zoom. |
+| `resetView` | none | `void` | Resets pan/zoom transforms. |
+| `setFit` | `fit` | `void` | Updates fit mode. |
+| `update` | `nextOptions?` | `void` | Updates viewer options/state. |
+| `getState` | none | `object` | Returns viewer state. |
+| `destroy` | none | `void` | Removes DOM and listeners. |
+
+Related demos:
+
+- `demos/demo.media.viewer.html`
 
 ### Audio UI
 

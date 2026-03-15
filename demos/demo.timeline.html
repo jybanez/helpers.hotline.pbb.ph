@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Timeline Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -73,12 +73,39 @@
     }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.timeline", "ui.timeline.scrubber"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Timeline",
+      overview: "Timeline and scrubber helpers for event chronology and time-range playback/navigation.",
+      useWhen: [
+        "Use <code>createTimeline(...)</code> for ordered event history.",
+        "Use <code>createTimelineScrubber(...)</code> when the user needs a playhead or selectable time range."
+      ],
+      avoidWhen: [
+        "Do not use it for full calendar scheduling; use <code>createScheduler(...)</code>.",
+        "Do not use it when a simple list is enough."
+      ],
+      description: "The timeline family is meant for chronology, not generic record listing. This page keeps the event-list and scrubber primitives together because they are often used in the same media-review and audit surfaces.",
+      sectionSamples: {
+        "scrubber": `const scrubber = createTimelineScrubber(host, {\n  min: 0,\n  max: 120,\n  value: 32,\n});`,
+        "vertical (grouped)": `createTimeline(host, items, {\n  orientation: "vertical",\n  groupByDate: true,\n});`,
+        "horizontal": `createTimeline(host, items, {\n  orientation: "horizontal",\n});`
+      },
+      constructor: [
+        { factory: "<code>createTimeline(container, items, options)</code>", arguments: "container, timeline items, options", returns: "Timeline instance" },
+        { factory: "<code>createTimelineScrubber(container, options)</code>", arguments: "container, scrubber options", returns: "Timeline-scrubber instance" }
+      ],
+      methods: [
+        { method: "<code>Helper-specific methods</code>", arguments: "varies by timeline helper", returns: "varies" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -113,7 +140,7 @@
   </main>
 
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createTimeline = await uiLoader.get("ui.timeline");
     const createTimelineScrubber = await uiLoader.get("ui.timeline.scrubber");

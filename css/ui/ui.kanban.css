@@ -1,7 +1,11 @@
 .ui-kanban {
-  display: flex;
+  display: inline-flex;
   gap: 12px;
-  overflow-x: auto;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+  max-width: none;
+  overflow: visible;
   padding: 2px;
 }
 

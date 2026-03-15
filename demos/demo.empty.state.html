@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Empty State Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; }
@@ -20,12 +20,39 @@
     .incident-list-meta { color: #9fb2d8; font-size: 12px; }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.empty.state", "ui.dom"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Empty State",
+      overview: "Standardized empty, error, and no-results presentation block for shared product surfaces.",
+      useWhen: [
+        "Use <code>createEmptyState(...)</code> when lists or views need consistent empty/error/no-result messaging.",
+        "Use it to keep placeholder treatment aligned across projects."
+      ],
+      avoidWhen: [
+        "Do not use it when the surface needs highly task-specific recovery actions or long explanatory content.",
+        "Do not use it as a substitute for loading placeholders; use <code>createSkeleton(...)</code>."
+      ],
+      description: "Empty-state handling is a consistency problem more than a rendering problem. This helper standardizes the common placeholder cases so teams do not keep reinventing them.",
+      sectionSamples: {
+        "framed": `createEmptyState(host, {\n  title: "No incidents found",\n  description: "Try a different search or clear filters.",\n});`,
+        "chrome-less": `createEmptyState(host, data, {\n  chrome: false,\n});`
+      },
+      constructor: [
+        { factory: "<code>createEmptyState(container, data, options)</code>", arguments: "container, empty-state data, options", returns: "Empty-state instance" }
+      ],
+      methods: [
+        { method: "<code>setData(data)</code>", arguments: "new state payload", returns: "<code>void</code>" },
+        { method: "<code>update(nextOptions)</code>", arguments: "partial options", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -50,7 +77,7 @@
     </section>
   </main>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createEmptyState = await uiLoader.get("ui.empty.state");
     const clearNode = await uiLoader.get("ui.dom.clearNode");

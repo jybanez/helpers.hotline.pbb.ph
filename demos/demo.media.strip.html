@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Strip Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #0c1017;
+      color: #d7e0f4;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+    .panel {
+      border: 1px solid #263146;
+      border-radius: 10px;
+      background: #111826;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .back {
+      color: #b2c2e5;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .muted {
+      margin: 0;
+      color: #9fb2d8;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    #mediaStripHostScroll,
+    #mediaStripHostWrap {
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      padding: 10px;
+      background: #0b1220;
+    }
+    .control-grid {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .control-grid label {
+      font-size: 13px;
+      color: #d7e0f4;
+    }
+    .log {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #b2c2e5;
+      font-family: Consolas, "Courier New", monospace;
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 10px;
+      min-height: 180px;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+    pre:not(.log) {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #d7e0f4;
+      font-family: Consolas, "Courier New", monospace;
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 10px;
+      overflow-x: auto;
+    }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.media.strip"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Media Strip",
+      overview: "Thumbnail strip surface for browsing image/video sets and delegating full-view behavior to the shared media viewer.",
+      useWhen: [
+        "Use <code>createMediaStrip(...)</code> when the primary UI is a thumbnail browser and the full viewer opens on demand.",
+        "Use it for incident photos/videos, call artifacts, and evidence sets where quick scanning matters."
+      ],
+      avoidWhen: [
+        "Do not use it as a standalone full viewer; use <code>createMediaViewer(...)</code> when the viewer itself is the main surface.",
+        "Do not use it for generic file upload workflows with queue management."
+      ],
+      description: "This demo keeps two layouts side by side: scroll and wrap. Viewer options stay shared between both strips, and relative sample-media paths resolve through <code>baseUrl</code>.",
+      defaultSampleCode: `const strip = createMediaStrip(host, items, {\n  layout: "scroll",\n  autoplay: true,\n  baseUrl: mediaBaseUrl,\n  viewerFit: "contain",\n  showViewerFooter: true,\n  showViewerToolbar: true,\n  onOpen(item, index) {\n    writeLog("media.open", { index, id: item?.id });\n  },\n});`,
+      constructor: [
+        { factory: "<code>createMediaStrip(container, items, options)</code>", arguments: "<code>container</code>, media item array, strip <code>options</code>", returns: "Media-strip instance with update/open/state methods" }
+      ],
+      options: [
+        { option: "<code>layout</code>", default: "<code>\"scroll\"</code>", description: "Thumbnail arrangement mode.", values: ["scroll", "wrap"] },
+        { option: "<code>baseUrl</code>", default: "<code>\"\"</code>", description: "Base URL for relative sample-media paths." },
+        { option: "<code>viewerFit</code>", default: "<code>\"contain\"</code>", description: "Viewer fit mode passed to the shared media viewer.", values: ["contain", "cover", "original"] },
+        { option: "<code>showViewerFooter</code>", default: "<code>true</code>", description: "Shows the viewer footer area.", values: ["true", "false"] },
+        { option: "<code>showViewerToolbar</code>", default: "<code>true</code>", description: "Shows the viewer toolbar.", values: ["true", "false"] },
+        { option: "<code>showViewerAudiograph</code>", default: "<code>false</code>", description: "Shows video audiograph in the delegated viewer.", values: ["true", "false"] }
+      ],
+      propertiesText: "No stable public instance properties are documented. Use <code>getState()</code> and update methods instead of reading internals.",
+      events: [
+        { event: "<code>onOpen</code>", arguments: "<code>(item, index)</code>", returns: "<code>void</code>" },
+        { event: "<code>onClose</code>", arguments: "<code>(item, index)</code>", returns: "<code>void</code>" }
+      ],
+      methods: [
+        { method: "<code>update(nextItems, nextOptions?)</code>", arguments: "item array and optional options", returns: "<code>void</code>" },
+        { method: "<code>openById(id)</code>", arguments: "media id", returns: "<code>void</code>" },
+        { method: "<code>openByIndex(index)</code>", arguments: "item index", returns: "<code>void</code>" },
+        { method: "<code>getState()</code>", arguments: "none", returns: "Strip state snapshot" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Media Strip Demo</h1>
+      <p class="muted">Dedicated thumbnail-strip demo for incident photos/videos, shared viewer delegation, and viewer option syncing.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Thumbnail Browser</h2>
+      <p class="muted">Both strip layouts share the same viewer options. Relative sample-media paths resolve against the repo base URL.</p>
+      <div class="control-grid">
+        <label for="mediaStripFitSelect">Viewer fit</label>
+        <select id="mediaStripFitSelect" class="ui-input">
+          <option value="contain" selected>Contain</option>
+          <option value="cover">Cover</option>
+          <option value="original">Original</option>
+        </select>
+        <label><input id="mediaStripFooterToggle" type="checkbox" checked> Footer</label>
+        <label><input id="mediaStripToolbarToggle" type="checkbox" checked> Toolbar</label>
+        <label><input id="mediaStripAudiographToggle" type="checkbox"> Video audiograph</label>
+      </div>
+      <p class="muted">Scroll layout</p>
+      <div id="mediaStripHostScroll"></div>
+      <p class="muted">Wrap layout</p>
+      <div id="mediaStripHostWrap"></div>
+      <pre>const strip = createMediaStrip(host, items, {
+  layout: "scroll",
+  autoplay: true,
+  baseUrl: mediaBaseUrl,
+  viewerFit: mediaStripFitSelect.value,
+  showViewerFooter: mediaStripFooterToggle.checked,
+  showViewerToolbar: mediaStripToolbarToggle.checked,
+  showViewerAudiograph: mediaStripAudiographToggle.checked,
+  onOpen(item, index) {
+    writeLog("media.open", { index, id: item?.id, type: item?.type });
+  },
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createMediaStrip = await uiLoader.get("ui.media.strip");
+
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    const mediaStripFitSelect = document.getElementById("mediaStripFitSelect");
+    const mediaStripFooterToggle = document.getElementById("mediaStripFooterToggle");
+    const mediaStripToolbarToggle = document.getElementById("mediaStripToolbarToggle");
+    const mediaStripAudiographToggle = document.getElementById("mediaStripAudiographToggle");
+
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+
+    const fallbackMediaItems = [
+      {
+        id: "img-1",
+        type: "image",
+        thumbUrl: "https://picsum.photos/id/1015/160/120",
+        srcUrl: "https://picsum.photos/id/1015/1600/1000",
+        title: "Mountain",
+        alt: "Mountain landscape",
+      },
+      {
+        id: "vid-1",
+        type: "video",
+        thumbUrl: "https://picsum.photos/id/1025/160/120",
+        srcUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        title: "Flower Video",
+      },
+      {
+        id: "img-2",
+        type: "image",
+        thumbUrl: "https://picsum.photos/id/1035/160/120",
+        srcUrl: "https://picsum.photos/id/1035/1600/1000",
+        title: "Forest",
+        alt: "Forest view",
+      },
+      {
+        id: "vid-2",
+        type: "video",
+        thumbUrl: "https://picsum.photos/id/1043/160/120",
+        srcUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
+        title: "Big Buck Bunny Clip",
+      },
+    ];
+
+    async function loadMediaItems() {
+      try {
+        const response = await fetch("../samples/samplemedia.json", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Failed to load samples/samplemedia.json (${response.status})`);
+        }
+        const payload = await response.json();
+        if (!Array.isArray(payload)) {
+          throw new Error("samples/samplemedia.json is not an array");
+        }
+        writeLog("media.dataset", {
+          source: "samples/samplemedia.json",
+          total: payload.length,
+          renderable: payload.filter((item) => item?.type === "photo" || item?.type === "video").length,
+        });
+        return payload;
+      } catch (error) {
+        writeLog("media.dataset.fallback", { reason: error.message });
+        return fallbackMediaItems;
+      }
+    }
+
+    const mediaBaseUrl = new URL("../", window.location.href).href.replace(/\/+$/, "");
+    const mediaItems = await loadMediaItems();
+    const stripOptions = () => ({
+      autoplay: true,
+      baseUrl: mediaBaseUrl,
+      viewerFit: mediaStripFitSelect.value,
+      showViewerFooter: mediaStripFooterToggle.checked,
+      showViewerToolbar: mediaStripToolbarToggle.checked,
+      showViewerAudiograph: mediaStripAudiographToggle.checked,
+      onOpen(item, index) {
+        writeLog("media.open", { index, id: item?.id, type: item?.type });
+      },
+      onClose(item, index) {
+        writeLog("media.close", { index, id: item?.id, type: item?.type });
+      },
+    });
+
+    const mediaStripScroll = createMediaStrip(document.getElementById("mediaStripHostScroll"), mediaItems, {
+      layout: "scroll",
+      ...stripOptions(),
+    });
+
+    const mediaStripWrap = createMediaStrip(document.getElementById("mediaStripHostWrap"), mediaItems, {
+      layout: "wrap",
+      ...stripOptions(),
+    });
+
+    function syncMediaStripViewerOptions() {
+      const nextOptions = stripOptions();
+      mediaStripScroll.update(mediaItems, {
+        layout: "scroll",
+        ...nextOptions,
+      });
+      mediaStripWrap.update(mediaItems, {
+        layout: "wrap",
+        ...nextOptions,
+      });
+      writeLog("mediaStrip.viewerOptions.update", {
+        viewerFit: nextOptions.viewerFit,
+        showViewerFooter: nextOptions.showViewerFooter,
+        showViewerToolbar: nextOptions.showViewerToolbar,
+        showViewerAudiograph: nextOptions.showViewerAudiograph,
+      });
+    }
+
+    mediaStripFitSelect.addEventListener("change", syncMediaStripViewerOptions);
+    mediaStripFooterToggle.addEventListener("change", syncMediaStripViewerOptions);
+    mediaStripToolbarToggle.addEventListener("change", syncMediaStripViewerOptions);
+    mediaStripAudiographToggle.addEventListener("change", syncMediaStripViewerOptions);
+  </script>
+</body>
+</html>

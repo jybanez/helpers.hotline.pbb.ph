@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Splitter Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
@@ -16,12 +16,38 @@
     .log { margin: 0; white-space: pre-wrap; font-size: 12px; color: #b2c2e5; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; height: 220px; overflow: auto; }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.splitter", "ui.dom"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Splitter",
+      overview: "Resizable two-pane layout primitive for horizontal or vertical split surfaces.",
+      useWhen: [
+        "Use <code>createSplitter(...)</code> when two adjacent panes must be resizable by the user.",
+        "Use it as layout infrastructure under more specific components."
+      ],
+      avoidWhen: [
+        "Do not use it for static two-column layouts that never resize.",
+        "Do not use it as a replacement for a full page shell."
+      ],
+      description: "The splitter is intentionally narrow: it solves pane resizing and leaves the pane contents to the surrounding app or helper composition.",
+      sectionSamples: {
+        "horizontal": `createSplitter(host, {\n  orientation: "horizontal",\n  initialSizes: [35, 65],\n});`,
+        "vertical": `createSplitter(host, {\n  orientation: "vertical",\n  initialSizes: [50, 50],\n});`
+      },
+      constructor: [
+        { factory: "<code>createSplitter(container, options)</code>", arguments: "container and splitter options", returns: "Splitter instance" }
+      ],
+      methods: [
+        { method: "<code>setSizes(sizes)</code>", arguments: "pane size array", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -44,7 +70,7 @@
     </section>
   </main>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createSplitter = await uiLoader.get("ui.splitter");
     const createElement = await uiLoader.get("ui.dom.createElement");

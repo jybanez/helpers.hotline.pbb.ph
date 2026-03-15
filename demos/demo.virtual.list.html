@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Virtual List Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
@@ -15,12 +15,41 @@
     .log { margin: 0; white-space: pre-wrap; font-size: 12px; color: #b2c2e5; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; height: 220px; overflow: auto; }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.virtual.list", "ui.dom"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Virtual List",
+      overview: "Low-level virtualization primitive for very large item sets when a full grid or tree shell is unnecessary.",
+      useWhen: [
+        "Use <code>createVirtualList(...)</code> when row count is large enough that only visible items should render.",
+        "Use it as a primitive under custom list presentations instead of forcing grid behavior."
+      ],
+      avoidWhen: [
+        "Do not use it when a standard list with a few dozen rows is enough.",
+        "Do not use it when you need sorting, paging, or full tabular structure; use <code>createGrid(...)</code>."
+      ],
+      description: "The virtual-list helper solves rendering scale, not page-level data UX. It is the narrow primitive for large custom lists and should stay smaller than the grid and tree-grid helpers.",
+      defaultSampleCode: `const list = createVirtualList(host, items, {\n  rowHeight: 40,\n  overscan: 6,\n  renderItem(item) {\n    return renderRow(item);\n  },\n});`,
+      constructor: [
+        { factory: "<code>createVirtualList(container, items, options)</code>", arguments: "<code>container</code>, items array, virtual-list options", returns: "Virtual-list instance" }
+      ],
+      options: [
+        { option: "<code>rowHeight</code>", default: "documented default", description: "Fixed row height used for virtualization math." },
+        { option: "<code>renderItem</code>", default: "<code>null</code>", description: "Custom row renderer for each visible item." },
+        { option: "<code>overscan</code>", default: "documented default", description: "Extra rows rendered outside the immediate viewport." }
+      ],
+      methods: [
+        { method: "<code>setItems(items)</code>", arguments: "items array", returns: "<code>void</code>" },
+        { method: "<code>scrollToIndex(index)</code>", arguments: "number", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -46,7 +75,7 @@
     </section>
   </main>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createVirtualList = await uiLoader.get("ui.virtual.list");
     const createElement = await uiLoader.get("ui.dom.createElement");

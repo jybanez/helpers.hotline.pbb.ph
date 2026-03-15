@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Skeleton Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     .page { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; }
@@ -15,12 +15,40 @@
     .log { margin: 0; white-space: pre-wrap; font-size: 12px; color: #b2c2e5; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; height: 220px; overflow: auto; }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.skeleton"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Skeleton",
+      overview: "Loading-placeholder helper for line, card, and grid-style placeholder treatments.",
+      useWhen: [
+        "Use <code>createSkeleton(...)</code> when the user benefits from seeing the structure of loading content.",
+        "Use it instead of empty blanks during fetch-heavy flows."
+      ],
+      avoidWhen: [
+        "Do not use it after data load completes or for permanent empty states.",
+        "Do not use it when a small inline spinner communicates enough."
+      ],
+      description: "Skeletons are structural loading placeholders. They should mirror the shape of the final surface rather than act as decorative shimmer blocks without context.",
+      sectionSamples: {
+        "lines": `createSkeleton(host, { type: "lines", count: 5 });`,
+        "card": `createSkeleton(host, { type: "card" });`,
+        "grid": `createSkeleton(host, { type: "grid", columns: 3, rows: 2 });`
+      },
+      constructor: [
+        { factory: "<code>createSkeleton(container, data, options)</code>", arguments: "container, skeleton data, options", returns: "Skeleton instance" }
+      ],
+      methods: [
+        { method: "<code>setData(data)</code>", arguments: "skeleton payload", returns: "<code>void</code>" },
+        { method: "<code>update(nextOptions)</code>", arguments: "partial options", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -48,7 +76,7 @@
     </section>
   </main>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createSkeleton = await uiLoader.get("ui.skeleton");
 

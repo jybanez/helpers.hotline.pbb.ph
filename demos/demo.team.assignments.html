@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Team Assignments Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -64,12 +64,38 @@
     }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["incident.base", "incident.teams.assignments"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Team Assignments",
+      overview: "PBB incident team-assignment demo for real operational assignment surfaces.",
+      useWhen: [
+        "Use this page to inspect shared team-assignment behavior in the incident stack.",
+        "Use it when validating assignment presentation against real incident/team workflows."
+      ],
+      avoidWhen: [
+        "Do not use it as a generic team-management surface outside the incident domain.",
+        "Do not bypass the shared incident/team helper with app-local markup."
+      ],
+      description: "This is a domain demo page rather than a generic UI primitive. Its purpose is to validate shared team-assignment behavior after the demo and documentation reorganization.",
+      sectionSamples: {
+        "editable team assignments": `const editor = createTeamAssignments(host, data, {\n  editable: true,\n  onAssign(payload) {\n    writeLog("team.assign", payload);\n  },\n});`,
+        "read-only team assignments": `createTeamAssignments(host, data, {\n  editable: false,\n});`
+      },
+      constructor: [
+        { factory: "<code>incident.teams.assignments</code> helper entry", arguments: "incident-team data and options", returns: "Domain-specific assignment surface" }
+      ],
+      propertiesText: "Read this page as a domain demo. Stable public contract ownership sits with the incident/team helper layer.",
+      methods: [
+        { method: "<code>Domain-specific methods</code>", arguments: "varies by incident/team helper", returns: "varies" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page">
     <section class="controls">
       <a class="back" href="./index.html">← Back to Home</a>
@@ -109,7 +135,7 @@
   </main>
 
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const incidentBase = await uiLoader.get("incident.base");
     const incidentTeamsAssignments = await uiLoader.get("incident.teams.assignments");
@@ -154,14 +180,14 @@
         resourceTypes,
         operators
       ] = await Promise.all([
-        fetchJson("./boot.team.assignment.status.json"),
-        fetchJson("./boot.incident.status.json"),
-        fetchJson("./boot.alert.levels.json"),
-        fetchJson("./boot.incident.types.json"),
-        fetchJson("./boot.incident.categories.json"),
-        fetchJson("./boot.teams.json"),
-        fetchJson("./boot.resource.types.json"),
-        fetchJson("./boot.operators.json")
+        fetchJson("../boot.team.assignment.status.json"),
+        fetchJson("../boot.incident.status.json"),
+        fetchJson("../boot.alert.levels.json"),
+        fetchJson("../boot.incident.types.json"),
+        fetchJson("../boot.incident.categories.json"),
+        fetchJson("../boot.teams.json"),
+        fetchJson("../boot.resource.types.json"),
+        fetchJson("../boot.operators.json")
       ]);
 
       const lookups = {
@@ -333,7 +359,7 @@
         const availability = await Promise.all(
           sampleCandidates.map(async (name) => {
             try {
-              await fetchJson(`./samples/${name}`);
+              await fetchJson(`../samples/${name}`);
               return name;
             } catch (error) {
               return null;
@@ -357,7 +383,7 @@
       }
 
       async function applySample(sampleFile) {
-        const samplePayload = await fetchJson(`./samples/${sampleFile}`);
+        const samplePayload = await fetchJson(`../samples/${sampleFile}`);
         incidentState = structuredClone(samplePayload?.incident || {});
         listState = structuredClone(incidentState.team_assignments || []);
         editableApi.update({ team_assignments: listState }, getEditableOptions());

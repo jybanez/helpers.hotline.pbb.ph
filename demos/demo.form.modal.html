@@ -1,0 +1,1135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schema Form Modal Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body {
+      margin: 0;
+      background: #0c1017;
+      color: #d7e0f4;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .demo-workbench {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--demo-shell-content-width, 700px);
+      grid-column: 2 / 4;
+      min-height: 100vh;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .demo-workbench__center,
+    .demo-workbench__content {
+      min-height: 0;
+      overflow: auto;
+      padding: 20px;
+    }
+    .demo-workbench__center {
+      display: grid;
+      gap: 14px;
+      background:
+        radial-gradient(circle at top left, rgba(58, 92, 158, 0.12), transparent 32%),
+        #0c1017;
+    }
+    .demo-workbench__content {
+      display: grid;
+      gap: 14px;
+      border-left: 1px solid #263146;
+      background: #0f1521;
+    }
+    .panel {
+      border: 1px solid #263146;
+      border-radius: 14px;
+      background: #111826;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .eyebrow {
+      color: #8db5ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .intro h1,
+    .intro p,
+    .content-section h2,
+    .content-section p,
+    .content-section ul,
+    .content-section li {
+      margin: 0;
+    }
+    .intro p,
+    .content-section p,
+    .content-section li {
+      color: #9fb2d8;
+      line-height: 1.5;
+    }
+    .content-section ul {
+      padding-left: 18px;
+      display: grid;
+      gap: 6px;
+    }
+    .demo-stack-list {
+      display: grid;
+      gap: 14px;
+    }
+    .demo-stack {
+      display: grid;
+      gap: 0;
+      border: 1px solid #263146;
+      border-radius: 14px;
+      background: #0b1220;
+    }
+    .demo-stack__row {
+      padding: 14px 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .demo-stack__row + .demo-stack__row {
+      border-top: 1px solid #24314a;
+    }
+    .demo-stack__row--live {
+      gap: 12px;
+    }
+    .demo-stack__header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+    .demo-stack__header h2,
+    .demo-stack__header p {
+      margin: 0;
+    }
+    .demo-stack__header p {
+      color: #9fb2d8;
+      max-width: 720px;
+      line-height: 1.5;
+    }
+    .demo-stack__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .demo-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 10px;
+      border: 1px solid #334563;
+      border-radius: 999px;
+      background: #10192b;
+      color: #b7c9eb;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .demo-code,
+    .demo-log {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #c8d6f2;
+      font-family: Consolas, "Courier New", monospace;
+      border: 1px solid #2b3750;
+      border-radius: 10px;
+      background: #09111d;
+      padding: 10px;
+      overflow: auto;
+    }
+    .demo-code {
+      max-height: 220px;
+    }
+    .demo-log {
+      min-height: 120px;
+      max-height: 180px;
+    }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #263146;
+      border-radius: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #24314a;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: #8db5ff;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #0f1829;
+      position: sticky;
+      top: 0;
+    }
+    td code {
+      color: #ffffff;
+    }
+    .guidance {
+      display: grid;
+      gap: 10px;
+    }
+    .guidance-card {
+      border: 1px solid #2b3750;
+      border-radius: 10px;
+      background: #0b1220;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+    .guidance-card h3,
+    .guidance-card p {
+      margin: 0;
+    }
+    .guidance-card p {
+      color: #9fb2d8;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .anchor-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .anchor-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid #334563;
+      border-radius: 999px;
+      color: #d7e0f4;
+      text-decoration: none;
+      background: #0b1423;
+      font-size: 12px;
+    }
+    .anchor-links a:hover {
+      border-color: #4a5f86;
+      background: #101a2b;
+    }
+    @media (max-width: 1260px) {
+      .demo-workbench {
+        grid-template-columns: 1fr;
+      }
+      .demo-workbench__content {
+        border-left: 0;
+        border-top: 1px solid #263146;
+      }
+    }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany([
+      "ui.dom",
+      "ui.modal",
+      "ui.form.modal",
+      "ui.form.modal.login",
+      "ui.form.modal.reauth",
+      "ui.form.modal.status",
+      "ui.form.modal.reason",
+    ]);
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="demo-workbench">
+    <section class="demo-workbench__center">
+      <section class="panel intro">
+        <span class="eyebrow">Forms</span>
+        <h1>Schema Form Modal</h1>
+        <p>Shared modal-form shell for short operational workflows. This page is the first pass of the new demo layout: live examples in the center, full API/manual content on the right, and shared demo navigation pinned on the left.</p>
+      </section>
+
+      <section class="demo-stack-list">
+        <article class="demo-stack">
+          <div class="demo-stack__row demo-stack__row--live">
+            <div class="demo-stack__header">
+              <div>
+                <h2>Login</h2>
+                <p>Baseline helper config with required fields, busy submit, and field-error handling.</p>
+              </div>
+              <button id="loginDemoBtn" class="ui-button" type="button">Open Login Form</button>
+            </div>
+            <div class="demo-stack__meta">
+              <span class="demo-chip">single-column</span>
+              <span class="demo-chip">field errors</span>
+              <span class="demo-chip">busy submit</span>
+            </div>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-code">const formModal = createFormModal({
+  title: "Operator Login",
+  submitLabel: "Login",
+  rows: [
+    [{ type: "input", input: "email", name: "email", required: true }],
+    [{ type: "input", input: "password", name: "password", required: true }],
+  ],
+  async onSubmit(values, ctx) {
+    if (values.password !== "correct-password") {
+      ctx.setErrors({ password: "Invalid password." });
+      return false;
+    }
+    return true;
+  },
+});</pre>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-log" data-log-prefix="formModal.login">No events yet for Login.</pre>
+          </div>
+        </article>
+
+        <article class="demo-stack">
+          <div class="demo-stack__row demo-stack__row--live">
+            <div class="demo-stack__header">
+              <div>
+                <h2>Preset Login + Re-auth</h2>
+                <p>Opinionated wrappers over <code>createFormModal(...)</code> with engineer-provided field-name mapping.</p>
+              </div>
+              <div class="row">
+                <button id="presetLoginDemoBtn" class="ui-button" type="button">Open Preset Login</button>
+                <button id="reauthDemoBtn" class="ui-button" type="button">Open Re-auth Form</button>
+              </div>
+            </div>
+            <div class="demo-stack__meta">
+              <span class="demo-chip">wrapper presets</span>
+              <span class="demo-chip">remapped payload keys</span>
+              <span class="demo-chip">locked re-auth identity</span>
+            </div>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-code">const formModal = createLoginFormModal({
+  fields: {
+    identifier: "user_email",
+    password: "user_password",
+  },
+  onSubmit(values) {
+    // values => { user_email, user_password }
+  },
+});</pre>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-log" data-log-prefix="preset.login">No preset-login events yet.</pre>
+            <pre class="demo-log" data-log-prefix="preset.reauth">No re-auth events yet.</pre>
+          </div>
+        </article>
+
+        <article class="demo-stack">
+          <div class="demo-stack__row demo-stack__row--live">
+            <div class="demo-stack__header">
+              <div>
+                <h2>Status Update + Reason Required</h2>
+                <p>Operational presets for common status changes and categorized reason capture with app-supplied options.</p>
+              </div>
+              <div class="row">
+                <button id="statusDemoBtn" class="ui-button" type="button">Open Status Update</button>
+                <button id="reasonDemoBtn" class="ui-button ui-button-danger" type="button">Open Reason Form</button>
+              </div>
+            </div>
+            <div class="demo-stack__meta">
+              <span class="demo-chip">app-supplied vocabularies</span>
+              <span class="demo-chip">textarea + select</span>
+              <span class="demo-chip">metrics-friendly reasons</span>
+            </div>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-code">const formModal = createReasonFormModal({
+  fields: {
+    reasonCode: "cancel_reason",
+    reasonDetails: "remarks",
+    confirmText: "confirm_cancel",
+  },
+  reasonOptions: [
+    { label: "Duplicate", value: "duplicate" },
+    { label: "Bad Data", value: "bad_data" },
+  ],
+});</pre>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-log" data-log-prefix="preset.status">No status-update events yet.</pre>
+            <pre class="demo-log" data-log-prefix="preset.reason">No reason-form events yet.</pre>
+          </div>
+        </article>
+
+        <article class="demo-stack">
+          <div class="demo-stack__row demo-stack__row--live">
+            <div class="demo-stack__header">
+              <div>
+                <h2>Hub Add/Edit Acceptance Proof</h2>
+                <p>Faithful PBB HQ mappings for geodata-driven add flow and <code>other</code>-deployment edit flow using <code>mode</code>, <code>context</code>, <code>hidden</code>, <code>display</code>, and <code>span</code>.</p>
+              </div>
+              <div class="row">
+                <button id="hubCreateDemoBtn" class="ui-button" type="button">Open Hub Add Style</button>
+                <button id="hubEditDemoBtn" class="ui-button" type="button">Open Hub Edit Style</button>
+              </div>
+            </div>
+            <div class="demo-stack__meta">
+              <span class="demo-chip">acceptance target</span>
+              <span class="demo-chip">context strip</span>
+              <span class="demo-chip">hidden payload fields</span>
+              <span class="demo-chip">flow-specific layout</span>
+            </div>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-code">const formModal = createFormModal({
+  mode: "create",
+  context: { badge: "CITY", summary: "..." },
+  initialValues: {
+    name: "LAHUG, CEBU CITY",
+    deployment: "city",
+    reg_code: "07",
+  },
+  rows: [
+    [{ type: "display", name: "name", span: 2 }],
+    [{ type: "hidden", name: "name" }],
+    [{ type: "hidden", name: "deployment" }],
+    [{ type: "ui.select", name: "status", items: hubStatusOptions }],
+  ],
+});</pre>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-log" data-log-prefix="formModal.hub">No hub acceptance-proof events yet.</pre>
+          </div>
+        </article>
+
+        <article class="demo-stack">
+          <div class="demo-stack__row demo-stack__row--live">
+            <div class="demo-stack__header">
+              <div>
+                <h2>API Error Mapping</h2>
+                <p>Shared backend error plumbing via <code>ctx.applyApiErrors(...)</code> so form-level and field-level errors land consistently.</p>
+              </div>
+              <button id="apiErrorsDemoBtn" class="ui-button" type="button">Open API Error Mapping</button>
+            </div>
+            <div class="demo-stack__meta">
+              <span class="demo-chip">field + form errors</span>
+              <span class="demo-chip">shared backend handling</span>
+            </div>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-code">ctx.applyApiErrors({
+  errors: {
+    domain: ["Domain already exists."],
+    _form: "Unable to save hub.",
+  },
+});</pre>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-log" data-log-prefix="formModal.apiErrors">No API-error mapping events yet.</pre>
+          </div>
+        </article>
+
+        <article class="demo-stack">
+          <div class="demo-stack__row demo-stack__row--live">
+            <div class="demo-stack__header">
+              <div>
+                <h2>Add Uplink Acceptance Proof</h2>
+                <p>Hosted <code>ui.select</code> with searchable multi-select options from loaded hub state, dotted validation mapping, and string-to-integer payload conversion.</p>
+              </div>
+              <button id="uplinkDemoBtn" class="ui-button ui-button-primary" type="button">Open Add Uplink Style</button>
+            </div>
+            <div class="demo-stack__meta">
+              <span class="demo-chip">ui.select</span>
+              <span class="demo-chip">multiple + searchable</span>
+              <span class="demo-chip">dotted backend keys</span>
+              <span class="demo-chip">acceptance target</span>
+            </div>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-code">{
+  type: "ui.select",
+  name: "uplink_hub_ids",
+  multiple: true,
+  searchable: true,
+  options: hubOptions,
+}
+
+const payload = {
+  ...hubState,
+  uplink_hub_ids: values.uplink_hub_ids.map(Number),
+};</pre>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-log" data-log-prefix="formModal.addUplink">No Add Uplink events yet.</pre>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <aside class="demo-workbench__content">
+      <section class="panel content-section" id="overview">
+        <span class="eyebrow">Reference</span>
+        <h2>Schema Form Modal</h2>
+        <p>Shared helper for short operational modal forms. It composes over the existing modal shell and standardizes structure, validation, busy state, and submit handling.</p>
+        <div class="anchor-links">
+          <a href="#overview">Overview</a>
+          <a href="#constructor">Constructor</a>
+          <a href="#options">Options</a>
+          <a href="#properties">Properties</a>
+          <a href="#events">Events</a>
+          <a href="#methods">Methods</a>
+        </div>
+      </section>
+
+      <section class="panel content-section" id="use-this-when">
+        <h2>Use This When</h2>
+        <ul>
+          <li>Short modal-bound workflows are enough.</li>
+          <li>You need field errors, form errors, and busy submit handling owned by the helper.</li>
+          <li>The flow can be expressed as a narrow row-based schema instead of app-local modal markup.</li>
+        </ul>
+      </section>
+
+      <section class="panel content-section" id="do-not-use-this-when">
+        <h2>Do Not Use This When</h2>
+        <ul>
+          <li>The flow is a large CRUD editor with many fields and sections.</li>
+          <li>You need a multi-step wizard, page-level validation summary, or long-form editing workflow.</li>
+          <li>The layout depends on arbitrary grids, nested groups, or app-local modal body markup.</li>
+        </ul>
+      </section>
+
+      <section class="panel content-section" id="description">
+        <h2>Description</h2>
+        <p><code>createFormModal(...)</code> is the shared direction for modal forms in PBB projects. It keeps the layout intentionally narrow: one or two items per row, helper-owned field rendering, and a stable submit lifecycle. Presets like login, re-auth, status update, and reason-required compose over it instead of bypassing it.</p>
+      </section>
+
+      <section class="panel content-section" id="constructor">
+        <h2>Constructor / Initialization</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Factory</th><th>Arguments</th><th>Returns</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>createFormModal(options)</code></td>
+                <td><code>options</code>: form-modal configuration object</td>
+                <td>Instance with open/close, value, error, busy, and update methods</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel content-section" id="options">
+        <h2>Options</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>title</code></td><td><code>""</code></td><td>Modal title.</td></tr>
+              <tr><td><code>mode</code></td><td><code>"create"</code></td><td>Lightweight form mode surfaced to rules and state. Allowed values: <code>create</code>, <code>edit</code>.</td></tr>
+              <tr><td><code>context</code></td><td><code>null</code></td><td>Narrow top strip for acceptance-proof flows such as geodata hub add.</td></tr>
+              <tr><td><code>rows</code></td><td><code>[]</code></td><td>Row-based field schema. One or two items per row; hidden-only rows do not render visible gaps.</td></tr>
+              <tr><td><code>initialValues</code></td><td><code>{}</code></td><td>Initial payload values, including hidden fields.</td></tr>
+              <tr><td><code>submitLabel</code></td><td><code>"Submit"</code></td><td>Primary action label.</td></tr>
+              <tr><td><code>busyMessage</code></td><td><code>"Working..."</code></td><td>Busy overlay message while async submit is pending.</td></tr>
+              <tr><td><code>onSubmit(values, ctx)</code></td><td><code>null</code></td><td>Submit hook. Return truthy to close, falsy to keep the modal open.</td></tr>
+              <tr><td><code>onClose(meta)</code></td><td><code>null</code></td><td>Close callback with helper/meta context.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel content-section" id="properties">
+        <h2>Properties</h2>
+        <p><code>createFormModal(...)</code> does not expose stable public instance properties as part of its working contract. Use methods such as <code>getState()</code>, <code>getValues()</code>, and <code>isBusy()</code> instead of reading instance fields directly.</p>
+      </section>
+
+      <section class="panel content-section" id="events">
+        <h2>Events</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Event</th><th>Arguments</th><th>Return Effect</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>onSubmit(values, ctx)</code></td><td><code>values</code>, helper-owned <code>ctx</code></td><td>Truthy closes the modal. Falsy or rejected promise keeps it open.</td></tr>
+              <tr><td><code>onClose(meta)</code></td><td>Close metadata</td><td>No return effect.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel content-section" id="methods">
+        <h2>Methods</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Method</th><th>Arguments</th><th>Returns</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>open()</code></td><td>none</td><td><code>void</code></td></tr>
+              <tr><td><code>close()</code></td><td>optional metadata</td><td><code>void</code></td></tr>
+              <tr><td><code>getValues()</code></td><td>none</td><td>Current values object, including hidden fields</td></tr>
+              <tr><td><code>setValues(values)</code></td><td>partial value map</td><td><code>void</code></td></tr>
+              <tr><td><code>setErrors(errors)</code></td><td>field error map</td><td><code>void</code></td></tr>
+              <tr><td><code>setFormError(message)</code></td><td>string</td><td><code>void</code></td></tr>
+              <tr><td><code>clearErrors()</code></td><td>none</td><td><code>void</code></td></tr>
+              <tr><td><code>setBusy(flag, meta)</code></td><td>boolean, optional metadata</td><td><code>void</code></td></tr>
+              <tr><td><code>isBusy()</code></td><td>none</td><td><code>boolean</code></td></tr>
+              <tr><td><code>update(nextOptions)</code></td><td>partial options</td><td><code>void</code></td></tr>
+              <tr><td><code>applyApiErrors(response)</code></td><td>backend error payload</td><td>Normalized mapping result</td></tr>
+              <tr><td><code>getState()</code></td><td>none</td><td>Current helper state including <code>mode</code> and values</td></tr>
+              <tr><td><code>destroy()</code></td><td>none</td><td><code>void</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+
+    await window.__demoLoaderReady;
+    const createFormModal = await uiLoader.get("ui.form.modal");
+    const createLoginFormModal = await uiLoader.get("ui.form.modal.login");
+    const createReauthFormModal = await uiLoader.get("ui.form.modal.reauth");
+    const createStatusUpdateFormModal = await uiLoader.get("ui.form.modal.status");
+    const createReasonFormModal = await uiLoader.get("ui.form.modal.reason");
+
+    const stackLogs = Array.from(document.querySelectorAll("[data-log-prefix]")).map((el) => ({
+      prefix: String(el.dataset.logPrefix || ""),
+      element: el,
+    }));
+
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      let matched = false;
+      stackLogs.forEach(({ prefix, element }) => {
+        if (!prefix || !label.startsWith(prefix)) {
+          return;
+        }
+        element.textContent = element.textContent.startsWith("No events yet")
+          ? line
+          : `${line}\n${element.textContent}`;
+        matched = true;
+      });
+      if (!matched && stackLogs.length) {
+        const fallback = stackLogs[0].element;
+        fallback.textContent = fallback.textContent.startsWith("No events yet")
+          ? line
+          : `${line}\n${fallback.textContent}`;
+      }
+    }
+
+    function openLoginFormModal(source = "formModal.login") {
+      const formModal = createFormModal({
+        title: "Operator Login",
+        size: "sm",
+        busyMessage: "Signing in...",
+        submitLabel: "Login",
+        rows: [
+          [{ type: "text", content: "This demo intentionally fails and keeps the modal open." }],
+          [{ type: "input", input: "email", name: "email", label: "Email address", value: "operator@pbb.ph", autocomplete: "username", required: true }],
+          [{ type: "input", input: "password", name: "password", label: "Password", value: "wrong-password", autocomplete: "current-password", required: true }],
+        ],
+        async onSubmit(values, ctx) {
+          writeLog(`${source}.submit.begin`, { email: values.email });
+          await new Promise((resolve) => setTimeout(resolve, 900));
+          if (values.password !== "correct-password") {
+            ctx.setErrors({ password: "Invalid password." });
+            writeLog(`${source}.submit.failed`, { email: values.email });
+            return false;
+          }
+          writeLog(`${source}.submit.success`, { email: values.email });
+          return true;
+        },
+        onClose(meta) {
+          writeLog(`${source}.close`, meta || {});
+        },
+      });
+      formModal.open();
+      writeLog(`${source}.open`, { ok: true });
+    }
+
+    function openCrudFormModal(source = "formModal.crud") {
+      const formModal = createFormModal({
+        title: "Create User",
+        size: "md",
+        busyMessage: "Saving user...",
+        submitLabel: "Save User",
+        rows: [
+          [{ type: "text", content: "This example uses a two-column row and returns a form-level error from the submit handler." }],
+          [
+            { type: "input", input: "text", name: "firstname", label: "First Name", value: "Maria", required: true },
+            { type: "input", input: "text", name: "lastname", label: "Last Name", value: "Santos", required: true },
+          ],
+          [
+            { type: "input", input: "email", name: "email", label: "Email", value: "exists@pbb.ph", required: true, autocomplete: "email" },
+            {
+              type: "select",
+              name: "role",
+              label: "Role",
+              value: "operator",
+              options: [
+                { label: "Operator", value: "operator" },
+                { label: "Supervisor", value: "supervisor" },
+                { label: "Admin", value: "admin" },
+              ],
+            },
+          ],
+          [{ type: "checkbox", name: "notify", label: "Send welcome notification", value: true }],
+        ],
+        async onSubmit(values, ctx) {
+          writeLog(`${source}.submit.begin`, values);
+          await new Promise((resolve) => setTimeout(resolve, 1100));
+          if (String(values.email || "").toLowerCase() === "exists@pbb.ph") {
+            ctx.setFormError("Unable to save record. The email address is already assigned to another user.");
+            writeLog(`${source}.submit.failed`, { reason: "email-exists" });
+            return false;
+          }
+          writeLog(`${source}.submit.success`, values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog(`${source}.close`, meta || {});
+        },
+      });
+      formModal.open();
+      writeLog(`${source}.open`, { ok: true });
+    }
+
+    function openSuccessFormModal(source = "formModal.success") {
+      const formModal = createFormModal({
+        title: "Create Barangay Mapping",
+        size: "sm",
+        busyMessage: "Creating mapping...",
+        submitLabel: "Create Mapping",
+        rows: [
+          [{ type: "alert", tone: "info", content: "This path demonstrates a successful async submit that closes the modal." }],
+          [{ type: "input", input: "text", name: "barangayCode", label: "Barangay Code", value: "072217001", required: true }],
+          [{ type: "input", input: "url", name: "endpoint", label: "Endpoint URL", value: "https://api.pbb.ph/relay/barangay", required: true, help: "Use the production endpoint for this demo." }],
+        ],
+        async onSubmit(values) {
+          writeLog(`${source}.submit.begin`, values);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          writeLog(`${source}.submit.complete`, values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog(`${source}.close`, meta || {});
+        },
+      });
+      formModal.open();
+      writeLog(`${source}.open`, { ok: true });
+    }
+
+    const hubStatusOptions = [
+      { label: "Planned", value: "planned" },
+      { label: "Online", value: "online" },
+      { label: "Offline", value: "offline" },
+      { label: "Maintenance", value: "maintenance" },
+    ];
+
+    function buildHubGeoCreateConfig() {
+      return {
+        title: "Add Hub (Geodata)",
+        size: "md",
+        mode: "create",
+        busyMessage: "Creating hub...",
+        submitLabel: "Create Hub",
+        context: {
+          badge: "CITY",
+          summary: "Philippines / Region VII / Cebu / Cebu City / Lahug",
+        },
+        initialValues: {
+          name: "LAHUG, CEBU CITY",
+          deployment: "city",
+          country_code: "PH",
+          reg_code: "07",
+          prov_code: "0722",
+          citymun_code: "072217",
+          brgy_code: "072217022",
+          code: "lahug-cebu-city",
+          domain: "lahug-cebu-city.pbb.ph",
+          status: "planned",
+        },
+        rows: [
+          [{
+            type: "display",
+            name: "name",
+            label: "Generated Hub Name",
+            span: 2,
+            help: "Real geodata flow submits the name as a hidden generated value while still showing it as context.",
+          }],
+          [{ type: "hidden", name: "name" }],
+          [{ type: "hidden", name: "deployment" }],
+          [{ type: "hidden", name: "country_code" }],
+          [{ type: "hidden", name: "reg_code" }],
+          [{ type: "hidden", name: "prov_code" }],
+          [{ type: "hidden", name: "citymun_code" }],
+          [{ type: "hidden", name: "brgy_code" }],
+          [
+            {
+              type: "ui.select",
+              name: "status",
+              label: "Status",
+              items: hubStatusOptions,
+              clearable: false,
+            },
+            {
+              type: "input",
+              input: "text",
+              name: "code",
+              label: "Hub Code",
+              required: true,
+            },
+          ],
+          [{
+            type: "input",
+            input: "text",
+            name: "domain",
+            label: "Domain Name",
+            required: true,
+            span: 2,
+          }],
+        ],
+      };
+    }
+
+    function buildHubOtherEditConfig() {
+      return {
+        title: "Edit Hub (Other Deployment)",
+        size: "md",
+        mode: "edit",
+        busyMessage: "Saving hub...",
+        submitLabel: "Save Changes",
+        initialValues: {
+          name: "MOBILE COMMAND TRAILER",
+          deployment: "other",
+          country_code: "PH",
+          reg_code: "",
+          prov_code: "",
+          citymun_code: "",
+          brgy_code: "",
+          code: "mobile-command-trailer",
+          domain: "mobile-command-trailer.pbb.ph",
+          status: "online",
+        },
+        rows: [
+          [{ type: "hidden", name: "deployment" }],
+          [{ type: "hidden", name: "country_code" }],
+          [{ type: "hidden", name: "reg_code" }],
+          [{ type: "hidden", name: "prov_code" }],
+          [{ type: "hidden", name: "citymun_code" }],
+          [{ type: "hidden", name: "brgy_code" }],
+          [
+            {
+              type: "input",
+              input: "text",
+              name: "name",
+              label: "Hub Name",
+              required: true,
+            },
+            {
+              type: "ui.select",
+              name: "status",
+              label: "Status",
+              items: hubStatusOptions,
+              clearable: false,
+            },
+          ],
+          [
+            {
+              type: "input",
+              input: "text",
+              name: "code",
+              label: "Hub Code",
+              required: true,
+            },
+            {
+              type: "input",
+              input: "text",
+              name: "domain",
+              label: "Domain Name",
+              required: true,
+            },
+          ],
+        ],
+      };
+    }
+
+    function openHubFormModal(variant, source = "formModal.hubStyle") {
+      const config = variant === "geo-create"
+        ? buildHubGeoCreateConfig()
+        : buildHubOtherEditConfig();
+      const formModal = createFormModal({
+        ...config,
+        async onSubmit(values) {
+          writeLog(`${source}.submit.begin`, { variant, values });
+          await new Promise((resolve) => setTimeout(resolve, 900));
+          writeLog(`${source}.submit.success`, { variant, values });
+          return true;
+        },
+        onClose(meta) {
+          writeLog(`${source}.close`, { variant, ...(meta || {}) });
+        },
+      });
+      formModal.open();
+      writeLog(`${source}.open`, {
+        variant,
+        mode: config.mode,
+        context: config.context || null,
+      });
+    }
+
+    function openApiErrorMappingModal(source = "formModal.apiErrors") {
+      const formModal = createFormModal({
+        title: "API Error Mapping",
+        size: "sm",
+        busyMessage: "Saving hub...",
+        submitLabel: "Save Hub",
+        rows: [
+          [{ type: "text", content: "This example maps a common backend error response into helper field/form errors." }],
+          [{ type: "input", input: "text", name: "domain", label: "Domain Name", value: "city-cebu.pbb.ph", required: true }],
+          [{ type: "input", input: "text", name: "hub_code", label: "Hub Code", value: "city-cebu", required: true }],
+        ],
+        async onSubmit(_values, ctx) {
+          writeLog(`${source}.submit.begin`, { ok: true });
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          const mapped = ctx.applyApiErrors({
+            errors: {
+              domain: ["Domain already exists."],
+              _form: "Unable to save hub. Please review the highlighted fields.",
+            },
+          });
+          writeLog(`${source}.submit.mapped`, mapped);
+          return false;
+        },
+        onClose(meta) {
+          writeLog(`${source}.close`, meta || {});
+        },
+      });
+      formModal.open();
+      writeLog(`${source}.open`, { ok: true });
+    }
+
+    function openAddUplinkStyleModal(source = "formModal.addUplink") {
+      const formModal = createFormModal({
+        title: "Add Uplink",
+        size: "md",
+        busyMessage: "Saving uplink...",
+        submitLabel: "Save Uplink",
+        rows: [
+          [{ type: "text", content: "Faithful acceptance-target shape: hosted helper ui.select, static searchable options from loaded hub state, and integer uplink ids merged back into a full hub update payload." }],
+          [{
+            type: "ui.select",
+            name: "uplink_hub_ids",
+            label: "Uplinks",
+            placeholder: "Search uplink hubs...",
+            searchable: true,
+            multiple: true,
+            closeOnSelect: false,
+            clearable: true,
+            options: [
+              { label: "CEBU CITY CORE", value: "101" },
+              { label: "MANDAUE CITY CORE", value: "102" },
+              { label: "LAPU-LAPU CITY CORE", value: "103" },
+              { label: "BASAK PARDO RELAY", value: "104" },
+              { label: "BANILAD RELAY", value: "105" },
+              { label: "TALAMBAN RELAY", value: "106" },
+            ],
+            required: true,
+            span: 2,
+          }],
+        ],
+        async onSubmit(values, ctx) {
+          const payload = {
+            id: 88,
+            name: "LAHUG, CEBU CITY",
+            deployment: "barangay",
+            status: "online",
+            code: "lahug-cebu-city",
+            domain: "lahug-cebu-city.pbb.ph",
+            uplink_hub_ids: Array.isArray(values.uplink_hub_ids)
+              ? values.uplink_hub_ids.map((value) => Number(value))
+              : [],
+          };
+          writeLog(`${source}.submit.begin`, { values, payload });
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          if (!payload.uplink_hub_ids.length) {
+            ctx.setErrors({ uplink_hub_ids: "Select at least one uplink." });
+            writeLog(`${source}.submit.failed`, { reason: "missing-uplink", payload });
+            return false;
+          }
+          if (payload.uplink_hub_ids.includes(101)) {
+            const mapped = ctx.applyApiErrors({
+              errors: {
+                "uplink_hub_ids.0": ["Selected uplink is already attached to this hub."],
+              },
+            });
+            writeLog(`${source}.submit.mapped`, mapped);
+            return false;
+          }
+          writeLog(`${source}.submit.success`, payload);
+          return true;
+        },
+        onClose(meta) {
+          writeLog(`${source}.close`, meta || {});
+        },
+      });
+      formModal.open();
+      writeLog(`${source}.open`, { ok: true });
+    }
+
+    document.getElementById("loginDemoBtn").addEventListener("click", () => openLoginFormModal());
+    document.getElementById("presetLoginDemoBtn").addEventListener("click", () => {
+      const formModal = createLoginFormModal({
+        title: "Preset Operator Login",
+        message: "This preset uses remapped field names while keeping the shared login layout and behavior.",
+        fields: {
+          identifier: "user_email",
+          password: "user_password",
+        },
+        initialValues: {
+          user_email: "operator@pbb.ph",
+          user_password: "wrong-password",
+        },
+        async onSubmit(values, ctx) {
+          writeLog("preset.login.submit.begin", values);
+          await new Promise((resolve) => setTimeout(resolve, 900));
+          if (values.user_password !== "correct-password") {
+            ctx.setErrors({ user_password: "Invalid password." });
+            writeLog("preset.login.submit.failed", values);
+            return false;
+          }
+          writeLog("preset.login.submit.success", values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog("preset.login.close", meta || {});
+        },
+      });
+      formModal.open();
+      writeLog("preset.login.open", { ok: true });
+    });
+    document.getElementById("reauthDemoBtn").addEventListener("click", () => {
+      const formModal = createReauthFormModal({
+        title: "Supervisor Re-authentication",
+        message: "This preset keeps the identifier visible and locked while re-authentication is in progress.",
+        fields: {
+          identifier: "account_email",
+          password: "reauth_password",
+        },
+        identifierValue: "supervisor@pbb.ph",
+        async onSubmit(values, ctx) {
+          writeLog("preset.reauth.submit.begin", values);
+          await new Promise((resolve) => setTimeout(resolve, 900));
+          if (values.reauth_password !== "correct-password") {
+            ctx.setErrors({ reauth_password: "Password does not match the active session." });
+            writeLog("preset.reauth.submit.failed", values);
+            return false;
+          }
+          writeLog("preset.reauth.submit.success", values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog("preset.reauth.close", meta || {});
+        },
+      });
+      formModal.open();
+      writeLog("preset.reauth.open", { ok: true });
+    });
+    document.getElementById("statusDemoBtn").addEventListener("click", () => {
+      const formModal = createStatusUpdateFormModal({
+        title: "Update Incident Status",
+        message: "This preset uses remapped field names and app-provided status options while keeping the shared operational layout.",
+        fields: {
+          status: "incident_status",
+          remarks: "notes",
+          notify: "notify_teams",
+        },
+        statusOptions: [
+          { label: "Pending", value: "pending" },
+          { label: "In Progress", value: "in_progress" },
+          { label: "Resolved", value: "resolved" },
+          { label: "Cancelled", value: "cancelled" },
+        ],
+        initialValues: {
+          incident_status: "in_progress",
+          notes: "Technician dispatched to the site.",
+          notify_teams: true,
+        },
+        async onSubmit(values) {
+          writeLog("preset.status.submit.begin", values);
+          await new Promise((resolve) => setTimeout(resolve, 900));
+          writeLog("preset.status.submit.success", values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog("preset.status.close", meta || {});
+        },
+      });
+      formModal.open();
+      writeLog("preset.status.open", { ok: true });
+    });
+    document.getElementById("reasonDemoBtn").addEventListener("click", () => {
+      const formModal = createReasonFormModal({
+        title: "Cancel Uplink",
+        message: "This action may affect downstream connectivity. Please provide a categorized reason before continuing.",
+        fields: {
+          reasonCode: "cancel_reason",
+          reasonDetails: "remarks",
+          confirmText: "confirm_cancel",
+          notify: "notify_clients",
+        },
+        reasonOptions: [
+          { label: "Duplicate Record", value: "duplicate_record" },
+          { label: "Bad Data", value: "bad_data" },
+          { label: "User Request", value: "user_request" },
+          { label: "Operational Override", value: "operational_override" },
+        ],
+        confirmPhrase: "CANCEL",
+        showNotify: true,
+        initialValues: {
+          cancel_reason: "operational_override",
+          remarks: "",
+          notify_clients: false,
+        },
+        async onSubmit(values, ctx) {
+          writeLog("preset.reason.submit.begin", values);
+          await new Promise((resolve) => setTimeout(resolve, 900));
+          if (values.confirm_cancel !== "CANCEL") {
+            ctx.setErrors({ confirm_cancel: "Type CANCEL to confirm." });
+            writeLog("preset.reason.submit.failed", { reason: "confirm-text" });
+            return false;
+          }
+          writeLog("preset.reason.submit.success", values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog("preset.reason.close", meta || {});
+        },
+      });
+      formModal.open();
+      writeLog("preset.reason.open", { ok: true });
+    });
+    document.getElementById("hubCreateDemoBtn").addEventListener("click", () => openHubFormModal("geo-create", "formModal.hub.geoCreate"));
+    document.getElementById("hubEditDemoBtn").addEventListener("click", () => openHubFormModal("other-edit", "formModal.hub.otherEdit"));
+    document.getElementById("apiErrorsDemoBtn").addEventListener("click", () => openApiErrorMappingModal());
+    document.getElementById("uplinkDemoBtn").addEventListener("click", () => openAddUplinkStyleModal());
+  </script>
+</body>
+</html>

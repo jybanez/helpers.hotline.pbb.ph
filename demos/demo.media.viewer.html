@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Media Viewer Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -132,14 +132,69 @@
       overflow-y: auto;
       overflow-x: auto;
     }
+    .guidance {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .guidance-card {
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+    .guidance-card h3,
+    .guidance-card p {
+      margin: 0;
+    }
+    .guidance-card p {
+      color: #9fb2d8;
+      font-size: 13px;
+      line-height: 1.45;
+    }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.media.viewer"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Media Viewer",
+      overview: "Standalone image/video viewer with zoom, fit modes, gallery navigation, and optional video audiograph support.",
+      useWhen: [
+        "Use <code>createMediaViewer(...)</code> when media needs full-screen or dedicated viewer treatment.",
+        "Use it when the thumbnail launcher is separate from the viewing experience."
+      ],
+      avoidWhen: [
+        "Do not use it as a thumbnail strip; use <code>createMediaStrip(...)</code>.",
+        "Do not use it for generic file browsing with upload workflows."
+      ],
+      description: "The viewer owns the full-size media experience. Demo sample assets resolve against the repo base path so images and videos can be tested without changing the sample payloads.",
+      sectionSamples: {
+        "media items": `const response = await fetch("../samples/samplemedia.json");\nconst items = await response.json();\nviewer.setItems(items);`,
+        "viewer host": `const viewer = createMediaViewer(host, {\n  items,\n  baseUrl: mediaBaseUrl,\n  fit: "contain",\n});`
+      },
+      constructor: [
+        { factory: "<code>createMediaViewer(container, options)</code>", arguments: "<code>container</code>, media-viewer <code>options</code>", returns: "Media-viewer instance" }
+      ],
+      options: [
+        { option: "<code>items</code>", default: "<code>[]</code>", description: "Image/video gallery items." },
+        { option: "<code>baseUrl</code>", default: "<code>\"\"</code>", description: "Base URL applied when media paths are relative." },
+        { option: "<code>fit</code>", default: "documented default", description: "Viewer fit behavior.", values: ["contain", "cover", "original"] }
+      ],
+      methods: [
+        { method: "<code>open(index)</code>", arguments: "item index", returns: "<code>void</code>" },
+        { method: "<code>close()</code>", arguments: "none", returns: "<code>void</code>" },
+        { method: "<code>setItems(items)</code>", arguments: "gallery items", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -148,6 +203,20 @@
       </div>
       <h1 class="ui-title">Media Viewer Demo</h1>
       <p class="muted">Standalone image/video viewer with navigation, zoom, pan, fit modes, and optional video audiograph.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Use This When</h2>
+      <div class="guidance">
+        <article class="guidance-card">
+          <h3>Use this when</h3>
+          <p>Use <code>createMediaViewer(...)</code> when image or video review needs zoom, pan, fit control, gallery navigation, or a viewer that stands on its own outside a strip.</p>
+        </article>
+        <article class="guidance-card">
+          <h3>Do not use this when</h3>
+          <p>Do not use it when you only need thumbnail launching. Use <code>createMediaStrip(...)</code> for thumbnail surfaces and let it delegate full-view behavior to the viewer.</p>
+        </article>
+      </div>
     </section>
 
     <section class="panel">
@@ -198,7 +267,7 @@
   </main>
 
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
 
     await window.__demoLoaderReady;
     const createMediaViewer = await uiLoader.get("ui.media.viewer");
@@ -212,6 +281,18 @@
     const showAudiographInput = document.getElementById("showAudiographInput");
     const showFooterInput = document.getElementById("showFooterInput");
     const autoplayInput = document.getElementById("autoplayInput");
+    const mediaBaseUrl = new URL("../", window.location.href).href.replace(/\/+$/, "");
+
+    function resolveDemoMediaUrl(value) {
+      const raw = String(value || "").trim();
+      if (!raw) {
+        return "";
+      }
+      if (/^(https?:)?\/\//i.test(raw) || raw.startsWith("/")) {
+        return raw;
+      }
+      return new URL(raw.replace(/^\/+/, ""), `${mediaBaseUrl}/`).href;
+    }
 
     function writeLog(label, payload) {
       const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
@@ -226,9 +307,9 @@
         .map((item, index) => ({
           id: item.id ?? `media-${index + 1}`,
           type: item.type === "photo" ? "image" : "video",
-          src: item.path,
-          thumb: item.type === "photo" ? item.path : "",
-          poster: item.poster || "",
+          src: resolveDemoMediaUrl(item.path),
+          thumb: item.type === "photo" ? resolveDemoMediaUrl(item.path) : "",
+          poster: resolveDemoMediaUrl(item.poster || ""),
           title: item.title || `${item.type === "photo" ? "Photo" : "Video"} ${index + 1}`,
           alt: item.alt || item.title || `${item.type === "photo" ? "Photo" : "Video"} ${index + 1}`,
           duration_seconds: item.duration_seconds ?? null,
@@ -243,7 +324,7 @@
     }
 
     async function loadItems() {
-      const response = await fetch("./samples/samplemedia.json", { cache: "no-store" });
+      const response = await fetch("../samples/samplemedia.json", { cache: "no-store" });
       if (!response.ok) {
         throw new Error(`Failed to load samples/samplemedia.json (${response.status})`);
       }
@@ -268,6 +349,7 @@
         showAudiograph: showAudiographInput.checked,
         showFooter: showFooterInput.checked,
         autoplayVideo: autoplayInput.checked,
+        baseUrl: mediaBaseUrl,
         ariaLabel: "Media viewer demo",
         onOpen(item, index) {
           writeLog("mediaViewer.open", { index, id: item?.id, type: item?.type });

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Uploader Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+    .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 12px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
+    .muted { margin: 0; color: #9fb2d8; font-size: 13px; line-height: 1.45; }
+    #fileUploaderHost { border: 1px solid #2b3750; border-radius: 8px; padding: 10px; background: #0b1220; }
+    .log, pre:not(.log) { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; overflow: auto; }
+    .log { color: #b2c2e5; min-height: 220px; }
+    pre:not(.log) { color: #d7e0f4; }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.file.uploader"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "File Uploader",
+      overview: "Queue-based file uploader demo with validation, resumable-state hooks, and chunk-upload lifecycle callbacks.",
+      useWhen: [
+        "Use <code>createFileUploader(...)</code> when upload intake, queue state, and retry behavior should be helper-owned.",
+        "Use it for drag/drop or browse-driven file intake instead of app-local upload widgets."
+      ],
+      avoidWhen: [
+        "Do not use it for trivial one-file uploads where a plain file input is enough.",
+        "Do not move backend upload policy into the helper; keep authoritative limits and persistence rules in app logic."
+      ],
+      description: "This demo keeps the same operational upload flow used in the utility playground: resumable local state, chunk-session hooks, and explicit lifecycle logging.",
+      defaultSampleCode: `createFileUploader(host, {\n  accept: ".jpg,.jpeg,.png,.webp,.mp4,.webm,.pdf",\n  multiple: true,\n  useChunkUpload: true,\n  chunkSize: 512 * 1024,\n  onUpload(item) {\n    writeLog("uploader.upload", { name: item.file.name });\n  },\n});`,
+      constructor: [
+        { factory: "<code>createFileUploader(container, options)</code>", arguments: "host element, uploader <code>options</code>", returns: "Uploader instance" }
+      ],
+      options: [
+        { option: "<code>accept</code>", default: "<code>\"\"</code>", description: "Native file-input accept filter." },
+        { option: "<code>multiple</code>", default: "<code>true</code>", description: "Allows multiple files in the queue.", values: ["true", "false"] },
+        { option: "<code>useChunkUpload</code>", default: "<code>false</code>", description: "Turns on chunked upload lifecycle hooks.", values: ["true", "false"] },
+        { option: "<code>chunkSize</code>", default: "component default", description: "Chunk size in bytes when chunk uploads are enabled." }
+      ],
+      propertiesText: "No stable public instance properties are documented. Use returned methods such as <code>getState()</code>, <code>start()</code>, and <code>retry()</code>.",
+      events: [
+        { event: "<code>onUpload</code>", arguments: "<code>(item)</code>", returns: "Promise or value" },
+        { event: "<code>onUploadComplete</code>", arguments: "<code>(payload)</code>", returns: "<code>void</code>" },
+        { event: "<code>onUploadError</code>", arguments: "<code>(payload)</code>", returns: "<code>void</code>" }
+      ],
+      methods: [
+        { method: "<code>start()</code>", arguments: "none", returns: "<code>Promise&lt;void&gt;</code>" },
+        { method: "<code>clear()</code>", arguments: "none", returns: "<code>void</code>" },
+        { method: "<code>getState()</code>", arguments: "none", returns: "Uploader queue state" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">File Uploader Demo</h1>
+      <p class="muted">Dedicated uploader demo with queueing, validation, simulated chunk flow, and resumable-state hooks.</p>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Operational Upload Intake</h2>
+      <p class="muted">Browse or drop files to exercise queueing, simulated session creation, chunk upload, persistence, retry, and completion handling.</p>
+      <div id="fileUploaderHost"></div>
+      <pre>createFileUploader(document.getElementById("fileUploaderHost"), {
+  accept: ".jpg,.jpeg,.png,.webp,.mp4,.webm,.pdf",
+  multiple: true,
+  maxFiles: 12,
+  useChunkUpload: true,
+  chunkSize: 512 * 1024,
+  onCreateUploadSession(payload) { ... },
+  onUploadChunk(payload) { ... },
+  onFinalizeUpload(payload) { ... },
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createFileUploader = await uiLoader.get("ui.file.uploader");
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+    createFileUploader(document.getElementById("fileUploaderHost"), {
+      ariaLabel: "Demo file uploader",
+      dropzoneAriaLabel: "Browse or drop files for upload",
+      accept: ".jpg,.jpeg,.png,.webp,.mp4,.webm,.pdf",
+      multiple: true,
+      maxFiles: 12,
+      maxFileSize: 15 * 1024 * 1024,
+      autoUpload: false,
+      useChunkUpload: true,
+      chunkSize: 512 * 1024,
+      onGetResumeState({ uploadKey }) {
+        try {
+          const raw = window.localStorage.getItem(`ui-demo-uploader:${uploadKey}`);
+          return raw ? JSON.parse(raw) : { uploadedBytes: 0 };
+        } catch (_error) {
+          return { uploadedBytes: 0 };
+        }
+      },
+      onCreateUploadSession({ item, uploadKey, totalBytes, totalChunks }) {
+        writeLog("uploader.session.create", { uploadKey, name: item.file.name, totalBytes, totalChunks });
+        return Promise.resolve({
+          uploadUrl: `/demo/uploads/${encodeURIComponent(item.file.name)}`,
+          uploadKey,
+          sessionId: `session-${uploadKey}`,
+        });
+      },
+      onUploadChunk({ item, chunkIndex, totalChunks, chunkSize, uploadedBytes }) {
+        writeLog("uploader.chunk.upload", {
+          name: item.file.name,
+          chunkIndex,
+          totalChunks,
+          chunkSize,
+          uploadedBytes,
+        });
+        return new Promise((resolve) => setTimeout(resolve, 90));
+      },
+      onPersistResumeState({ uploadKey, uploadedBytes, totalBytes, chunkIndex, totalChunks, session }) {
+        window.localStorage.setItem(`ui-demo-uploader:${uploadKey}`, JSON.stringify({
+          uploadedBytes,
+          totalBytes,
+          chunkIndex,
+          totalChunks,
+          session,
+        }));
+      },
+      onFinalizeUpload({ item, uploadKey, totalBytes, totalChunks, session }) {
+        writeLog("uploader.finalize", {
+          uploadKey,
+          name: item.file.name,
+          totalBytes,
+          totalChunks,
+          sessionId: session?.sessionId || null,
+        });
+        return Promise.resolve({
+          ok: true,
+          fileId: `file-${uploadKey}`,
+          url: `/demo/media/${encodeURIComponent(item.file.name)}`,
+        });
+      },
+      onClearResumeState({ uploadKey }) {
+        window.localStorage.removeItem(`ui-demo-uploader:${uploadKey}`);
+      },
+      onUploadComplete(payload) {
+        writeLog("uploader.complete", payload);
+      },
+      onUploadError(payload) {
+        writeLog("uploader.error", payload);
+      },
+      onValidate(item, state) {
+        if (item.file.name.toLowerCase().includes("virus")) {
+          return {
+            ok: false,
+            code: "blocked_name",
+            message: "Files containing 'virus' in the name are rejected by the demo validator.",
+          };
+        }
+        writeLog("uploader.validate", { name: item.file.name, queueLength: state.items.length });
+        return { ok: true };
+      },
+    });
+  </script>
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grid Demo</title>
-  <link rel='stylesheet' href='./css/demo/demo.shell.css'>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
   <style>
     body {
       margin: 0;
@@ -61,14 +61,78 @@
       overflow-y: auto;
       overflow-x: auto;
     }
+    .guidance {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .guidance-card {
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+    .guidance-card h3,
+    .guidance-card p {
+      margin: 0;
+    }
+    .guidance-card p {
+      color: #9fb2d8;
+      font-size: 13px;
+      line-height: 1.45;
+    }
   </style>
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     window.__demoLoaderReady = uiLoader.loadMany(["ui.grid"]);
   </script>
-  <script type='module' src='./js/demo/demo.shell.js'></script>
+  <script>
+    window.demoMeta = {
+      title: "Grid",
+      overview: "Flat data-grid helper for local and remote tabular data, with optional virtualization for large row sets.",
+      useWhen: [
+        "Use <code>createGrid(...)</code> for flat tabular data with sort, search, paging, or remote query handling.",
+        "Use it when dense action cells and conventional table semantics matter more than a purely visual layout."
+      ],
+      avoidWhen: [
+        "Do not use it for true parent-child hierarchy; use <code>createTreeGrid(...)</code> or <code>createHierarchyMap(...)</code> instead.",
+        "Do not use it for small summary lists where a full grid shell would be excessive."
+      ],
+      description: "This demo covers three common grid modes: local client-side data, remote query-driven data, and a fixed-height virtualized large grid. The helper stays table-first and does not try to become a tree or chart.",
+      sectionSamples: {
+        "local grid": `const grid = createGrid(host, rows, {\n  columns,\n  search: true,\n  sortable: true,\n  pagination: true,\n});`,
+        "remote grid": `const grid = createGrid(host, [], {\n  columns,\n  remote: true,\n  onQueryChange(query) {\n    fetchRows(query).then((rows) => grid.setRows(rows));\n  },\n});`,
+        "large grid (virtualized)": `const grid = createGrid(host, largeRows, {\n  columns,\n  virtualize: true,\n  rowHeight: 44,\n});`
+      },
+      constructor: [
+        { factory: "<code>createGrid(container, rows, options)</code>", arguments: "<code>container</code>, initial <code>rows</code>, grid <code>options</code>", returns: "Grid instance with data, query, and lifecycle methods" }
+      ],
+      options: [
+        { option: "<code>columns</code>", default: "<code>[]</code>", description: "Column definitions and renderers." },
+        { option: "<code>search</code>", default: "<code>false</code>", description: "Enables built-in search UI for local data." },
+        { option: "<code>pagination</code>", default: "<code>false</code>", description: "Enables paging controls." },
+        { option: "<code>sortable</code>", default: "<code>false</code>", description: "Enables sortable columns." },
+        { option: "<code>virtualize</code>", default: "<code>false</code>", description: "Enables row virtualization for large data sets." },
+        { option: "<code>remote</code>", default: "<code>false</code>", description: "Switches the grid into external query/data ownership." }
+      ],
+      events: [
+        { event: "<code>onQueryChange</code>", arguments: "<code>{ page, pageSize, search, sort }</code>", returns: "No return effect", },
+        { event: "<code>onRowClick</code>", arguments: "<code>{ row, index }</code>", returns: "No return effect" }
+      ],
+      methods: [
+        { method: "<code>setRows(rows)</code>", arguments: "row array", returns: "<code>void</code>" },
+        { method: "<code>setLoading(flag)</code>", arguments: "boolean", returns: "<code>void</code>" },
+        { method: "<code>setQuery(query)</code>", arguments: "partial query", returns: "<code>void</code>" },
+        { method: "<code>getState()</code>", arguments: "none", returns: "Current grid state" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
 </head>
-<body>
+<body class="demo-shell-sidebar">
   <main class="page" data-theme="dark">
     <section class="panel">
       <div class="row">
@@ -77,6 +141,20 @@
       </div>
       <h1 class="ui-title">Grid Demo</h1>
       <p class="muted">Dedicated playground for local, remote, and large virtualized grids.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Use This When</h2>
+      <div class="guidance">
+        <article class="guidance-card">
+          <h3>Use this when</h3>
+          <p>Use <code>createGrid(...)</code> for flat tabular data where search, sort, pagination, remote query flows, or dense action cells matter.</p>
+        </article>
+        <article class="guidance-card">
+          <h3>Do not use this when</h3>
+          <p>Do not use it for true hierarchy. If the first column represents parent-child structure, use <code>createTreeGrid(...)</code> or <code>createHierarchyMap(...)</code> instead.</p>
+        </article>
+      </div>
     </section>
 
     <section class="panel">
@@ -104,7 +182,7 @@
   </main>
 
   <script type="module">
-    import { uiLoader } from "./js/ui/ui.loader.js";
+    import { uiLoader } from "../js/ui/ui.loader.js";
     await window.__demoLoaderReady;
     const createGrid = await uiLoader.get("ui.grid");
 

@@ -28,6 +28,7 @@ export function createSelect(container, items = [], options = {}) {
   let menu = null;
   let searchInput = null;
   let list = null;
+  let menuMount = null;
   let activeIndex = -1;
   const listId = `ui-select-list-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -36,6 +37,7 @@ export function createSelect(container, items = [], options = {}) {
       return;
     }
     events.clear();
+    detachMenu();
     clearNode(container);
 
     root = createElement("div", {
@@ -109,6 +111,8 @@ export function createSelect(container, items = [], options = {}) {
     });
     root.appendChild(trigger);
 
+    container.appendChild(root);
+
     if (open) {
       menu = createElement("div", { className: "ui-select-menu" });
       if (currentOptions.searchable) {
@@ -163,7 +167,7 @@ export function createSelect(container, items = [], options = {}) {
         list.setAttribute("aria-multiselectable", "true");
       }
       menu.appendChild(list);
-      root.appendChild(menu);
+      mountMenu();
       renderList();
       if (currentOptions.searchable && searchInput) {
         searchInput.focus();
@@ -172,7 +176,6 @@ export function createSelect(container, items = [], options = {}) {
       }
     }
 
-    container.appendChild(root);
     bindGlobal();
   }
 
@@ -223,6 +226,49 @@ export function createSelect(container, items = [], options = {}) {
     });
     clampActiveIndex();
     syncActiveOption();
+  }
+
+  function mountMenu() {
+    menuMount = document.body;
+    if (!menu || !menuMount) {
+      return;
+    }
+    menuMount.appendChild(menu);
+    positionMenu();
+  }
+
+  function detachMenu() {
+    if (menu?.parentNode) {
+      menu.parentNode.removeChild(menu);
+    }
+    menu = null;
+    searchInput = null;
+    list = null;
+    menuMount = null;
+  }
+
+  function positionMenu() {
+    if (!menu || !trigger) {
+      return;
+    }
+    const rect = trigger.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const spaceBelow = Math.max(0, viewportHeight - rect.bottom - 12);
+    const spaceAbove = Math.max(0, rect.top - 12);
+    const openUpward = spaceBelow < 220 && spaceAbove > spaceBelow;
+    const maxMenuHeight = Math.max(160, Math.min(openUpward ? spaceAbove : spaceBelow, 320));
+
+    menu.style.position = "fixed";
+    menu.style.left = `${Math.round(rect.left)}px`;
+    menu.style.width = `${Math.round(rect.width)}px`;
+    menu.style.maxWidth = `${Math.round(rect.width)}px`;
+    menu.style.top = openUpward ? "auto" : `${Math.round(rect.bottom + 6)}px`;
+    menu.style.bottom = openUpward ? `${Math.round(viewportHeight - rect.top + 6)}px` : "auto";
+
+    const listNode = menu.querySelector(".ui-select-list");
+    if (listNode) {
+      listNode.style.maxHeight = `${Math.round(Math.max(96, maxMenuHeight - (currentOptions.searchable ? 52 : 12)))}px`;
+    }
   }
 
   function toggleSelected(key) {
@@ -394,11 +440,21 @@ export function createSelect(container, items = [], options = {}) {
     }
     globalEvents.on(document, "mousedown", (event) => {
       const target = event.target;
-      if (target && root && !root.contains(target)) {
+      if (target && root && !root.contains(target) && !menu?.contains(target)) {
         open = false;
         render();
       }
     });
+    globalEvents.on(window, "resize", () => {
+      if (open) {
+        positionMenu();
+      }
+    });
+    globalEvents.on(window, "scroll", () => {
+      if (open) {
+        positionMenu();
+      }
+    }, true);
     globalEvents.on(document, "keydown", (event) => {
       if (!open) {
         return;
@@ -458,6 +514,7 @@ export function createSelect(container, items = [], options = {}) {
   function destroy() {
     globalEvents.clear();
     events.clear();
+    detachMenu();
     clearNode(container);
     root = null;
     trigger = null;
