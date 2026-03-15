@@ -241,10 +241,6 @@
       "ui.dom",
       "ui.modal",
       "ui.form.modal",
-      "ui.form.modal.login",
-      "ui.form.modal.reauth",
-      "ui.form.modal.status",
-      "ui.form.modal.reason",
     ]);
   </script>
   <script type='module' src='../js/demo/demo.shell.js'></script>
@@ -255,7 +251,7 @@
       <section class="panel intro">
         <span class="eyebrow">Forms</span>
         <h1>Schema Form Modal</h1>
-        <p>Shared modal-form shell for short operational workflows. This page is the first pass of the new demo layout: live examples in the center, full API/manual content on the right, and shared demo navigation pinned on the left.</p>
+        <p>Shared modal-form shell for short operational workflows. This page focuses on the base helper contract plus the PBB HQ acceptance-proof mappings for hub add/edit and uplink update flows.</p>
       </section>
 
       <section class="demo-stack-list">
@@ -293,78 +289,6 @@
           </div>
           <div class="demo-stack__row">
             <pre class="demo-log" data-log-prefix="formModal.login">No events yet for Login.</pre>
-          </div>
-        </article>
-
-        <article class="demo-stack">
-          <div class="demo-stack__row demo-stack__row--live">
-            <div class="demo-stack__header">
-              <div>
-                <h2>Preset Login + Re-auth</h2>
-                <p>Opinionated wrappers over <code>createFormModal(...)</code> with engineer-provided field-name mapping.</p>
-              </div>
-              <div class="row">
-                <button id="presetLoginDemoBtn" class="ui-button" type="button">Open Preset Login</button>
-                <button id="reauthDemoBtn" class="ui-button" type="button">Open Re-auth Form</button>
-              </div>
-            </div>
-            <div class="demo-stack__meta">
-              <span class="demo-chip">wrapper presets</span>
-              <span class="demo-chip">remapped payload keys</span>
-              <span class="demo-chip">locked re-auth identity</span>
-            </div>
-          </div>
-          <div class="demo-stack__row">
-            <pre class="demo-code">const formModal = createLoginFormModal({
-  fields: {
-    identifier: "user_email",
-    password: "user_password",
-  },
-  onSubmit(values) {
-    // values => { user_email, user_password }
-  },
-});</pre>
-          </div>
-          <div class="demo-stack__row">
-            <pre class="demo-log" data-log-prefix="preset.login">No preset-login events yet.</pre>
-            <pre class="demo-log" data-log-prefix="preset.reauth">No re-auth events yet.</pre>
-          </div>
-        </article>
-
-        <article class="demo-stack">
-          <div class="demo-stack__row demo-stack__row--live">
-            <div class="demo-stack__header">
-              <div>
-                <h2>Status Update + Reason Required</h2>
-                <p>Operational presets for common status changes and categorized reason capture with app-supplied options.</p>
-              </div>
-              <div class="row">
-                <button id="statusDemoBtn" class="ui-button" type="button">Open Status Update</button>
-                <button id="reasonDemoBtn" class="ui-button ui-button-danger" type="button">Open Reason Form</button>
-              </div>
-            </div>
-            <div class="demo-stack__meta">
-              <span class="demo-chip">app-supplied vocabularies</span>
-              <span class="demo-chip">textarea + select</span>
-              <span class="demo-chip">metrics-friendly reasons</span>
-            </div>
-          </div>
-          <div class="demo-stack__row">
-            <pre class="demo-code">const formModal = createReasonFormModal({
-  fields: {
-    reasonCode: "cancel_reason",
-    reasonDetails: "remarks",
-    confirmText: "confirm_cancel",
-  },
-  reasonOptions: [
-    { label: "Duplicate", value: "duplicate" },
-    { label: "Bad Data", value: "bad_data" },
-  ],
-});</pre>
-          </div>
-          <div class="demo-stack__row">
-            <pre class="demo-log" data-log-prefix="preset.status">No status-update events yet.</pre>
-            <pre class="demo-log" data-log-prefix="preset.reason">No reason-form events yet.</pre>
           </div>
         </article>
 
@@ -604,10 +528,6 @@ const payload = {
 
     await window.__demoLoaderReady;
     const createFormModal = await uiLoader.get("ui.form.modal");
-    const createLoginFormModal = await uiLoader.get("ui.form.modal.login");
-    const createReauthFormModal = await uiLoader.get("ui.form.modal.reauth");
-    const createStatusUpdateFormModal = await uiLoader.get("ui.form.modal.status");
-    const createReasonFormModal = await uiLoader.get("ui.form.modal.reason");
 
     const stackLogs = Array.from(document.querySelectorAll("[data-log-prefix]")).map((el) => ({
       prefix: String(el.dataset.logPrefix || ""),
@@ -994,142 +914,11 @@ const payload = {
       writeLog(`${source}.open`, { ok: true });
     }
 
-    document.getElementById("loginDemoBtn").addEventListener("click", () => openLoginFormModal());
-    document.getElementById("presetLoginDemoBtn").addEventListener("click", () => {
-      const formModal = createLoginFormModal({
-        title: "Preset Operator Login",
-        message: "This preset uses remapped field names while keeping the shared login layout and behavior.",
-        fields: {
-          identifier: "user_email",
-          password: "user_password",
-        },
-        initialValues: {
-          user_email: "operator@pbb.ph",
-          user_password: "wrong-password",
-        },
-        async onSubmit(values, ctx) {
-          writeLog("preset.login.submit.begin", values);
-          await new Promise((resolve) => setTimeout(resolve, 900));
-          if (values.user_password !== "correct-password") {
-            ctx.setErrors({ user_password: "Invalid password." });
-            writeLog("preset.login.submit.failed", values);
-            return false;
-          }
-          writeLog("preset.login.submit.success", values);
-          return true;
-        },
-        onClose(meta) {
-          writeLog("preset.login.close", meta || {});
-        },
-      });
-      formModal.open();
-      writeLog("preset.login.open", { ok: true });
-    });
-    document.getElementById("reauthDemoBtn").addEventListener("click", () => {
-      const formModal = createReauthFormModal({
-        title: "Supervisor Re-authentication",
-        message: "This preset keeps the identifier visible and locked while re-authentication is in progress.",
-        fields: {
-          identifier: "account_email",
-          password: "reauth_password",
-        },
-        identifierValue: "supervisor@pbb.ph",
-        async onSubmit(values, ctx) {
-          writeLog("preset.reauth.submit.begin", values);
-          await new Promise((resolve) => setTimeout(resolve, 900));
-          if (values.reauth_password !== "correct-password") {
-            ctx.setErrors({ reauth_password: "Password does not match the active session." });
-            writeLog("preset.reauth.submit.failed", values);
-            return false;
-          }
-          writeLog("preset.reauth.submit.success", values);
-          return true;
-        },
-        onClose(meta) {
-          writeLog("preset.reauth.close", meta || {});
-        },
-      });
-      formModal.open();
-      writeLog("preset.reauth.open", { ok: true });
-    });
-    document.getElementById("statusDemoBtn").addEventListener("click", () => {
-      const formModal = createStatusUpdateFormModal({
-        title: "Update Incident Status",
-        message: "This preset uses remapped field names and app-provided status options while keeping the shared operational layout.",
-        fields: {
-          status: "incident_status",
-          remarks: "notes",
-          notify: "notify_teams",
-        },
-        statusOptions: [
-          { label: "Pending", value: "pending" },
-          { label: "In Progress", value: "in_progress" },
-          { label: "Resolved", value: "resolved" },
-          { label: "Cancelled", value: "cancelled" },
-        ],
-        initialValues: {
-          incident_status: "in_progress",
-          notes: "Technician dispatched to the site.",
-          notify_teams: true,
-        },
-        async onSubmit(values) {
-          writeLog("preset.status.submit.begin", values);
-          await new Promise((resolve) => setTimeout(resolve, 900));
-          writeLog("preset.status.submit.success", values);
-          return true;
-        },
-        onClose(meta) {
-          writeLog("preset.status.close", meta || {});
-        },
-      });
-      formModal.open();
-      writeLog("preset.status.open", { ok: true });
-    });
-    document.getElementById("reasonDemoBtn").addEventListener("click", () => {
-      const formModal = createReasonFormModal({
-        title: "Cancel Uplink",
-        message: "This action may affect downstream connectivity. Please provide a categorized reason before continuing.",
-        fields: {
-          reasonCode: "cancel_reason",
-          reasonDetails: "remarks",
-          confirmText: "confirm_cancel",
-          notify: "notify_clients",
-        },
-        reasonOptions: [
-          { label: "Duplicate Record", value: "duplicate_record" },
-          { label: "Bad Data", value: "bad_data" },
-          { label: "User Request", value: "user_request" },
-          { label: "Operational Override", value: "operational_override" },
-        ],
-        confirmPhrase: "CANCEL",
-        showNotify: true,
-        initialValues: {
-          cancel_reason: "operational_override",
-          remarks: "",
-          notify_clients: false,
-        },
-        async onSubmit(values, ctx) {
-          writeLog("preset.reason.submit.begin", values);
-          await new Promise((resolve) => setTimeout(resolve, 900));
-          if (values.confirm_cancel !== "CANCEL") {
-            ctx.setErrors({ confirm_cancel: "Type CANCEL to confirm." });
-            writeLog("preset.reason.submit.failed", { reason: "confirm-text" });
-            return false;
-          }
-          writeLog("preset.reason.submit.success", values);
-          return true;
-        },
-        onClose(meta) {
-          writeLog("preset.reason.close", meta || {});
-        },
-      });
-      formModal.open();
-      writeLog("preset.reason.open", { ok: true });
-    });
-    document.getElementById("hubCreateDemoBtn").addEventListener("click", () => openHubFormModal("geo-create", "formModal.hub.geoCreate"));
+    document.getElementById("loginDemoBtn").addEventListener("click", () => openLoginFormModal());    document.getElementById("hubCreateDemoBtn").addEventListener("click", () => openHubFormModal("geo-create", "formModal.hub.geoCreate"));
     document.getElementById("hubEditDemoBtn").addEventListener("click", () => openHubFormModal("other-edit", "formModal.hub.otherEdit"));
     document.getElementById("apiErrorsDemoBtn").addEventListener("click", () => openApiErrorMappingModal());
     document.getElementById("uplinkDemoBtn").addEventListener("click", () => openAddUplinkStyleModal());
   </script>
 </body>
 </html>
+

@@ -8,145 +8,291 @@
   <style>
     body {
       margin: 0;
-      padding: 24px;
       background: #0c1017;
       color: #d7e0f4;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
-    .page {
-      max-width: 1120px;
+
+    .cookbook-page {
+      grid-column: 2 / 4;
+      min-width: 0;
+      height: 100vh; overflow: auto; padding: 20px; box-sizing: border-box;
+      background:
+        radial-gradient(circle at top left, rgba(58, 92, 158, 0.12), transparent 32%),
+        #0c1017;
+    }
+
+    .cookbook-layout {
+      max-width: 1240px;
       margin: 0 auto;
       display: grid;
       gap: 16px;
     }
+
     .panel {
       border: 1px solid #263146;
-      border-radius: 12px;
+      border-radius: 14px;
       background: #111826;
       padding: 16px;
       display: grid;
       gap: 12px;
     }
-    .muted {
+
+    .intro {
+      padding: 12px 16px;
+      gap: 8px;
+    }
+
+    .eyebrow {
+      color: #8db5ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .panel h1,
+    .panel h2,
+    .panel h3,
+    .panel p,
+    .panel ul,
+    .panel li,
+    .recipe small {
       margin: 0;
+    }
+
+    .muted,
+    .recipe small {
       color: #aebcdc;
       line-height: 1.55;
     }
+
+    .section-head {
+      display: grid;
+      gap: 6px;
+    }
+
     .recipes {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 12px;
     }
+
     .recipe {
       border: 1px solid #334563;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #0b1423;
       padding: 14px;
       display: grid;
+      gap: 10px;
+    }
+
+    .recipe-links {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
     }
-    .recipe h3,
-    .recipe p {
-      margin: 0;
+
+    .recipe a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid #334563;
+      border-radius: 999px;
+      color: #8db5ff;
+      text-decoration: none;
+      font-size: 12px;
+      background: #09111d;
     }
-    .recipe small {
-      color: #aebcdc;
-      line-height: 1.45;
+
+    .recipe a:hover {
+      border-color: #4a5f86;
+      background: #101a2b;
     }
+
     .recipe code {
       color: #d7e0f4;
     }
-    .recipe a {
-      color: #8db5ff;
-      text-decoration: none;
-      font-size: 13px;
+
+    @media (max-width: 1260px) {
+      .cookbook-page {
+        grid-column: auto; height: auto;
+      }
     }
   </style>
   <script type="module" src="../js/demo/demo.shell.js"></script>
 </head>
-<body>
-  <main class="page">
-    <section class="panel">
-      <h1 style="margin:0;">Operational UI Cookbook</h1>
-      <p class="muted">
-        Use this page to find the right helper flow by common operational task rather than by raw component name.
-        These recipes are intentionally narrow. If a workflow stops fitting the shared pattern cleanly, fall back to
-        the lower-level helper instead of overloading the wrapper.
-      </p>
-    </section>
+<body class="demo-shell-sidebar">
+  <main class="cookbook-page">
+    <div class="cookbook-layout">
+      <section class="panel intro">
+        <span class="eyebrow">Cookbook</span>
+        <h1>Operational UI Cookbook</h1>
+        <p class="muted">
+          Use this page to find the right helper flow by operational task rather than by raw component name.
+          The cookbook is a workflow router: it points to the dedicated demo page and the correct shared helper
+          instead of trying to duplicate the component workbench pages.
+        </p>
+      </section>
 
-    <section class="panel">
-      <h2 style="margin:0;">Common Modal Workflows</h2>
-      <div class="recipes">
-        <article class="recipe">
-          <h3>Login</h3>
-          <small>Use <code>createLoginFormModal(...)</code> for shared login structure, busy submit handling, and field-name remapping.</small>
-          <a href="./demo.form.modal.html">Open Form Modal Demo</a>
-        </article>
-        <article class="recipe">
-          <h3>Re-auth</h3>
-          <small>Use <code>createReauthFormModal(...)</code> when a session-sensitive flow requires password confirmation without rebuilding the form.</small>
-          <a href="./demo.form.modal.html">Open Form Modal Demo</a>
-        </article>
-        <article class="recipe">
-          <h3>Status Update</h3>
-          <small>Use <code>createStatusUpdateFormModal(...)</code> for routine state changes with status options, remarks, and optional notify behavior.</small>
-          <a href="./demo.form.modal.html">Open Form Modal Demo</a>
-        </article>
-        <article class="recipe">
-          <h3>Reason Required</h3>
-          <small>Use <code>createReasonFormModal(...)</code> when you need a categorized reason select plus details for audit and reporting.</small>
-          <a href="./demo.form.modal.html">Open Form Modal Demo</a>
-        </article>
-        <article class="recipe">
-          <h3>Alert / Confirm / Prompt</h3>
-          <small>Use <code>uiAlert(...)</code>, <code>uiConfirm(...)</code>, or <code>uiPrompt(...)</code> for short decision flows instead of hand-built modals.</small>
-          <a href="./demo.ui.html">Open UI Utilities Demo</a>
-        </article>
-        <article class="recipe">
-          <h3>Busy Async Form</h3>
-          <small>Use <code>createFormModal(...)</code> or dialog wrappers with helper-owned busy state. Do not rebuild duplicate-submit locking in app code.</small>
-          <a href="./demo.ui.html">Open UI Utilities Demo</a>
-        </article>
-      </div>
-    </section>
+      <section class="panel">
+        <div class="section-head">
+          <span class="eyebrow">Authentication</span>
+          <h2>Common Modal Workflows</h2>
+          <p class="muted">Use the narrowest helper that matches the flow. If a workflow no longer fits cleanly, drop to the lower-level modal helper rather than overloading a preset.</p>
+        </div>
+        <div class="recipes">
+          <article class="recipe">
+            <h3>Login</h3>
+            <small>Use <code>createLoginFormModal(...)</code> for shared login structure, busy submit handling, and field-name remapping.</small>
+            <div class="recipe-links">
+              <a href="./demo.form.modal.login.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Re-auth</h3>
+            <small>Use <code>createReauthFormModal(...)</code> when a session-sensitive flow requires password confirmation with a locked visible identity.</small>
+            <div class="recipe-links">
+              <a href="./demo.form.modal.reauth.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Status Update</h3>
+            <small>Use <code>createStatusUpdateFormModal(...)</code> for routine state changes with app-supplied status options, remarks, and optional notify behavior.</small>
+            <div class="recipe-links">
+              <a href="./demo.form.modal.status.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Reason Required</h3>
+            <small>Use <code>createReasonFormModal(...)</code> when you need a categorized reason select plus details for audit, reporting, and destructive confirmation flows.</small>
+            <div class="recipe-links">
+              <a href="./demo.form.modal.reason.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Free-form Modal Shell</h3>
+            <small>Use <code>createModal(...)</code> when the body content is custom and does not fit the shared action or schema-form wrappers.</small>
+            <div class="recipe-links">
+              <a href="./demo.modal.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Action Footer Modal</h3>
+            <small>Use <code>createActionModal(...)</code> when the shell is still custom but the footer actions are known and should use the shared action contract.</small>
+            <div class="recipe-links">
+              <a href="./demo.action.modal.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+        </div>
+      </section>
 
-    <section class="panel">
-      <h2 style="margin:0;">Feedback And Messaging</h2>
-      <div class="recipes">
-        <article class="recipe">
-          <h3>Toast Feedback</h3>
-          <small>Use <code>createToastStack(...)</code> for semantic transient feedback, shared status icons, and optional speech.</small>
-          <a href="./demo.ui.html">Open UI Utilities Demo</a>
-        </article>
-        <article class="recipe">
-          <h3>Semantic Dialogs</h3>
-          <small>Use dialog variants and descriptions when you need stronger status framing without building custom dialog chrome.</small>
-          <a href="./demo.ui.html">Open UI Utilities Demo</a>
-        </article>
-      </div>
-    </section>
+      <section class="panel">
+        <div class="section-head">
+          <span class="eyebrow">Feedback</span>
+          <h2>Feedback And Messaging</h2>
+        </div>
+        <div class="recipes">
+          <article class="recipe">
+            <h3>Alert Dialog</h3>
+            <small>Use <code>uiAlert(...)</code> for read-only acknowledgement flows with semantic variants, descriptions, and optional speech.</small>
+            <div class="recipe-links">
+              <a href="./demo.dialog.alert.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Confirm Dialog</h3>
+            <small>Use <code>uiConfirm(...)</code> for binary decision points instead of building one-off confirm shells.</small>
+            <div class="recipe-links">
+              <a href="./demo.dialog.confirm.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Prompt Dialog</h3>
+            <small>Use <code>uiPrompt(...)</code> for one short text value when a full modal form would be excessive.</small>
+            <div class="recipe-links">
+              <a href="./demo.dialog.prompt.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Toast Feedback</h3>
+            <small>Use <code>createToastStack(...)</code> for transient status feedback with semantic icons and optional speech.</small>
+            <div class="recipe-links">
+              <a href="./demo.ui.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+        </div>
+      </section>
 
-    <section class="panel">
-      <h2 style="margin:0;">Data Exploration</h2>
-      <div class="recipes">
-        <article class="recipe">
-          <h3>Flat Data Grid</h3>
-          <small>Use <code>createGrid(...)</code> for flat tabular data, remote query flows, and dense action cells.</small>
-          <a href="./demo.grid.html">Open Grid Demo</a>
-        </article>
-        <article class="recipe">
-          <h3>Tabular Hierarchy</h3>
-          <small>Use <code>createTreeGrid(...)</code> when you need hierarchy with aligned columns, tree-aware search, and virtualization.</small>
-          <a href="./demo.tree.grid.html">Open Tree Grid Demo</a>
-        </article>
-        <article class="recipe">
-          <h3>Visual Hierarchy</h3>
-          <small>Use <code>createHierarchyMap(...)</code> when the hierarchy needs to be read visually and overlay links matter.</small>
-          <a href="./demo.hierarchy.map.html">Open Hierarchy Map Demo</a>
-        </article>
-      </div>
-    </section>
+      <section class="panel">
+        <div class="section-head">
+          <span class="eyebrow">Data</span>
+          <h2>Data Exploration And Editing</h2>
+        </div>
+        <div class="recipes">
+          <article class="recipe">
+            <h3>Flat Data Grid</h3>
+            <small>Use <code>createGrid(...)</code> for flat tabular data, remote query flows, and dense action cells.</small>
+            <div class="recipe-links">
+              <a href="./demo.grid.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Date Input</h3>
+            <small>Use <code>createDatepicker(...)</code> for single-date and range selection with optional time controls.</small>
+            <div class="recipe-links">
+              <a href="./demo.datepicker.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>File Intake</h3>
+            <small>Use <code>createFileUploader(...)</code> for queue-based uploads, retries, and optional chunked upload flows.</small>
+            <div class="recipe-links">
+              <a href="./demo.file.uploader.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Tree Navigation</h3>
+            <small>Use <code>createTree(...)</code> when the content is primarily hierarchical and does not need aligned non-tree columns.</small>
+            <div class="recipe-links">
+              <a href="./demo.tree.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Tabular Hierarchy</h3>
+            <small>Use <code>createTreeGrid(...)</code> when you need hierarchy with aligned columns, tree-aware search, and virtualization.</small>
+            <div class="recipe-links">
+              <a href="./demo.tree.grid.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+          <article class="recipe">
+            <h3>Visual Hierarchy</h3>
+            <small>Use <code>createHierarchyMap(...)</code> when the hierarchy needs to be read visually and overlay relationships matter.</small>
+            <div class="recipe-links">
+              <a href="./demo.hierarchy.map.html">Open Demo</a>
+              <a href="../README.md">Read API</a>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
   </main>
 </body>
 </html>
+

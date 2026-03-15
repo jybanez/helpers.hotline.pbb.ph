@@ -13,6 +13,10 @@ const DEMO_GROUPS = [
       { href: "./demo.modal.html", label: "Modal" },
       { href: "./demo.action.modal.html", label: "Action Modal" },
       { href: "./demo.form.modal.html", label: "Form Modal" },
+      { href: "./demo.form.modal.login.html", label: "Login Preset" },
+      { href: "./demo.form.modal.reauth.html", label: "Re-auth Preset" },
+      { href: "./demo.form.modal.status.html", label: "Status Preset" },
+      { href: "./demo.form.modal.reason.html", label: "Reason Preset" },
     ],
   },
   {
@@ -72,9 +76,9 @@ const DEMO_GROUPS = [
   },
 ];
 const DOC_LINKS = [
-  { href: "../README.md", label: "README" },
-  { href: "../CHANGELOG.md", label: "Changelog" },
-  { href: "../docs/pbb-refactor-playbook.md", label: "Playbook" },
+  { href: "./readme.html", label: "README" },
+  { href: "./changelog.html", label: "Changelog" },
+  { href: "./playbook.html", label: "Playbook" },
 ];
 const NAV_SCROLL_STORAGE_KEY = "demo-shell.nav.scroll.v1";
 

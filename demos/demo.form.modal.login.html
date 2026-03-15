@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Form Modal Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+    .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 12px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
+    .muted { margin: 0; color: #9fb2d8; font-size: 13px; line-height: 1.45; }
+    .log, pre:not(.log) { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; overflow: auto; }
+    .log { color: #b2c2e5; min-height: 180px; }
+    .demo-matrix { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .demo-matrix-card { display: grid; gap: 8px; padding: 12px; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; }
+    .demo-matrix-meta { display: grid; gap: 4px; font-size: 12px; color: #9fb2d8; }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.form.modal.login"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Login Form Modal",
+      overview: "Opinionated login wrapper over createFormModal(...) for shared auth layout, validation defaults, and field-name remapping.",
+      useWhen: [
+        "Use <code>createLoginFormModal(...)</code> when the flow is a standard login prompt with identifier and password fields.",
+        "Use it when multiple projects should keep the same login structure and submit behavior."
+      ],
+      avoidWhen: [
+        "Do not use it when the auth flow needs extra project-specific fields or a multi-step sign-in sequence.",
+        "Do not use it when the login UI must live inline on a page instead of inside a modal."
+      ],
+      description: "This wrapper keeps the login layout fixed while still allowing identifier remapping, message overrides, and app-owned submit handling.",
+      defaultSampleCode: `const modal = createLoginFormModal({\n  fields: {\n    identifier: \"user_email\",\n    password: \"user_password\",\n  },\n  identifierKind: \"email\",\n  initialValues: {\n    user_email: \"operator@pbb.ph\",\n  },\n  async onSubmit(values, ctx) {\n    if (values.user_password !== \"correct-password\") {\n      ctx.setErrors({ user_password: \"Invalid password.\" });\n      return false;\n    }\n    return true;\n  },\n});\n\nmodal.open();`,
+      constructor: [
+        { factory: "<code>createLoginFormModal(options)</code>", arguments: "preset options object", returns: "Form-modal instance" }
+      ],
+      options: [
+        { option: "<code>fields</code>", default: "email/password", description: "Payload field-name mapping for the identifier and password fields." },
+        { option: "<code>identifierKind</code>", default: "<code>\"email\"</code>", description: "Identifier input mode.", values: ["email", "username"] },
+        { option: "<code>identifierLabel</code>", default: "component default", description: "Override for the identifier field label." },
+        { option: "<code>identifierPlaceholder</code>", default: "component default", description: "Override for the identifier placeholder." },
+        { option: "<code>identifierAutocomplete</code>", default: "component default", description: "Override for the identifier autocomplete token." },
+        { option: "<code>passwordLabel</code>", default: "<code>\"Password\"</code>", description: "Password field label override." },
+        { option: "<code>passwordPlaceholder</code>", default: "component default", description: "Password field placeholder override." }
+      ],
+      propertiesText: "Preset wrappers return the same instance API as <code>createFormModal(...)</code>. They do not add stable public instance properties.",
+      events: [
+        { event: "<code>onSubmit(values, ctx)</code>", arguments: "remapped values object and helper context", returns: "truthy closes, falsey keeps modal open" },
+        { event: "<code>onClose(meta)</code>", arguments: "close metadata", returns: "<code>void</code>" }
+      ],
+      methods: [
+        { method: "<code>open()</code>", arguments: "none", returns: "<code>Promise&lt;void&gt;</code>" },
+        { method: "<code>getValues()</code>", arguments: "none", returns: "current form values" },
+        { method: "<code>setErrors(map)</code>", arguments: "field-error map", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Login Form Modal Demo</h1>
+      <p class="muted">Dedicated preset page for the shared login wrapper over <code>createFormModal(...)</code>.</p>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Preset Login Flow</h2>
+      <div class="demo-matrix">
+        <article class="demo-matrix-card">
+          <strong>Identifier Kind</strong>
+          <div class="demo-matrix-meta">
+            <span><code>email</code> or <code>username</code></span>
+            <span>Layout stays fixed</span>
+          </div>
+        </article>
+        <article class="demo-matrix-card">
+          <strong>Field Mapping</strong>
+          <div class="demo-matrix-meta">
+            <span><code>user_email</code></span>
+            <span><code>user_password</code></span>
+          </div>
+        </article>
+      </div>
+      <div class="row">
+        <button id="loginPresetBtn" class="ui-button ui-button-primary" type="button">Open Login Preset</button>
+      </div>
+      <pre>const modal = createLoginFormModal({
+  fields: {
+    identifier: "user_email",
+    password: "user_password",
+  },
+  identifierKind: "email",
+  async onSubmit(values, ctx) {
+    if (values.user_password !== "correct-password") {
+      ctx.setErrors({ user_password: "Invalid password." });
+      return false;
+    }
+    return true;
+  },
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createLoginFormModal = await uiLoader.get("ui.form.modal.login");
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+    document.getElementById("loginPresetBtn").addEventListener("click", () => {
+      const modal = createLoginFormModal({
+        title: "Preset Operator Login",
+        message: "This preset keeps the shared login shell while still allowing remapped field names.",
+        fields: {
+          identifier: "user_email",
+          password: "user_password",
+        },
+        initialValues: {
+          user_email: "operator@pbb.ph",
+        },
+        async onSubmit(values, ctx) {
+          writeLog("preset.login.submit.begin", values);
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          if (values.user_password !== "correct-password") {
+            ctx.setErrors({ user_password: "Invalid password." });
+            writeLog("preset.login.submit.failed", values);
+            return false;
+          }
+          writeLog("preset.login.submit.success", values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog("preset.login.close", meta || {});
+        },
+      });
+      modal.open();
+      writeLog("preset.login.open", { ok: true });
+    });
+  </script>
+</body>
+</html>

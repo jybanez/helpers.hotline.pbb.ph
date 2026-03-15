@@ -1188,10 +1188,13 @@ Open from a local server (Apache/WAMP/Nginx):
 - `demos/demo.skeleton.html` -> dedicated skeleton playground
   - lines/card/grid variants
   - animation toggle
-- `demos/demo.form.modal.html` -> dedicated form-modal playground
+- `demos/demo.form.modal.html` -> dedicated base form-modal playground
   - base `createFormModal(...)`
-  - login / re-auth / status / reason presets
-  - remapped payload previews
+  - acceptance-proof hub/uplink flows
+- `demos/demo.form.modal.login.html` -> dedicated login preset page
+- `demos/demo.form.modal.reauth.html` -> dedicated re-auth preset page
+- `demos/demo.form.modal.status.html` -> dedicated status-update preset page
+- `demos/demo.form.modal.reason.html` -> dedicated reason-required preset page
 
 Demo pages load:
 
@@ -1894,6 +1897,10 @@ modal.open();
 Related demos:
 
 - `demos/demo.form.modal.html`
+- `demos/demo.form.modal.login.html`
+- `demos/demo.form.modal.reauth.html`
+- `demos/demo.form.modal.status.html`
+- `demos/demo.form.modal.reason.html`
 
 ### `uiAlert(message, options)`, `uiConfirm(message, options)`, `uiPrompt(message, options)` (`js/ui/ui.dialog.js`)
 

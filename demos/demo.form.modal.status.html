@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Status Update Form Modal Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+    .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 12px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
+    .muted { margin: 0; color: #9fb2d8; font-size: 13px; line-height: 1.45; }
+    .log, pre:not(.log) { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; overflow: auto; }
+    .log { color: #b2c2e5; min-height: 180px; }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.form.modal.status"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Status Update Form Modal",
+      overview: "Operational status-change wrapper over createFormModal(...) with app-supplied status vocabularies and optional notify behavior.",
+      useWhen: [
+        "Use <code>createStatusUpdateFormModal(...)</code> for routine operational status changes with remarks and optional notifications.",
+        "Use it when the allowed statuses come from project-specific business vocabulary."
+      ],
+      avoidWhen: [
+        "Do not use it when the form has many unrelated fields beyond status, notes, and notification behavior.",
+        "Do not use it when the action needs destructive confirmation with categorized reasons; use the reason preset instead."
+      ],
+      description: "The helper owns the layout while the project supplies the status vocabulary and can remap outgoing payload field names.",
+      defaultSampleCode: `const modal = createStatusUpdateFormModal({\n  fields: {\n    status: \"incident_status\",\n    remarks: \"notes\",\n    notify: \"notify_teams\",\n  },\n  statusOptions: [\n    { label: \"Pending\", value: \"pending\" },\n    { label: \"In Progress\", value: \"in_progress\" },\n    { label: \"Resolved\", value: \"resolved\" },\n  ],\n  showNotify: true,\n});`,
+      constructor: [
+        { factory: "<code>createStatusUpdateFormModal(options)</code>", arguments: "preset options object", returns: "Form-modal instance" }
+      ],
+      options: [
+        { option: "<code>fields</code>", default: "status/remarks/notify", description: "Payload field-name mapping for the status form." },
+        { option: "<code>statusOptions</code>", default: "<code>[]</code>", description: "App-supplied selectable status vocabulary." },
+        { option: "<code>statusLabel</code>", default: "<code>\"Status\"</code>", description: "Status select label override." },
+        { option: "<code>remarksLabel</code>", default: "<code>\"Remarks\"</code>", description: "Remarks textarea label override." },
+        { option: "<code>remarksPlaceholder</code>", default: "component default", description: "Remarks textarea placeholder override." },
+        { option: "<code>showNotify</code>", default: "<code>true</code>", description: "Controls whether the notify checkbox row is shown.", values: ["true", "false"] },
+        { option: "<code>notifyLabel</code>", default: "component default", description: "Notify checkbox label override." }
+      ],
+      propertiesText: "Preset wrappers return the same instance API as <code>createFormModal(...)</code>. They do not add stable public instance properties.",
+      events: [
+        { event: "<code>onSubmit(values, ctx)</code>", arguments: "remapped values object and helper context", returns: "truthy closes, falsey keeps modal open" },
+        { event: "<code>onClose(meta)</code>", arguments: "close metadata", returns: "<code>void</code>" }
+      ],
+      methods: [
+        { method: "<code>open()</code>", arguments: "none", returns: "<code>Promise&lt;void&gt;</code>" },
+        { method: "<code>getValues()</code>", arguments: "none", returns: "current form values" },
+        { method: "<code>setValues(map)</code>", arguments: "value map", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Status Update Form Modal Demo</h1>
+      <p class="muted">Dedicated preset page for the shared operational status-update wrapper.</p>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Operational Status Change</h2>
+      <div class="row">
+        <button id="statusPresetBtn" class="ui-button ui-button-primary" type="button">Open Status Update Preset</button>
+      </div>
+      <pre>const modal = createStatusUpdateFormModal({
+  fields: {
+    status: "incident_status",
+    remarks: "notes",
+    notify: "notify_teams",
+  },
+  statusOptions: [
+    { label: "Pending", value: "pending" },
+    { label: "In Progress", value: "in_progress" },
+    { label: "Resolved", value: "resolved" },
+  ],
+  showNotify: true,
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createStatusUpdateFormModal = await uiLoader.get("ui.form.modal.status");
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+    document.getElementById("statusPresetBtn").addEventListener("click", () => {
+      const modal = createStatusUpdateFormModal({
+        title: "Update Incident Status",
+        message: "This preset uses remapped field names and app-provided status options while keeping the shared operational layout.",
+        fields: {
+          status: "incident_status",
+          remarks: "notes",
+          notify: "notify_teams",
+        },
+        statusOptions: [
+          { label: "Pending", value: "pending" },
+          { label: "In Progress", value: "in_progress" },
+          { label: "Resolved", value: "resolved" },
+          { label: "Cancelled", value: "cancelled" },
+        ],
+        initialValues: {
+          incident_status: "in_progress",
+          notes: "Crew dispatched to verify the reported outage.",
+          notify_teams: true,
+        },
+        async onSubmit(values) {
+          writeLog("preset.status.submit.begin", values);
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          writeLog("preset.status.submit.success", values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog("preset.status.close", meta || {});
+        },
+      });
+      modal.open();
+      writeLog("preset.status.open", { ok: true });
+    });
+  </script>
+</body>
+</html>

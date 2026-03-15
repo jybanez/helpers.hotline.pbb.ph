@@ -182,7 +182,11 @@
       options: [
         { option: "<code>items</code>", default: "<code>[]</code>", description: "Image/video gallery items." },
         { option: "<code>baseUrl</code>", default: "<code>\"\"</code>", description: "Base URL applied when media paths are relative." },
-        { option: "<code>fit</code>", default: "documented default", description: "Viewer fit behavior.", values: ["contain", "cover", "original"] }
+        { option: "<code>fit</code>", default: "documented default", description: "Viewer fit behavior.", values: ["contain", "cover", "original"] },
+        { option: "<code>zoomStep</code>", default: "<code>0.2</code>", description: "Zoom increment used by toolbar controls and keyboard zoom actions." },
+        { option: "<code>showAudiograph</code>", default: "<code>false</code>", description: "Shows the built-in video audiograph when the active item is a video.", values: ["true", "false"] },
+        { option: "<code>showFooter</code>", default: "<code>true</code>", description: "Shows the metadata footer for the active media item.", values: ["true", "false"] },
+        { option: "<code>autoplayVideo</code>", default: "<code>true</code>", description: "Starts video playback automatically when a video item is opened.", values: ["true", "false"] }
       ],
       methods: [
         { method: "<code>open(index)</code>", arguments: "item index", returns: "<code>void</code>" },

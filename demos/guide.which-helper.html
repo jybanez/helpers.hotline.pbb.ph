@@ -8,159 +8,263 @@
   <style>
     body {
       margin: 0;
-      padding: 24px;
       background: #0c1017;
       color: #d7e0f4;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
-    .page {
-      max-width: 1040px;
+
+    .guide-page {
+      grid-column: 2 / 4;
+      min-width: 0;
+      height: 100vh; overflow: auto; padding: 20px; box-sizing: border-box;
+      background:
+        radial-gradient(circle at top left, rgba(58, 92, 158, 0.12), transparent 32%),
+        #0c1017;
+    }
+
+    .guide-layout {
+      max-width: 1240px;
       margin: 0 auto;
       display: grid;
       gap: 16px;
     }
+
     .panel {
       border: 1px solid #263146;
-      border-radius: 12px;
+      border-radius: 14px;
       background: #111826;
       padding: 16px;
       display: grid;
       gap: 12px;
     }
-    .muted {
+
+    .intro {
+      padding: 12px 16px;
+      gap: 8px;
+    }
+
+    .eyebrow {
+      color: #8db5ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .panel h1,
+    .panel h2,
+    .panel p,
+    .panel ul,
+    .panel li {
       margin: 0;
+    }
+
+    .muted {
       color: #aebcdc;
       line-height: 1.55;
     }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #263146;
+      border-radius: 12px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 14px;
     }
-    th, td {
+
+    th,
+    td {
       border-bottom: 1px solid #243048;
-      padding: 10px 8px;
+      padding: 10px 12px;
       text-align: left;
       vertical-align: top;
     }
+
     th {
       color: #8db5ff;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      background: #0f1829;
+      position: sticky;
+      top: 0;
     }
+
     td code {
       color: #d7e0f4;
     }
-    a {
+
+    td a {
       color: #8db5ff;
       text-decoration: none;
+    }
+
+    .notes {
+      padding-left: 18px;
+      display: grid;
+      gap: 8px;
+    }
+
+    @media (max-width: 1260px) {
+      .guide-page {
+        grid-column: auto; height: auto;
+      }
     }
   </style>
   <script type="module" src="../js/demo/demo.shell.js"></script>
 </head>
-<body>
-  <main class="page">
-    <section class="panel">
-      <h1 style="margin:0;">Which Helper Should I Use?</h1>
-      <p class="muted">
-        This page is a routing guide. Pick the narrowest documented helper that already fits the workflow. If none fits
-        cleanly and the use case is repeated, submit a proposal instead of mutating the shared helper contract ad hoc.
-      </p>
-    </section>
+<body class="demo-shell-sidebar">
+  <main class="guide-page">
+    <div class="guide-layout">
+      <section class="panel intro">
+        <span class="eyebrow">Routing Guide</span>
+        <h1>Which Helper Should I Use?</h1>
+        <p class="muted">
+          Pick the narrowest documented helper that already fits the workflow. If none fits cleanly and the use case
+          is repeated, submit a proposal instead of mutating the shared helper contract ad hoc from consuming app code.
+        </p>
+      </section>
 
-    <section class="panel">
-      <table>
-        <thead>
-          <tr>
-            <th>Need</th>
-            <th>Use</th>
-            <th>Why</th>
-            <th>Demo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Read-only message</td>
-            <td><code>uiAlert(...)</code></td>
-            <td>Fast semantic dialog without rebuilding modal actions.</td>
-            <td><a href="./demo.ui.html">UI Utilities</a></td>
-          </tr>
-          <tr>
-            <td>Confirm / cancel decision</td>
-            <td><code>uiConfirm(...)</code></td>
-            <td>Shared confirm semantics, variants, and icons.</td>
-            <td><a href="./demo.ui.html">UI Utilities</a></td>
-          </tr>
-          <tr>
-            <td>Prompt for one input</td>
-            <td><code>uiPrompt(...)</code></td>
-            <td>Short value collection without building a full modal form.</td>
-            <td><a href="./demo.ui.html">UI Utilities</a></td>
-          </tr>
-          <tr>
-            <td>Short custom modal form</td>
-            <td><code>createFormModal(...)</code></td>
-            <td>Strict row model, field errors, form error, and helper-owned busy submit flow.</td>
-            <td><a href="./demo.form.modal.html">Form Modal</a></td>
-          </tr>
-          <tr>
-            <td>Shared login flow</td>
-            <td><code>createLoginFormModal(...)</code></td>
-            <td>Consistent structure with field-name remapping for backend compatibility.</td>
-            <td><a href="./demo.form.modal.html">Form Modal</a></td>
-          </tr>
-          <tr>
-            <td>Session re-auth</td>
-            <td><code>createReauthFormModal(...)</code></td>
-            <td>Locked identifier and shared re-auth wording/behavior.</td>
-            <td><a href="./demo.form.modal.html">Form Modal</a></td>
-          </tr>
-          <tr>
-            <td>Status change workflow</td>
-            <td><code>createStatusUpdateFormModal(...)</code></td>
-            <td>Shared structure with app-supplied status vocabulary.</td>
-            <td><a href="./demo.form.modal.html">Form Modal</a></td>
-          </tr>
-          <tr>
-            <td>Categorized reason-required flow</td>
-            <td><code>createReasonFormModal(...)</code></td>
-            <td>Reason select plus details textarea for monitoring/audit use cases.</td>
-            <td><a href="./demo.form.modal.html">Form Modal</a></td>
-          </tr>
-          <tr>
-            <td>Transient status feedback</td>
-            <td><code>createToastStack(...)</code></td>
-            <td>Shared semantic icons, optional speech, and auto-dismiss behavior.</td>
-            <td><a href="./demo.ui.html">UI Utilities</a></td>
-          </tr>
-          <tr>
-            <td>Flat tabular data</td>
-            <td><code>createGrid(...)</code></td>
-            <td>Sorting, query state, pagination, virtualization, and dense action cells.</td>
-            <td><a href="./demo.grid.html">Grid</a></td>
-          </tr>
-          <tr>
-            <td>Hierarchical data with columns</td>
-            <td><code>createTreeGrid(...)</code></td>
-            <td>Hierarchy plus columns, tree-aware search, and lazy loading.</td>
-            <td><a href="./demo.tree.grid.html">Tree Grid</a></td>
-          </tr>
-          <tr>
-            <td>Hierarchy shown visually</td>
-            <td><code>createHierarchyMap(...)</code></td>
-            <td>Hierarchy-first visual map with overlay relationships and pan/zoom.</td>
-            <td><a href="./demo.hierarchy.map.html">Hierarchy Map</a></td>
-          </tr>
-          <tr>
-            <td>Standalone media viewing</td>
-            <td><code>createMediaViewer(...)</code></td>
-            <td>Dedicated image/video viewer with fit and navigation behaviors.</td>
-            <td><a href="./demo.media.viewer.html">Media Viewer</a></td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+      <section class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Need</th>
+                <th>Use</th>
+                <th>Why</th>
+                <th>Demo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Read-only message</td>
+                <td><code>uiAlert(...)</code></td>
+                <td>Fast semantic dialog without rebuilding modal actions.</td>
+                <td><a href="./demo.dialog.alert.html">Alert Dialog</a></td>
+              </tr>
+              <tr>
+                <td>Confirm / cancel decision</td>
+                <td><code>uiConfirm(...)</code></td>
+                <td>Shared confirm semantics, variants, icons, and optional speech.</td>
+                <td><a href="./demo.dialog.confirm.html">Confirm Dialog</a></td>
+              </tr>
+              <tr>
+                <td>Prompt for one input</td>
+                <td><code>uiPrompt(...)</code></td>
+                <td>Short value collection without building a full modal form.</td>
+                <td><a href="./demo.dialog.prompt.html">Prompt Dialog</a></td>
+              </tr>
+              <tr>
+                <td>Free-form custom modal</td>
+                <td><code>createModal(...)</code></td>
+                <td>General shell for body content that does not fit a stricter wrapper.</td>
+                <td><a href="./demo.modal.html">Modal</a></td>
+              </tr>
+              <tr>
+                <td>Known footer-action modal</td>
+                <td><code>createActionModal(...)</code></td>
+                <td>Shared action-footer shell with auto-busy state and declarative actions.</td>
+                <td><a href="./demo.action.modal.html">Action Modal</a></td>
+              </tr>
+              <tr>
+                <td>Short custom modal form</td>
+                <td><code>createFormModal(...)</code></td>
+                <td>Strict row model, field errors, form error, and helper-owned busy submit flow.</td>
+                <td><a href="./demo.form.modal.html">Form Modal</a></td>
+              </tr>
+              <tr>
+                <td>Shared login flow</td>
+                <td><code>createLoginFormModal(...)</code></td>
+                <td>Consistent structure with field-name remapping for backend compatibility.</td>
+                <td><a href="./demo.form.modal.login.html">Login Preset</a></td>
+              </tr>
+              <tr>
+                <td>Session re-auth</td>
+                <td><code>createReauthFormModal(...)</code></td>
+                <td>Locked identifier and shared re-auth wording/behavior.</td>
+                <td><a href="./demo.form.modal.reauth.html">Re-auth Preset</a></td>
+              </tr>
+              <tr>
+                <td>Status change workflow</td>
+                <td><code>createStatusUpdateFormModal(...)</code></td>
+                <td>Shared structure with app-supplied status vocabulary.</td>
+                <td><a href="./demo.form.modal.status.html">Status Preset</a></td>
+              </tr>
+              <tr>
+                <td>Categorized reason-required flow</td>
+                <td><code>createReasonFormModal(...)</code></td>
+                <td>Reason select plus details textarea for monitoring and audit use cases.</td>
+                <td><a href="./demo.form.modal.reason.html">Reason Preset</a></td>
+              </tr>
+              <tr>
+                <td>Transient status feedback</td>
+                <td><code>createToastStack(...)</code></td>
+                <td>Shared semantic icons, optional speech, and auto-dismiss behavior.</td>
+                <td><a href="./demo.ui.html">UI Utilities</a></td>
+              </tr>
+              <tr>
+                <td>Flat tabular data</td>
+                <td><code>createGrid(...)</code></td>
+                <td>Sorting, query state, pagination, virtualization, and dense action cells.</td>
+                <td><a href="./demo.grid.html">Grid</a></td>
+              </tr>
+              <tr>
+                <td>Date selection</td>
+                <td><code>createDatepicker(...)</code></td>
+                <td>Single or range date capture with optional time input.</td>
+                <td><a href="./demo.datepicker.html">Datepicker</a></td>
+              </tr>
+              <tr>
+                <td>File intake / upload queue</td>
+                <td><code>createFileUploader(...)</code></td>
+                <td>Queue-based uploads with retry and optional chunking.</td>
+                <td><a href="./demo.file.uploader.html">File Uploader</a></td>
+              </tr>
+              <tr>
+                <td>Hierarchical data only</td>
+                <td><code>createTree(...)</code></td>
+                <td>Expandable/selectable tree without forcing aligned non-tree columns.</td>
+                <td><a href="./demo.tree.html">Tree</a></td>
+              </tr>
+              <tr>
+                <td>Hierarchical data with columns</td>
+                <td><code>createTreeGrid(...)</code></td>
+                <td>Hierarchy plus columns, tree-aware search, and lazy loading.</td>
+                <td><a href="./demo.tree.grid.html">Tree Grid</a></td>
+              </tr>
+              <tr>
+                <td>Hierarchy shown visually</td>
+                <td><code>createHierarchyMap(...)</code></td>
+                <td>Hierarchy-first visual map with overlay relationships and pan/zoom.</td>
+                <td><a href="./demo.hierarchy.map.html">Hierarchy Map</a></td>
+              </tr>
+              <tr>
+                <td>Standalone media viewing</td>
+                <td><code>createMediaViewer(...)</code></td>
+                <td>Dedicated image/video viewer with fit and navigation behaviors.</td>
+                <td><a href="./demo.media.viewer.html">Media Viewer</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <span class="eyebrow">Rule</span>
+        <h2>Proposal-First Reminder</h2>
+        <ul class="notes muted">
+          <li>If the helper library is close but missing a repeated capability, do not patch the shared contract ad hoc from app work.</li>
+          <li>Use the existing helper where it fits, and submit a proposal when the missing capability is repeated enough to belong in the shared library.</li>
+          <li>The routing guide is intentionally conservative. It is better to choose a lower-level helper explicitly than to overload a narrow preset.</li>
+        </ul>
+      </section>
+    </div>
   </main>
 </body>
 </html>
+

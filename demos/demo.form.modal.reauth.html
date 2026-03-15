@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Re-auth Form Modal Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+    .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 12px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
+    .muted { margin: 0; color: #9fb2d8; font-size: 13px; line-height: 1.45; }
+    .log, pre:not(.log) { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; overflow: auto; }
+    .log { color: #b2c2e5; min-height: 180px; }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.form.modal.reauth"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Re-auth Form Modal",
+      overview: "Opinionated re-auth wrapper over createFormModal(...) with locked identity display and shared session-confirmation structure.",
+      useWhen: [
+        "Use <code>createReauthFormModal(...)</code> when the current user must confirm their password before a sensitive action continues.",
+        "Use it when the identifier must remain visible but non-editable."
+      ],
+      avoidWhen: [
+        "Do not use it for first-time login flows; use the login preset instead.",
+        "Do not use it when the user must change identity or choose an account."
+      ],
+      description: "This preset keeps the identifier visible and locked while letting projects remap payload field names and own the submit behavior.",
+      defaultSampleCode: `const modal = createReauthFormModal({\n  identifierValue: \"operator@pbb.ph\",\n  fields: {\n    identifier: \"account_email\",\n    password: \"reauth_password\",\n  },\n  async onSubmit(values, ctx) {\n    if (values.reauth_password !== \"correct-password\") {\n      ctx.setErrors({ reauth_password: \"Password does not match the active session.\" });\n      return false;\n    }\n    return true;\n  },\n});`,
+      constructor: [
+        { factory: "<code>createReauthFormModal(options)</code>", arguments: "preset options object", returns: "Form-modal instance" }
+      ],
+      options: [
+        { option: "<code>fields</code>", default: "email/password", description: "Payload field-name mapping for the locked identifier and password fields." },
+        { option: "<code>identifierKind</code>", default: "<code>\"email\"</code>", description: "Identifier display mode.", values: ["email", "username"] },
+        { option: "<code>identifierLabel</code>", default: "component default", description: "Override for the locked identifier label." },
+        { option: "<code>identifierValue</code>", default: "<code>\"\"</code>", description: "Visible locked identifier value shown to the user." },
+        { option: "<code>passwordLabel</code>", default: "<code>\"Password\"</code>", description: "Password field label override." },
+        { option: "<code>passwordPlaceholder</code>", default: "component default", description: "Password field placeholder override." }
+      ],
+      propertiesText: "Preset wrappers return the same instance API as <code>createFormModal(...)</code>. They do not add stable public instance properties.",
+      events: [
+        { event: "<code>onSubmit(values, ctx)</code>", arguments: "remapped values object and helper context", returns: "truthy closes, falsey keeps modal open" },
+        { event: "<code>onClose(meta)</code>", arguments: "close metadata", returns: "<code>void</code>" }
+      ],
+      methods: [
+        { method: "<code>open()</code>", arguments: "none", returns: "<code>Promise&lt;void&gt;</code>" },
+        { method: "<code>getValues()</code>", arguments: "none", returns: "current form values" },
+        { method: "<code>setErrors(map)</code>", arguments: "field-error map", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Re-auth Form Modal Demo</h1>
+      <p class="muted">Dedicated preset page for the shared re-auth/session-confirmation wrapper.</p>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Locked Identifier Re-auth</h2>
+      <div class="row">
+        <button id="reauthPresetBtn" class="ui-button ui-button-primary" type="button">Open Re-auth Preset</button>
+      </div>
+      <pre>const modal = createReauthFormModal({
+  identifierValue: "operator@pbb.ph",
+  fields: {
+    identifier: "account_email",
+    password: "reauth_password",
+  },
+  async onSubmit(values, ctx) {
+    if (values.reauth_password !== "correct-password") {
+      ctx.setErrors({ reauth_password: "Password does not match the active session." });
+      return false;
+    }
+    return true;
+  },
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createReauthFormModal = await uiLoader.get("ui.form.modal.reauth");
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+    document.getElementById("reauthPresetBtn").addEventListener("click", () => {
+      const modal = createReauthFormModal({
+        title: "Session Expired",
+        message: "This preset keeps the identifier visible and locked while re-authentication is in progress.",
+        fields: {
+          identifier: "account_email",
+          password: "reauth_password",
+        },
+        identifierValue: "operator@pbb.ph",
+        async onSubmit(values, ctx) {
+          writeLog("preset.reauth.submit.begin", values);
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          if (values.reauth_password !== "correct-password") {
+            ctx.setErrors({ reauth_password: "Password does not match the active session." });
+            writeLog("preset.reauth.submit.failed", values);
+            return false;
+          }
+          writeLog("preset.reauth.submit.success", values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog("preset.reauth.close", meta || {});
+        },
+      });
+      modal.open();
+      writeLog("preset.reauth.open", { ok: true });
+    });
+  </script>
+</body>
+</html>

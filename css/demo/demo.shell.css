@@ -207,6 +207,7 @@ body.demo-shell-sidebar .demo-shell-nav {
 
 body.demo-shell-sidebar .demo-shell-nav__inner {
   height: 100%;
+  box-sizing: border-box;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 14px;
   padding: 18px 14px;
@@ -224,6 +225,29 @@ body.demo-shell-sidebar .demo-shell-nav__groups {
   gap: 14px;
   overflow: auto;
   padding-right: 4px;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #73819b #101826;
+  scrollbar-gutter: stable;
+}
+
+body.demo-shell-sidebar .demo-shell-nav__groups::-webkit-scrollbar {
+  width: 10px;
+}
+
+body.demo-shell-sidebar .demo-shell-nav__groups::-webkit-scrollbar-track {
+  background: #101826;
+  border-radius: 999px;
+}
+
+body.demo-shell-sidebar .demo-shell-nav__groups::-webkit-scrollbar-thumb {
+  background: #73819b;
+  border-radius: 999px;
+  border: 2px solid #101826;
+}
+
+body.demo-shell-sidebar .demo-shell-nav__groups::-webkit-scrollbar-thumb:hover {
+  background: #8a99b6;
 }
 
 body.demo-shell-sidebar .demo-shell-nav__links {
@@ -466,6 +490,23 @@ body.demo-shell-sidebar .demo-shell-nav__docs a {
   min-width: 0;
 }
 
+.demo-auto-panel--intro {
+  padding: 12px 16px;
+  gap: 6px;
+  min-height: 0;
+  align-content: start;
+}
+
+.demo-auto-panel--intro h1,
+.demo-auto-panel--intro h2,
+.demo-auto-panel--intro p {
+  margin: 0;
+}
+
+.demo-auto-panel--intro .muted {
+  margin: 0;
+}
+
 .demo-support-nodes {
   display: none !important;
 }
@@ -536,3 +577,6 @@ body.demo-shell-sidebar .demo-shell-nav__docs a {
     transform: rotate(-90deg);
   }
 }
+
+
+

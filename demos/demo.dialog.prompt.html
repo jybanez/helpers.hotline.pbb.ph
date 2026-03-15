@@ -40,7 +40,8 @@
         { option: "<code>variant</code>", default: "<code>\"default\"</code>", description: "Semantic dialog tone.", values: ["default", "success", "info", "warning", "error"] },
         { option: "<code>description</code>", default: "<code>\"\"</code>", description: "Secondary explanatory copy." },
         { option: "<code>placeholder</code>", default: "<code>\"\"</code>", description: "Input placeholder text." },
-        { option: "<code>speak</code>", default: "<code>false</code>", description: "Opt-in speech for dialog content.", values: ["true", "false"] }
+        { option: "<code>speak</code>", default: "<code>false</code>", description: "Opt-in speech for dialog content.", values: ["true", "false"] },
+        { option: "<code>voiceName</code>", default: "<code>\"\"</code>", description: "Exact speech-synthesis voice name. Use one of the voices exposed by the browser/OS voice list; empty string falls back to the default voice." }
       ],
       propertiesText: "This helper resolves a string or null and does not expose stable public properties.",
       events: [

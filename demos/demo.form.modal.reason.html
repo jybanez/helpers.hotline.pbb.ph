@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reason Form Modal Demo</title>
+  <link rel='stylesheet' href='../css/demo/demo.shell.css'>
+  <style>
+    body { margin: 0; padding: 24px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+    .panel { border: 1px solid #263146; border-radius: 10px; background: #111826; padding: 14px; display: grid; gap: 12px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .back { color: #b2c2e5; text-decoration: none; font-size: 13px; }
+    .muted { margin: 0; color: #9fb2d8; font-size: 13px; line-height: 1.45; }
+    .log, pre:not(.log) { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #2b3750; border-radius: 8px; background: #0b1220; padding: 10px; overflow: auto; }
+    .log { color: #b2c2e5; min-height: 180px; }
+  </style>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    window.__demoLoaderReady = uiLoader.loadMany(["ui.form.modal.reason"]);
+  </script>
+  <script>
+    window.demoMeta = {
+      title: "Reason Form Modal",
+      overview: "Categorized reason-required wrapper over createFormModal(...) with app-supplied reason vocabularies and optional confirmation phrase enforcement.",
+      useWhen: [
+        "Use <code>createReasonFormModal(...)</code> for sensitive actions that require a categorized reason before continuing.",
+        "Use it when analytics and monitoring need structured reason codes instead of free text alone."
+      ],
+      avoidWhen: [
+        "Do not use it for routine status changes that do not require accountability or confirmation text.",
+        "Do not use it when the flow needs a large custom form with many additional domain fields."
+      ],
+      description: "The helper owns the alert, reason select, details textarea, and optional confirm-text row while the project supplies the reason vocabulary and payload field names.",
+      defaultSampleCode: `const modal = createReasonFormModal({\n  fields: {\n    reasonCode: \"cancel_reason\",\n    reasonDetails: \"remarks\",\n    confirmText: \"confirm_cancel\",\n  },\n  reasonOptions: [\n    { label: \"Operational Override\", value: \"operational_override\" },\n    { label: \"Duplicate Request\", value: \"duplicate_request\" },\n  ],\n  confirmPhrase: \"CANCEL\",\n});`,
+      constructor: [
+        { factory: "<code>createReasonFormModal(options)</code>", arguments: "preset options object", returns: "Form-modal instance" }
+      ],
+      options: [
+        { option: "<code>fields</code>", default: "reasonCode/reasonDetails/confirmText/notify", description: "Payload field-name mapping for the reason form." },
+        { option: "<code>reasonOptions</code>", default: "<code>[]</code>", description: "App-supplied selectable reason vocabulary." },
+        { option: "<code>reasonLabel</code>", default: "<code>\"Reason Category\"</code>", description: "Reason select label override." },
+        { option: "<code>detailsLabel</code>", default: "<code>\"Details\"</code>", description: "Details textarea label override." },
+        { option: "<code>detailsPlaceholder</code>", default: "component default", description: "Details textarea placeholder override." },
+        { option: "<code>confirmPhrase</code>", default: "<code>\"\"</code>", description: "When set, requires the user to type the exact phrase before submit." },
+        { option: "<code>confirmLabel</code>", default: "component default", description: "Confirmation input label override." },
+        { option: "<code>showNotify</code>", default: "<code>false</code>", description: "Controls whether the notify checkbox row is shown.", values: ["true", "false"] }
+      ],
+      propertiesText: "Preset wrappers return the same instance API as <code>createFormModal(...)</code>. They do not add stable public instance properties.",
+      events: [
+        { event: "<code>onSubmit(values, ctx)</code>", arguments: "remapped values object and helper context", returns: "truthy closes, falsey keeps modal open" },
+        { event: "<code>onClose(meta)</code>", arguments: "close metadata", returns: "<code>void</code>" }
+      ],
+      methods: [
+        { method: "<code>open()</code>", arguments: "none", returns: "<code>Promise&lt;void&gt;</code>" },
+        { method: "<code>getValues()</code>", arguments: "none", returns: "current form values" },
+        { method: "<code>setErrors(map)</code>", arguments: "field-error map", returns: "<code>void</code>" },
+        { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
+      ]
+    };
+  </script>
+  <script type='module' src='../js/demo/demo.shell.js'></script>
+</head>
+<body class="demo-shell-sidebar">
+  <main class="page" data-theme="dark">
+    <section class="panel">
+      <div class="row">
+        <a class="back" href="./index.html">← Back to Home</a>
+        <button id="themeToggle" class="ui-button" type="button">Toggle Theme</button>
+      </div>
+      <h1 class="ui-title">Reason Form Modal Demo</h1>
+      <p class="muted">Dedicated preset page for the categorized reason-required wrapper.</p>
+    </section>
+    <section class="panel">
+      <h2 class="ui-title">Categorized Reason Capture</h2>
+      <div class="row">
+        <button id="reasonPresetBtn" class="ui-button ui-button-danger" type="button">Open Reason Preset</button>
+      </div>
+      <pre>const modal = createReasonFormModal({
+  fields: {
+    reasonCode: "cancel_reason",
+    reasonDetails: "remarks",
+    confirmText: "confirm_cancel",
+  },
+  reasonOptions: [
+    { label: "Operational Override", value: "operational_override" },
+    { label: "Duplicate Request", value: "duplicate_request" },
+  ],
+  confirmPhrase: "CANCEL",
+});</pre>
+      <pre id="log" class="log">No events yet.</pre>
+    </section>
+  </main>
+  <script type="module">
+    import { uiLoader } from "../js/ui/ui.loader.js";
+    await window.__demoLoaderReady;
+    const createReasonFormModal = await uiLoader.get("ui.form.modal.reason");
+    const page = document.querySelector("main.page");
+    const log = document.getElementById("log");
+    function writeLog(label, payload) {
+      const line = `[${new Date().toISOString()}] ${label}\n${JSON.stringify(payload ?? {}, null, 2)}\n`;
+      log.textContent = log.textContent === "No events yet." ? line : `${line}\n${log.textContent}`;
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const next = page.dataset.theme === "dark" ? "light" : "dark";
+      page.dataset.theme = next;
+      writeLog("theme.toggle", { theme: next });
+    });
+    document.getElementById("reasonPresetBtn").addEventListener("click", () => {
+      const modal = createReasonFormModal({
+        title: "Cancel Uplink",
+        message: "This action may affect downstream connectivity. Please provide a categorized reason before continuing.",
+        fields: {
+          reasonCode: "cancel_reason",
+          reasonDetails: "remarks",
+          confirmText: "confirm_cancel",
+        },
+        reasonOptions: [
+          { label: "Operational Override", value: "operational_override" },
+          { label: "Bad Data", value: "bad_data" },
+          { label: "Duplicate Request", value: "duplicate_request" },
+        ],
+        confirmPhrase: "CANCEL",
+        initialValues: {
+          cancel_reason: "operational_override",
+          remarks: "Fiber path is unstable and needs to be rerouted before closure.",
+        },
+        async onSubmit(values) {
+          writeLog("preset.reason.submit.begin", values);
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          writeLog("preset.reason.submit.success", values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog("preset.reason.close", meta || {});
+        },
+      });
+      modal.open();
+      writeLog("preset.reason.open", { ok: true });
+    });
+  </script>
+</body>
+</html>

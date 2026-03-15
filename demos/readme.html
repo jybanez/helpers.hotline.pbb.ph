@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README</title>
+  <link rel="stylesheet" href="../css/demo/demo.shell.css">
+  <style>
+    body {
+      margin: 0;
+      background: #0c1017;
+      color: #d7e0f4;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .markdown-page {
+      grid-column: 2 / 4;
+      min-width: 0;
+      height: 100vh; overflow: auto; padding: 20px; box-sizing: border-box;
+      background:
+        radial-gradient(circle at top left, rgba(58, 92, 158, 0.12), transparent 32%),
+        #0c1017;
+    }
+    .markdown-layout {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+    .panel {
+      border: 1px solid #263146;
+      border-radius: 14px;
+      background: #111826;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .intro {
+      padding: 12px 16px;
+      gap: 8px;
+    }
+    .eyebrow {
+      color: #8db5ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .muted {
+      margin: 0;
+      color: #aebcdc;
+      line-height: 1.55;
+    }
+    .markdown-doc {
+      border: 1px solid #263146;
+      border-radius: 14px;
+      background: #111826;
+      padding: 20px 24px;
+      overflow: auto;
+      line-height: 1.65;
+    }
+    .markdown-doc h1,
+    .markdown-doc h2,
+    .markdown-doc h3,
+    .markdown-doc h4,
+    .markdown-doc h5,
+    .markdown-doc h6 {
+      color: #ffffff;
+      margin: 24px 0 12px;
+      line-height: 1.25;
+    }
+    .markdown-doc h1:first-child,
+    .markdown-doc h2:first-child {
+      margin-top: 0;
+    }
+    .markdown-doc p,
+    .markdown-doc li,
+    .markdown-doc blockquote {
+      color: #c2d1ed;
+    }
+    .markdown-doc a {
+      color: #8db5ff;
+      text-decoration: none;
+    }
+    .markdown-doc a:hover {
+      text-decoration: underline;
+    }
+    .markdown-doc code {
+      color: #ffffff;
+      background: #0b1423;
+      border: 1px solid #2b3750;
+      border-radius: 6px;
+      padding: 1px 5px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.95em;
+    }
+    .markdown-doc pre {
+      margin: 16px 0;
+      padding: 14px;
+      border: 1px solid #2b3750;
+      border-radius: 10px;
+      background: #09111d;
+      overflow: auto;
+    }
+    .markdown-doc pre code {
+      background: transparent;
+      border: 0;
+      padding: 0;
+    }
+    .markdown-doc table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    .markdown-doc th,
+    .markdown-doc td {
+      padding: 10px 12px;
+      border: 1px solid #24314a;
+      text-align: left;
+      vertical-align: top;
+    }
+    .markdown-doc th {
+      color: #8db5ff;
+      background: #0f1829;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 11px;
+    }
+    .markdown-doc hr {
+      border: 0;
+      border-top: 1px solid #263146;
+      margin: 24px 0;
+    }
+    .markdown-doc img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+    .markdown-status[data-state="error"] {
+      color: #ffb4b4;
+    }
+    @media (max-width: 1260px) {
+      .markdown-page {
+        grid-column: auto; height: auto;
+      }
+    }
+  </style>
+  <script type="module" src="../js/demo/demo.shell.js"></script>
+  <script type="module" src="../js/demo/demo.markdown.page.js"></script>
+</head>
+<body class="demo-shell-sidebar" data-markdown-path="../README.md" data-markdown-title="README">
+  <main class="markdown-page">
+    <div class="markdown-layout">
+      <section class="panel intro">
+        <span class="eyebrow">Documentation</span>
+        <h1 data-markdown-title>README</h1>
+        <p class="muted">Rendered directly from the markdown source so the shared docs can be read inside the demo shell.</p>
+      </section>
+      <section class="markdown-doc">
+        <p class="muted markdown-status" data-markdown-status>Loading markdown content...</p>
+        <article data-markdown-host></article>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
+
