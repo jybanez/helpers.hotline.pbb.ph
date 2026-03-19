@@ -1972,6 +1972,7 @@ Common preset rules:
 | Field-name mapping | Engineers can remap payload field names to match project backends. |
 | Busy behavior | Presets reuse `createFormModal(...)` busy submit handling. |
 | Submit behavior | App code still owns the actual `onSubmit(values, ctx)` implementation. |
+| Session expiry detection | Re-auth auto-launch is app-owned. `createReauthFormModal(...)` does not monitor timeout state or open itself. |
 
 Preset options:
 
@@ -2013,6 +2014,20 @@ const modal = createLoginFormModal({
 
 modal.open();
 ```
+
+Re-auth implementation note:
+
+- `createReauthFormModal(...)` is a UI wrapper, not a session watchdog.
+- Detect expiry in app code through:
+  - `401` / `419` API responses
+  - an app-owned idle/session timer
+  - an explicit backend "session expired" contract
+- Keep one reusable re-auth modal instance near the authenticated app shell.
+- When expiry is detected:
+  - pause or defer the protected action
+  - open the shared re-auth modal
+  - on successful re-auth, resume or retry the blocked action if appropriate
+- Do not let each screen create its own competing re-auth modal instance.
 
 Related demos:
 

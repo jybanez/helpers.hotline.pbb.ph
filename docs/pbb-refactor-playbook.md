@@ -87,6 +87,21 @@ Use adapter functions between helper callbacks and backend APIs.
 - Prefer shared variants first. Only add project-local overrides when the library contract is genuinely insufficient for the use case.
 - If a project needs the same override more than once, raise it back into the shared library instead of duplicating CSS across `*.pbb.ph` apps.
 
+Session and re-auth rule:
+
+- `createReauthFormModal(...)` owns the re-auth UI only.
+- Session-expiry detection remains app-owned.
+- Detect expiry through app contracts such as:
+  - `401` / `419` responses
+  - an app-owned idle timer
+  - an explicit backend session-expired response shape
+- Keep one reusable re-auth modal instance near the authenticated app shell instead of creating separate instances per page or action.
+- When expiry is detected:
+  - block or defer the protected action
+  - open the shared re-auth modal
+  - on successful re-auth, retry or resume the blocked action if the project flow supports it
+- Do not embed timeout polling or session-watch logic inside the helper wrapper itself.
+
 ## 5.1) Helper-First And Proposal-First Rules
 
 - Engineers integrating `*.pbb.ph` projects should maximize use of documented helper components, wrappers, and shared primitives before introducing app-local UI.

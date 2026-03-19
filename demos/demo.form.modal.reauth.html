@@ -25,13 +25,15 @@
       overview: "Opinionated re-auth wrapper over createFormModal(...) with locked identity display and shared session-confirmation structure.",
       useWhen: [
         "Use <code>createReauthFormModal(...)</code> when the current user must confirm their password before a sensitive action continues.",
-        "Use it when the identifier must remain visible but non-editable."
+        "Use it when the identifier must remain visible but non-editable.",
+        "Use it after app-owned session-expiry detection such as a <code>401</code>, <code>419</code>, or a confirmed idle-timeout event."
       ],
       avoidWhen: [
         "Do not use it for first-time login flows; use the login preset instead.",
-        "Do not use it when the user must change identity or choose an account."
+        "Do not use it when the user must change identity or choose an account.",
+        "Do not assume the preset detects timeout or auto-opens itself; session-expiry detection stays app-owned."
       ],
-      description: "This preset keeps the identifier visible and locked while letting projects remap payload field names and own the submit behavior.",
+      description: "This preset keeps the identifier visible and locked while letting projects remap payload field names and own the submit behavior. It does not monitor session state or auto-launch on timeout; the host app must detect expiry and call <code>open()</code>.",
       defaultSampleCode: `const modal = createReauthFormModal({\n  identifierValue: \"operator@pbb.ph\",\n  fields: {\n    identifier: \"account_email\",\n    password: \"reauth_password\",\n  },\n  async onSubmit(values, ctx) {\n    if (values.reauth_password !== \"correct-password\") {\n      ctx.setErrors({ reauth_password: \"Password does not match the active session.\" });\n      return false;\n    }\n    return true;\n  },\n});`,
       constructor: [
         { factory: "<code>createReauthFormModal(options)</code>", arguments: "preset options object", returns: "Form-modal instance" }
@@ -68,6 +70,7 @@
       </div>
       <h1 class="ui-title">Re-auth Form Modal Demo</h1>
       <p class="muted">Dedicated preset page for the shared re-auth/session-confirmation wrapper.</p>
+      <p class="muted">Contract note: this preset does not watch session lifetime or auto-open itself. PBB apps should detect timeout or <code>401</code>/<code>419</code> responses and then open one shared re-auth modal instance.</p>
     </section>
     <section class="panel">
       <h2 class="ui-title">Locked Identifier Re-auth</h2>
@@ -87,6 +90,20 @@
     }
     return true;
   },
+});</pre>
+      <pre>const reauthModal = createReauthFormModal({
+  identifierValue: currentUser.email,
+  fields: {
+    identifier: "account_email",
+    password: "reauth_password",
+  },
+  async onSubmit(values) {
+    return api.reauthenticate(values);
+  },
+});
+
+api.onAuthExpired(() => {
+  reauthModal.open();
 });</pre>
       <pre id="log" class="log">No events yet.</pre>
     </section>
