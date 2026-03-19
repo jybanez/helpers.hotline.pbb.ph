@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Media Viewer Regression Test</title>
+  <link rel="stylesheet" href="../css/ui/ui.components.css">
+  <link rel="stylesheet" href="../css/ui/ui.media.viewer.css">
+  <style>
+    body { margin: 0; padding: 16px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    #host { position: relative; width: 1280px; height: 900px; }
+    #results { white-space: pre-wrap; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+  </style>
+</head>
+<body data-status="pending">
+  <div id="host"></div>
+  <pre id="results">Running...</pre>
+
+  <script type="module">
+    import { createMediaViewer } from "../js/ui/ui.media.viewer.js";
+
+    const host = document.getElementById("host");
+    const results = document.getElementById("results");
+    const failures = [];
+
+    const firstImage = {
+      id: "single-image",
+      type: "image",
+      src: "../samples/media/photos/aW04MzEwNzgwYzYxNmQ5Y2Y4YjdmMGYxOWRmMjI4ODdhZDAzYjViZWEyYzE0MGE5YTJhYjE0MGQ0Y2Y4NDA3Yw.png",
+      title: "Single Image",
+      alt: "Single image repro",
+      metadata: { type: "photo" },
+    };
+
+    const tallImage = {
+      id: "portrait-repro-1",
+      type: "image",
+      src: "../samples/media/photos/pbb-preview-graphic-2x.png",
+      title: "Tall Repro Graphic",
+      alt: "Tall portrait repro graphic",
+      metadata: { type: "photo", shape: "portrait" },
+    };
+
+    const viewer = createMediaViewer(host, {
+      items: [firstImage],
+      fit: "contain",
+      baseUrl: "",
+      showFooter: false,
+      autoplayVideo: false,
+      zoomStep: 0.2,
+    });
+
+    viewer.open(0);
+    await wait(250);
+
+    const singleDebug = viewer.getDebugState();
+    const body = host.querySelector(".ui-media-viewer-body");
+    assert(body.classList.contains("is-nav-hidden"), "single-item viewer should collapse nav layout");
+    assert(singleDebug.viewport.width > 0 && singleDebug.viewport.height > 0, "single-item viewer should have a measurable viewport");
+    assert(singleDebug.panLimits.maxPanX === 0 && singleDebug.panLimits.maxPanY === 0, "single-item contain at zoom 1 should not expose pan");
+
+    viewer.update({ items: [tallImage], fit: "contain", zoomStep: 0.2, showFooter: false });
+    viewer.open(0);
+    await wait(300);
+    const containDebug = viewer.getDebugState();
+    assert(containDebug.host.width < containDebug.viewport.width, "tall contain should fit within viewport width");
+    assert(containDebug.host.height <= containDebug.viewport.height + 0.01, "tall contain should fit within viewport height");
+
+    viewer.setFit("cover");
+    await wait(300);
+    const coverDebug = viewer.getDebugState();
+    assert(coverDebug.host.height > coverDebug.viewport.height, "tall cover should overflow vertically");
+    assert(coverDebug.panLimits.maxPanY > 0, "tall cover should expose vertical pan");
+
+    const panSurface = host.querySelector(".ui-media-viewer-pan-surface");
+    const viewport = host.querySelector(".ui-media-viewer-viewport");
+    const viewportRect = viewport.getBoundingClientRect();
+    const startX = Math.round(viewportRect.left + viewportRect.width / 2);
+    const startY = Math.round(viewportRect.top + viewportRect.height / 2);
+    panSurface.dispatchEvent(new PointerEvent("pointerdown", {
+      bubbles: true,
+      button: 0,
+      clientX: startX,
+      clientY: startY,
+      pointerId: 1,
+    }));
+    window.dispatchEvent(new PointerEvent("pointermove", {
+      bubbles: true,
+      clientX: startX,
+      clientY: startY - 900,
+      pointerId: 1,
+    }));
+    window.dispatchEvent(new PointerEvent("pointerup", {
+      bubbles: true,
+      clientX: startX,
+      clientY: startY - 900,
+      pointerId: 1,
+    }));
+    await wait(120);
+    const pannedDebug = viewer.getDebugState();
+    assert(Math.abs(Math.abs(pannedDebug.panY) - pannedDebug.panLimits.maxPanY) < 2, "cover pan should be able to reach the vertical limit");
+
+    viewer.resetView();
+    await wait(120);
+    const beforeZoom = viewer.getDebugState();
+    viewer.zoomIn();
+    await wait(120);
+    const afterZoom = viewer.getDebugState();
+    assert(afterZoom.host.width > beforeZoom.host.width && afterZoom.host.height > beforeZoom.host.height, "zoom should increase rendered host size");
+    assert(Math.abs(afterZoom.panX) < 1 && Math.abs(afterZoom.panY) < 1, "centered zoom should keep pan near viewport center");
+
+    viewer.close();
+    await wait(40);
+    viewer.destroy();
+
+    if (failures.length) {
+      document.body.dataset.status = "fail";
+      results.textContent = `FAIL\n${failures.map((line) => `- ${line}`).join("\n")}`;
+    } else {
+      document.body.dataset.status = "pass";
+      results.textContent = "PASS";
+    }
+
+    function assert(condition, message) {
+      if (!condition) {
+        failures.push(message);
+      }
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+</html>

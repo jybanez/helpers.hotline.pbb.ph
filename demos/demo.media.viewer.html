@@ -132,19 +132,6 @@
       overflow-y: auto;
       overflow-x: auto;
     }
-    .debug-readout {
-      margin: 0;
-      white-space: pre-wrap;
-      font-size: 12px;
-      color: #b2c2e5;
-      font-family: Consolas, "Courier New", monospace;
-      border: 1px solid #2b3750;
-      border-radius: 8px;
-      background: #0b1220;
-      padding: 10px;
-      min-height: 140px;
-      overflow: auto;
-    }
     .guidance {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -289,8 +276,6 @@ viewer.open(0);</pre>
       <h2 class="ui-title">Viewer Host</h2>
       <p class="muted">The viewer is mounted here as a standalone component. The modal shell is owned by the component, not by the thumbnail launcher.</p>
       <div id="viewerHost" class="viewer-host"></div>
-      <h3 class="ui-title">Debugging</h3>
-      <p class="muted">Viewer debug state is mirrored to the browser console as <code>window.__mediaViewerDebug</code>. Use the DevTools console while the viewer is open.</p>
     </section>
 
     <section class="panel">
@@ -479,15 +464,6 @@ viewer.open(0);</pre>
     const viewer = createMediaViewer(viewerHost, getViewerOptions(activeItems));
     renderThumbs(items, viewer);
 
-    function syncConsoleDebugState() {
-      const state = viewer.getDebugState ? viewer.getDebugState() : viewer.getState();
-      if (state?.viewport?.width && state?.viewport?.height) {
-        window.__mediaViewerDebug = state;
-      } else if (!window.__mediaViewerDebug) {
-        window.__mediaViewerDebug = state;
-      }
-    }
-
     function syncViewer() {
       viewer.update(getViewerOptions(activeItems));
       writeLog("mediaViewer.options.update", {
@@ -499,7 +475,6 @@ viewer.open(0);</pre>
         autoplayVideo: autoplayInput.checked,
       });
       syncSingleItemCode();
-      syncConsoleDebugState();
     }
 
     function syncSingleItemCode() {
@@ -528,7 +503,6 @@ viewer.open(0);`;
         itemType: activeItems[0]?.type || null,
       });
       viewer.open(0);
-      syncConsoleDebugState();
     });
 
     openTripleItemBtn.addEventListener("click", () => {
@@ -542,7 +516,6 @@ viewer.open(0);`;
         baseItemType: base?.type || null,
       });
       viewer.open(0);
-      syncConsoleDebugState();
     });
 
     openTallSingleItemBtn.addEventListener("click", () => {
@@ -556,7 +529,6 @@ viewer.open(0);`;
         source: tallImage.metadata.source,
       });
       viewer.open(0);
-      syncConsoleDebugState();
     });
 
     openTallTripleItemBtn.addEventListener("click", () => {
@@ -574,7 +546,6 @@ viewer.open(0);`;
         source: tallImage.metadata.source,
       });
       viewer.open(0);
-      syncConsoleDebugState();
     });
 
     fitSelect.addEventListener("change", syncViewer);
@@ -586,9 +557,7 @@ viewer.open(0);`;
       page.dataset.theme = page.dataset.theme === "dark" ? "light" : "dark";
       writeLog("theme.toggle", { theme: page.dataset.theme });
     });
-    window.setInterval(syncConsoleDebugState, 120);
     syncSingleItemCode();
-    syncConsoleDebugState();
   </script>
 </body>
 </html>
