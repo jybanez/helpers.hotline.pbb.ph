@@ -190,6 +190,8 @@ Reusable shared UI utilities live under `js/ui`:
 - `ui.modal.js`
   - `createModal(options)` general-purpose modal shell (content/header/footer, sizing, focus trap, backdrop/escape close)
   - `createActionModal(options)` modal wrapper with declarative header/footer actions (`headerActions[]`, `actions[]`)
+- `ui.window.js`
+  - `createWindowManager(options)` desktop-style window manager with draggable/resizable stacked windows, minimize taskbar, and maximize/restore behavior
 - `ui.dialog.js`
   - `uiAlert(message, options)` promise-based alert modal
   - `uiConfirm(message, options)` promise-based confirm modal
@@ -349,6 +351,7 @@ Application integrations should use the registry loader.
 - Prefer shared styling contracts before adding project-local CSS overrides.
 - Prefer documented helper components and preset wrappers before building app-local UI for the same workflow.
 - Common helper-first checks for repeated operational flows:
+  - `createWindowManager(...)`
   - `createFormModal(...)`
   - `createLoginFormModal(...)`
   - `createReauthFormModal(...)`
@@ -1639,6 +1642,123 @@ Auto-busy behavior:
 Related demos:
 
 - `demos/demo.action.modal.html`
+
+### `createWindowManager(options)` (`js/ui/ui.window.js`)
+
+Purpose:
+
+- Shared desktop-style window manager for non-modal floating tools that need drag, resize, stacking, minimize, and maximize behavior.
+
+Factory:
+
+```js
+import { createWindowManager } from "./js/ui/ui.window.js";
+
+const manager = createWindowManager(options);
+```
+
+Manager options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `container` | `HTMLElement \| null` | `document.body` | no | Host surface for the manager layer and taskbar. |
+| `bounds` | `"viewport"` | `"viewport"` | no | Clamps movement and resize to the manager viewport. |
+| `showTaskbar` | `boolean` | `true` | no | Shows the recovery strip for minimized windows. |
+| `className` | `string` | `""` | no | Extra class names applied to the manager root. |
+| `onWindowOpen` | `({ id, window, state }) => void` | `null` | no | Fires after a window opens. |
+| `onWindowClose` | `({ id, window, state, meta? }) => void` | `null` | no | Fires after a window closes. |
+| `onActiveChange` | `({ id, window, state }) => void` | `null` | no | Fires when active/focused window changes. |
+
+Window factory:
+
+```js
+const win = manager.createWindow(options);
+```
+
+Window options:
+
+| Option | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `id` | `string` | auto-generated | no | Stable window identifier. |
+| `title` | `string` | `"Window"` | no | Title-bar label. |
+| `content` | `Node \| string \| (window) => Node \| string` | `null` | no | Window body content or content factory. |
+| `width` | `number` | `420` | no | Initial window width in pixels. |
+| `height` | `number` | `320` | no | Initial window height in pixels. |
+| `x` | `number` | centered | no | Initial x position. |
+| `y` | `number` | centered | no | Initial y position. |
+| `minWidth` | `number` | `280` | no | Minimum resize width. |
+| `minHeight` | `number` | `180` | no | Minimum resize height. |
+| `draggable` | `boolean` | `true` | no | Enables title-bar drag. |
+| `resizable` | `boolean` | `true` | no | Enables edge and corner resize handles. |
+| `minimizable` | `boolean` | `true` | no | Enables minimize action and taskbar recovery. |
+| `maximizable` | `boolean` | `true` | no | Enables maximize and restore behavior. |
+| `closable` | `boolean` | `true` | no | Enables close action. |
+| `initialState` | `"normal" \| "maximized" \| "minimized"` | `"normal"` | no | Initial state applied after creation. |
+| `className` | `string` | `""` | no | Extra class names for the window root. |
+| `headerActions` | `Array<Action>` | `[]` | no | Extra title-bar actions before minimize/maximize/close controls. |
+| `onOpen` | `({ state }) => void` | `null` | no | Fires when this window opens. |
+| `onClose` | `({ state, meta? }) => void` | `null` | no | Fires when this window closes. |
+| `onFocus` | `({ state }) => void` | `null` | no | Fires when this window becomes active. |
+| `onMove` | `({ state }) => void` | `null` | no | Fires after drag-based position changes. |
+| `onResize` | `({ state }) => void` | `null` | no | Fires after resize changes. |
+| `onStateChange` | `({ type, state }) => void` | `null` | no | Fires on minimize, maximize, restore, move, and resize transitions. |
+
+Header action object contract:
+
+| Property | Type | Default | Required | Description |
+|---|---|---:|---|---|
+| `id` | `string` | `""` | no | Stable action identifier. |
+| `label` | `string` | - | yes | Visible or accessible action label. |
+| `variant` | `"default" \| "ghost" \| "primary" \| "danger"` | `"ghost"` | no | Shared title-bar action emphasis. |
+| `title` | `string` | `""` | no | Native tooltip text. |
+| `ariaLabel` | `string` | `""` | no | Accessible label for icon-style actions. |
+| `onClick` | `({ manager, window, action, event }) => any` | `null` | no | Header action click handler. |
+
+Returned manager API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `createWindow` | `options` | `WindowInstance` | Creates and registers a managed window. |
+| `getWindows` | none | `WindowInstance[]` | Returns the current window instances. |
+| `focusWindow` | `id` | `boolean` | Brings the matching window to front. |
+| `closeWindow` | `id, meta?` | `boolean` | Closes one window by id. |
+| `closeAll` | `meta?` | `void` | Closes all windows. |
+| `destroy` | none | `void` | Removes the manager layer, taskbar, and window DOM. |
+
+Returned window API:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `open` | none | `boolean` | Opens the window if closed. |
+| `close` | `meta?` | `boolean` | Closes the window. |
+| `focus` | none | `boolean` | Activates and raises the window. |
+| `minimize` | none | `boolean` | Minimizes the window into the taskbar. |
+| `maximize` | none | `boolean` | Maximizes the window to manager bounds. |
+| `restore` | none | `boolean` | Restores from minimized or maximized state. |
+| `setTitle` | `title` | `void` | Replaces title-bar text. |
+| `setContent` | `content` | `void` | Replaces body content. |
+| `setPosition` | `{ x, y }` | `void` | Updates window position with bounds clamping. |
+| `setSize` | `{ width, height }` | `void` | Updates window size with min/bounds enforcement. |
+| `getState` | none | `object` | Returns current id, title, rect, z-index, and state flags. |
+| `destroy` | none | `void` | Fully disposes the instance. |
+
+Behavior notes:
+
+- V1 is intentionally narrow:
+  - drag by title bar
+  - resize by edges/corners
+  - active-window stacking
+  - minimize/maximize/restore
+  - manager-owned taskbar recovery
+- V1 does not include:
+  - docking
+  - snapping
+  - tiled layouts
+  - saved workspace persistence
+
+Related demos:
+
+- `demos/demo.window.html`
 
 ### `createFormModal(options)` (`js/ui/ui.form.modal.js`)
 
@@ -3394,15 +3514,15 @@ Recommended integration flow:
 
 ## Roadmap
 
-### Current Stable Line: `v0.20.x`
+### Current Stable Line: `v0.21.x`
 
-- Latest documented release: `v0.20.6`
+- Latest documented release: `v0.21.1`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`
   - fixes/docs/internal cleanup -> `patch`
 
-### Next Planned Line: `v0.21.x`
+### Next Planned Line: `v0.22.x`
 
 - Dedicated accessibility hardening pass across all UI utilities
 - Additional data-entry primitives (mask/format helpers, richer validation wrappers)

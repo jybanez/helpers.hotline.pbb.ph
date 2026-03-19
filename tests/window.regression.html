@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Window Regression Test</title>
+  <link rel="stylesheet" href="../css/ui/ui.components.css">
+  <link rel="stylesheet" href="../css/ui/ui.window.css">
+  <style>
+    body { margin: 0; padding: 16px; background: #0c1017; color: #d7e0f4; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    #host { position: relative; width: 900px; height: 600px; border: 1px solid #263146; margin-bottom: 12px; }
+    #results { white-space: pre-wrap; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+  </style>
+</head>
+<body data-status="pending">
+  <div id="host"></div>
+  <pre id="results">Running...</pre>
+
+  <script type="module">
+    import { createWindowManager } from "../js/ui/ui.window.js";
+
+    const host = document.getElementById("host");
+    const results = document.getElementById("results");
+    const failures = [];
+
+    const manager = createWindowManager({ container: host, showTaskbar: true });
+    const inspector = manager.createWindow({
+      id: "inspector",
+      title: "Inspector",
+      x: 24,
+      y: 24,
+      width: 360,
+      height: 260,
+      content: "<p>Inspector</p>",
+    });
+    const preview = manager.createWindow({
+      id: "preview",
+      title: "Preview",
+      x: 180,
+      y: 80,
+      width: 320,
+      height: 220,
+      content: "<p>Preview</p>",
+    });
+
+    await wait(40);
+    assert(manager.getWindows().length === 2, "manager should track multiple windows");
+
+    inspector.focus();
+    await wait(20);
+    const inspectorZ = inspector.getState().zIndex;
+    const previewZ = preview.getState().zIndex;
+    assert(inspectorZ > previewZ, "focus should bring a window to the front");
+
+    const header = inspector.refs.header;
+    const beforeDrag = inspector.getState();
+    header.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, button: 0, clientX: 100, clientY: 100 }));
+    document.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 170, clientY: 150 }));
+    document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, clientX: 170, clientY: 150 }));
+    await wait(20);
+    const afterDrag = inspector.getState();
+    assert(afterDrag.x !== beforeDrag.x || afterDrag.y !== beforeDrag.y, "drag should update the window position");
+
+    const seHandle = preview.refs.root.querySelector('.ui-window-resize-handle.is-se');
+    const beforeResize = preview.getState();
+    seHandle.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, button: 0, clientX: 240, clientY: 200 }));
+    document.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 320, clientY: 270 }));
+    document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, clientX: 320, clientY: 270 }));
+    await wait(20);
+    const afterResize = preview.getState();
+    assert(afterResize.width > beforeResize.width && afterResize.height > beforeResize.height, "resize should update the window size");
+
+    preview.setSize({ width: 40, height: 40 });
+    await wait(20);
+    assert(preview.getState().width >= 320 && preview.getState().height >= 220, "setSize should enforce minimum bounds");
+
+    const minimizeControl = preview.refs.controls.querySelector('.ui-window-control.is-minimize');
+    minimizeControl.click();
+    await wait(240);
+    assert(preview.getState().minimized === true, "minimize should update window state");
+    assert(preview.refs.root.hidden === true, "minimize should hide the window root");
+    assert(preview.refs.root.classList.contains("is-minimized"), "minimize should apply minimized class");
+    assert(Boolean(host.querySelector('.ui-window-taskbar-item')), "minimize should create a taskbar item");
+
+    const taskbar = host.querySelector('.ui-window-manager-taskbar');
+    const beforeMaximize = inspector.getState();
+    inspector.maximize();
+    await wait(20);
+    const maximizedWithTaskbar = inspector.getState();
+    assert(maximizedWithTaskbar.maximized === true, "maximize should set maximized state");
+    assert(maximizedWithTaskbar.width === host.clientWidth, "maximize should fill manager width");
+    assert(maximizedWithTaskbar.height === host.clientHeight - taskbar.offsetHeight, "maximize should reserve taskbar height when taskbar is visible");
+    inspector.restore();
+    await wait(20);
+    const restoredFromTaskbarMax = inspector.getState();
+    assert(restoredFromTaskbarMax.maximized === false, "restore should clear maximized state after taskbar-visible maximize");
+    assert(restoredFromTaskbarMax.width === beforeMaximize.width && restoredFromTaskbarMax.height === beforeMaximize.height, "restore should recover previous size after taskbar-visible maximize");
+
+    host.querySelector('.ui-window-taskbar-button').click();
+    await wait(240);
+    assert(preview.getState().minimized === false, "taskbar restore should unminimize the window");
+    assert(preview.refs.root.hidden === false, "taskbar restore should show the window root");
+
+    const beforeFullMaximize = inspector.getState();
+    inspector.maximize();
+    await wait(20);
+    const maximized = inspector.getState();
+    assert(maximized.maximized === true, "maximize should set maximized state");
+    assert(maximized.width === host.clientWidth && maximized.height === host.clientHeight, "maximize should fill manager bounds");
+    inspector.restore();
+    await wait(20);
+    const restored = inspector.getState();
+    assert(restored.maximized === false, "restore should clear maximized state");
+    assert(restored.width === beforeFullMaximize.width && restored.height === beforeFullMaximize.height, "restore should recover the previous size");
+
+    await preview.close({ reason: "test" });
+    await wait(20);
+    assert(host.querySelector('[data-window-id="preview"]') === null, "close should remove the window DOM");
+
+    manager.destroy();
+    await wait(20);
+    assert(host.querySelector('.ui-window-manager') === null, "destroy should remove the manager DOM");
+
+    if (failures.length) {
+      document.body.dataset.status = "fail";
+      results.textContent = `FAIL\n${failures.map((line) => `- ${line}`).join("\n")}`;
+    } else {
+      document.body.dataset.status = "pass";
+      results.textContent = "PASS";
+    }
+
+    function assert(condition, message) {
+      if (!condition) {
+        failures.push(message);
+      }
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+</html>

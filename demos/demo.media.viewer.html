@@ -132,6 +132,19 @@
       overflow-y: auto;
       overflow-x: auto;
     }
+    .debug-readout {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #b2c2e5;
+      font-family: Consolas, "Courier New", monospace;
+      border: 1px solid #2b3750;
+      border-radius: 8px;
+      background: #0b1220;
+      padding: 10px;
+      min-height: 140px;
+      overflow: auto;
+    }
     .guidance {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -191,7 +204,7 @@
       methods: [
         { method: "<code>open(index)</code>", arguments: "item index", returns: "<code>void</code>" },
         { method: "<code>close()</code>", arguments: "none", returns: "<code>void</code>" },
-        { method: "<code>setItems(items)</code>", arguments: "gallery items", returns: "<code>void</code>" },
+        { method: "<code>update(options)</code>", arguments: "partial viewer options", returns: "<code>void</code>" },
         { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
       ]
     };
@@ -259,9 +272,25 @@
     </section>
 
     <section class="panel">
+      <h2 class="ui-title">Single-Item Repro</h2>
+      <p class="muted">Use this section to compare the website-reported single-item case against a repeated-item control case without changing the viewer instance. Both actions reuse the same <code>createMediaViewer(...)</code> instance.</p>
+      <div class="row">
+        <button id="openSingleItemBtn" class="ui-button ui-button-primary" type="button">Open Single Image</button>
+        <button id="openTripleItemBtn" class="ui-button" type="button">Open Same Image x3</button>
+        <button id="openTallSingleItemBtn" class="ui-button" type="button">Open Tall Image</button>
+        <button id="openTallTripleItemBtn" class="ui-button" type="button">Open Tall Image x3</button>
+      </div>
+      <pre id="singleItemCode">const singleItem = [firstImage];
+viewer.update({ items: singleItem, index: 0, fit: "contain", showFooter: false, baseUrl: mediaBaseUrl });
+viewer.open(0);</pre>
+    </section>
+
+    <section class="panel">
       <h2 class="ui-title">Viewer Host</h2>
       <p class="muted">The viewer is mounted here as a standalone component. The modal shell is owned by the component, not by the thumbnail launcher.</p>
       <div id="viewerHost" class="viewer-host"></div>
+      <h3 class="ui-title">Debugging</h3>
+      <p class="muted">Viewer debug state is mirrored to the browser console as <code>window.__mediaViewerDebug</code>. Use the DevTools console while the viewer is open.</p>
     </section>
 
     <section class="panel">
@@ -280,11 +309,16 @@
     const thumbGrid = document.getElementById("thumbGrid");
     const viewerHost = document.getElementById("viewerHost");
     const eventLog = document.getElementById("eventLog");
+    const singleItemCode = document.getElementById("singleItemCode");
     const fitSelect = document.getElementById("fitSelect");
     const zoomStepRange = document.getElementById("zoomStepRange");
     const showAudiographInput = document.getElementById("showAudiographInput");
     const showFooterInput = document.getElementById("showFooterInput");
     const autoplayInput = document.getElementById("autoplayInput");
+    const openSingleItemBtn = document.getElementById("openSingleItemBtn");
+    const openTripleItemBtn = document.getElementById("openTripleItemBtn");
+    const openTallSingleItemBtn = document.getElementById("openTallSingleItemBtn");
+    const openTallTripleItemBtn = document.getElementById("openTallTripleItemBtn");
     const mediaBaseUrl = new URL("../", window.location.href).href.replace(/\/+$/, "");
 
     function resolveDemoMediaUrl(value) {
@@ -425,19 +459,123 @@
     }
 
     const items = await loadItems();
-    const viewer = createMediaViewer(viewerHost, getViewerOptions(items));
+    let activeItems = items;
+    const firstImage = items.find((item) => item.type === "image") || items[0] || null;
+    const tallImage = {
+      id: "portrait-repro-1",
+      type: "image",
+      src: resolveDemoMediaUrl("samples/media/photos/pbb-preview-graphic-2x.png"),
+      thumb: resolveDemoMediaUrl("samples/media/photos/pbb-preview-graphic-2x.png"),
+      title: "Tall Repro Graphic",
+      alt: "Tall portrait repro graphic",
+      duration_seconds: null,
+      metadata: {
+        source: "samples/media/photos/pbb-preview-graphic-2x.png",
+        type: "photo",
+        shape: "portrait",
+        ready: "Yes",
+      },
+    };
+    const viewer = createMediaViewer(viewerHost, getViewerOptions(activeItems));
     renderThumbs(items, viewer);
 
+    function syncConsoleDebugState() {
+      const state = viewer.getDebugState ? viewer.getDebugState() : viewer.getState();
+      if (state?.viewport?.width && state?.viewport?.height) {
+        window.__mediaViewerDebug = state;
+      } else if (!window.__mediaViewerDebug) {
+        window.__mediaViewerDebug = state;
+      }
+    }
+
     function syncViewer() {
-      viewer.update(getViewerOptions(items));
+      viewer.update(getViewerOptions(activeItems));
       writeLog("mediaViewer.options.update", {
+        itemCount: activeItems.length,
         fit: fitSelect.value,
         zoomStep: Number(zoomStepRange.value) || 0.2,
         showAudiograph: showAudiographInput.checked,
         showFooter: showFooterInput.checked,
         autoplayVideo: autoplayInput.checked,
       });
+      syncSingleItemCode();
+      syncConsoleDebugState();
     }
+
+    function syncSingleItemCode() {
+      singleItemCode.textContent = `const firstImage = items.find((item) => item.type === "image");
+const reproItems = ${activeItems.length === 1 ? "[firstImage]" : "[firstImage, { ...firstImage, id: `${firstImage.id}-copy-2` }, { ...firstImage, id: `${firstImage.id}-copy-3` }]"};
+viewer.update({
+  items: reproItems,
+  index: 0,
+  fit: ${JSON.stringify(fitSelect.value)},
+  zoomStep: ${Number(zoomStepRange.value || 0.2).toFixed(2)},
+  showAudiograph: ${String(showAudiographInput.checked)},
+  showFooter: ${String(showFooterInput.checked)},
+  autoplayVideo: ${String(autoplayInput.checked)},
+  baseUrl: mediaBaseUrl,
+});
+viewer.open(0);`;
+    }
+
+    openSingleItemBtn.addEventListener("click", () => {
+      activeItems = firstImage ? [firstImage] : [];
+      viewer.update(getViewerOptions(activeItems));
+      syncSingleItemCode();
+      writeLog("mediaViewer.repro.single", {
+        itemCount: activeItems.length,
+        itemId: activeItems[0]?.id || null,
+        itemType: activeItems[0]?.type || null,
+      });
+      viewer.open(0);
+      syncConsoleDebugState();
+    });
+
+    openTripleItemBtn.addEventListener("click", () => {
+      const base = firstImage;
+      activeItems = base ? [base, { ...base, id: `${base.id}-copy-2` }, { ...base, id: `${base.id}-copy-3` }] : [];
+      viewer.update(getViewerOptions(activeItems));
+      syncSingleItemCode();
+      writeLog("mediaViewer.repro.triple", {
+        itemCount: activeItems.length,
+        baseItemId: base?.id || null,
+        baseItemType: base?.type || null,
+      });
+      viewer.open(0);
+      syncConsoleDebugState();
+    });
+
+    openTallSingleItemBtn.addEventListener("click", () => {
+      activeItems = [tallImage];
+      viewer.update(getViewerOptions(activeItems));
+      syncSingleItemCode();
+      writeLog("mediaViewer.repro.tallSingle", {
+        itemCount: activeItems.length,
+        itemId: tallImage.id,
+        itemType: tallImage.type,
+        source: tallImage.metadata.source,
+      });
+      viewer.open(0);
+      syncConsoleDebugState();
+    });
+
+    openTallTripleItemBtn.addEventListener("click", () => {
+      activeItems = [
+        tallImage,
+        { ...tallImage, id: `${tallImage.id}-copy-2` },
+        { ...tallImage, id: `${tallImage.id}-copy-3` },
+      ];
+      viewer.update(getViewerOptions(activeItems));
+      syncSingleItemCode();
+      writeLog("mediaViewer.repro.tallTriple", {
+        itemCount: activeItems.length,
+        itemId: tallImage.id,
+        itemType: tallImage.type,
+        source: tallImage.metadata.source,
+      });
+      viewer.open(0);
+      syncConsoleDebugState();
+    });
 
     fitSelect.addEventListener("change", syncViewer);
     zoomStepRange.addEventListener("input", syncViewer);
@@ -448,6 +586,9 @@
       page.dataset.theme = page.dataset.theme === "dark" ? "light" : "dark";
       writeLog("theme.toggle", { theme: page.dataset.theme });
     });
+    window.setInterval(syncConsoleDebugState, 120);
+    syncSingleItemCode();
+    syncConsoleDebugState();
   </script>
 </body>
 </html>

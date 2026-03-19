@@ -170,6 +170,33 @@
     statusModal.destroy();
     await wait(80);
 
+    const statusSuccessModal = createStatusUpdateFormModal({
+      fields: {
+        status: "incident_status",
+        remarks: "notes",
+        notify: "notify_teams",
+      },
+      statusOptions: [
+        { label: "Pending", value: "pending" },
+        { label: "Resolved", value: "resolved" },
+      ],
+      initialValues: {
+        incident_status: "resolved",
+        notes: "Resolved by dispatch.",
+        notify_teams: false,
+      },
+      async onSubmit() {
+        await wait(80);
+        return true;
+      },
+    });
+
+    statusSuccessModal.open();
+    await wait(80);
+    statusSuccessModal.refs.form.requestSubmit();
+    await wait(500);
+    assert(document.querySelector(".ui-modal-root") === null, "status preset should close on successful native form submit");
+
     const reasonModal = createReasonFormModal({
       fields: {
         reasonCode: "cancel_reason",
@@ -212,6 +239,34 @@
     reasonModal.destroy();
     await wait(80);
 
+    const reasonSuccessModal = createReasonFormModal({
+      fields: {
+        reasonCode: "cancel_reason",
+        reasonDetails: "remarks",
+        confirmText: "confirm_cancel",
+      },
+      reasonOptions: [
+        { label: "Duplicate Record", value: "duplicate_record" },
+        { label: "Operational Override", value: "operational_override" },
+      ],
+      confirmPhrase: "CANCEL",
+      initialValues: {
+        cancel_reason: "duplicate_record",
+        remarks: "Duplicate uplink mapping.",
+        confirm_cancel: "CANCEL",
+      },
+      async onSubmit() {
+        await wait(80);
+        return true;
+      },
+    });
+
+    reasonSuccessModal.open();
+    await wait(80);
+    reasonSuccessModal.refs.form.requestSubmit();
+    await wait(500);
+    assert(document.querySelector(".ui-modal-root") === null, "reason preset should close on successful native form submit");
+
     if (failures.length) {
       document.body.dataset.status = "fail";
       results.textContent = `FAIL\n${failures.map((line) => `- ${line}`).join("\n")}`;
@@ -232,4 +287,5 @@
   </script>
 </body>
 </html>
+
 

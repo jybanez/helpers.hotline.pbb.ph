@@ -64,6 +64,7 @@ const DEMO_GROUPS = [
     items: [
       { href: "./demo.command.palette.html", label: "Command Palette" },
       { href: "./demo.drawers.html", label: "Drawers" },
+      { href: "./demo.window.html", label: "Window" },
       { href: "./demo.ui.html", label: "UI Utilities" },
       { href: "./demo.tabs.html", label: "Tabs" },
       { href: "./demo.strips.html", label: "Strips" },
@@ -611,3 +612,4 @@ if (document.readyState === "loading") {
 } else {
   mountDemoShell();
 }
+

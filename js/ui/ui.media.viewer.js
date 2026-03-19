@@ -57,8 +57,10 @@ export function createMediaViewer(container, options = {}) {
   let dialog = null;
   let titleEl = null;
   let counterEl = null;
+  let bodyEl = null;
   let viewport = null;
   let transformLayer = null;
+  let panLayer = null;
   let mediaHost = null;
   let panSurface = null;
   let toolbar = null;
@@ -123,7 +125,7 @@ export function createMediaViewer(container, options = {}) {
       dialog.appendChild(header);
     }
 
-    const body = createElement("div", { className: "ui-media-viewer-body" });
+    bodyEl = createElement("div", { className: "ui-media-viewer-body" });
     prevBtn = createElement("button", {
       className: "ui-button ui-button-ghost ui-media-viewer-nav ui-media-viewer-nav-prev",
       html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.5L8 12l7.5 7.5-1.5 1.5L5 12l9-9z"></path></svg>',
@@ -142,15 +144,17 @@ export function createMediaViewer(container, options = {}) {
       attrs: { tabindex: "0", "aria-label": "Media viewport" },
     });
     transformLayer = createElement("div", { className: "ui-media-viewer-transform" });
+    panLayer = createElement("div", { className: "ui-media-viewer-pan-layer" });
     mediaHost = createElement("div", { className: "ui-media-viewer-media-host" });
     panSurface = createElement("div", {
       className: "ui-media-viewer-pan-surface",
       attrs: { "aria-hidden": "true" },
     });
-    transformLayer.appendChild(mediaHost);
+    panLayer.appendChild(mediaHost);
+    transformLayer.appendChild(panLayer);
     viewport.append(transformLayer, panSurface);
-    body.append(prevBtn, viewport, nextBtn);
-    dialog.appendChild(body);
+    bodyEl.append(prevBtn, viewport, nextBtn);
+    dialog.appendChild(bodyEl);
 
     if (currentOptions.showToolbar) {
       toolbar = createElement("div", { className: "ui-media-viewer-toolbar" });
@@ -232,6 +236,7 @@ export function createMediaViewer(container, options = {}) {
       });
       mediaHost.appendChild(mediaEl);
       bindVideoState(item);
+      mediaEvents.on(mediaEl, "loadedmetadata", () => syncUi());
       if (currentOptions.showAudiograph) {
         mediaGraphApi = createAudioGraph(audiographHost, {
           role: "video",
@@ -261,6 +266,7 @@ export function createMediaViewer(container, options = {}) {
         },
       });
       mediaHost.appendChild(mediaEl);
+      mediaEvents.on(mediaEl, "load", () => syncUi());
     }
 
     renderFooter(item);
@@ -365,7 +371,7 @@ export function createMediaViewer(container, options = {}) {
   }
 
   function onViewportPointerDown(event) {
-    if (!isOpen || !currentOptions.panWhenZoomed || zoom <= currentOptions.minZoom) {
+    if (!isOpen || !currentOptions.panWhenZoomed || !canPan(zoom)) {
       return;
     }
     if (event.button !== 0) {
@@ -390,6 +396,7 @@ export function createMediaViewer(container, options = {}) {
         return;
       }
       moveEvent.preventDefault();
+      panLayer?.classList.add("is-panning");
       setPan(
         dragState.panStartX + (moveEvent.clientX - dragState.startX),
         dragState.panStartY + (moveEvent.clientY - dragState.startY),
@@ -405,6 +412,7 @@ export function createMediaViewer(container, options = {}) {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
       dragState = null;
+      panLayer?.classList.remove("is-panning");
       viewport?.releasePointerCapture?.(upEvent.pointerId);
     };
 
@@ -414,7 +422,7 @@ export function createMediaViewer(container, options = {}) {
   }
 
   function syncUi() {
-    if (!shell || !dialog || !viewport || !transformLayer || !panSurface) {
+    if (!shell || !dialog || !bodyEl || !viewport || !transformLayer || !panLayer || !panSurface) {
       return;
     }
     shell.classList.toggle("is-open", isOpen);
@@ -428,6 +436,7 @@ export function createMediaViewer(container, options = {}) {
     nextBtn.hidden = !currentOptions.showPrevNext || currentItems.length < 2;
     prevBtn.disabled = !canNavigate(-1);
     nextBtn.disabled = !canNavigate(1);
+    bodyEl.classList.toggle("is-nav-hidden", prevBtn.hidden && nextBtn.hidden);
 
     toolbar.hidden = !currentOptions.showToolbar;
     counterEl && (counterEl.hidden = !currentOptions.showCounter);
@@ -438,10 +447,24 @@ export function createMediaViewer(container, options = {}) {
     fitOriginalBtn?.classList.toggle("is-active", fit === "original");
     zoomInBtn && (zoomInBtn.disabled = zoom >= currentOptions.maxZoom);
     zoomOutBtn && (zoomOutBtn.disabled = zoom <= currentOptions.minZoom);
-    transformLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    syncMediaHostLayout();
+    const viewportWidth = Number(viewport?.clientWidth) || 0;
+    const viewportHeight = Number(viewport?.clientHeight) || 0;
+    const hostWidth = parseFloat(mediaHost?.style.width || "") || Number(mediaHost?.offsetWidth) || 0;
+    const hostHeight = parseFloat(mediaHost?.style.height || "") || Number(mediaHost?.offsetHeight) || 0;
+    transformLayer.style.transform = "none";
     transformLayer.dataset.fit = fit;
+    panLayer.style.left = `${((viewportWidth - hostWidth) / 2) + panX}px`;
+    panLayer.style.top = `${((viewportHeight - hostHeight) / 2) + panY}px`;
+    panLayer.style.width = `${hostWidth}px`;
+    panLayer.style.height = `${hostHeight}px`;
+    panLayer.style.transform = "none";
+    if (mediaHost) {
+      mediaHost.style.translate = "0px 0px";
+      mediaHost.style.transform = "none";
+    }
     mediaHost?.classList.toggle("is-zoomed", zoom > currentOptions.minZoom);
-    panSurface.hidden = !(currentOptions.panWhenZoomed && zoom > currentOptions.minZoom);
+    panSurface.hidden = !(currentOptions.panWhenZoomed && canPan(zoom));
     panSurface.classList.toggle("is-active", !panSurface.hidden);
   }
 
@@ -529,11 +552,17 @@ export function createMediaViewer(container, options = {}) {
 
   function setZoom(nextZoom, { emit = true } = {}) {
     const clamped = clampNumber(nextZoom, currentOptions.minZoom, currentOptions.maxZoom);
+    const previousSize = getHostSizeForZoom(zoom);
+    const nextSize = getHostSizeForZoom(clamped);
     zoom = clamped;
     if (zoom <= currentOptions.minZoom) {
       panX = 0;
       panY = 0;
     } else {
+      if (previousSize && nextSize) {
+        panX = scalePanForViewportCenter(panX, previousSize.width, nextSize.width);
+        panY = scalePanForViewportCenter(panY, previousSize.height, nextSize.height);
+      }
       const clampedPan = clampPan(panX, panY, zoom);
       panX = clampedPan.x;
       panY = clampedPan.y;
@@ -563,16 +592,97 @@ export function createMediaViewer(container, options = {}) {
   }
 
   function clampPan(nextPanX, nextPanY, nextZoom) {
-    const viewportRect = viewport?.getBoundingClientRect?.();
-    if (!viewportRect) {
+    const limits = getPanLimits(nextZoom);
+    if (!limits) {
       return { x: 0, y: 0 };
     }
-    const maxPanX = Math.max(0, (viewportRect.width * (nextZoom - 1)) / 2);
-    const maxPanY = Math.max(0, (viewportRect.height * (nextZoom - 1)) / 2);
     return {
-      x: clampNumber(nextPanX, -maxPanX, maxPanX),
-      y: clampNumber(nextPanY, -maxPanY, maxPanY),
+      x: clampNumber(nextPanX, -limits.maxPanX, limits.maxPanX),
+      y: clampNumber(nextPanY, -limits.maxPanY, limits.maxPanY),
     };
+  }
+
+  function canPan(nextZoom = zoom) {
+    const limits = getPanLimits(nextZoom);
+    return Boolean(limits && (limits.maxPanX > 0 || limits.maxPanY > 0));
+  }
+
+  function getPanLimits(nextZoom = zoom) {
+    const viewportWidth = Number(viewport?.clientWidth) || 0;
+    const viewportHeight = Number(viewport?.clientHeight) || 0;
+    const nextHostSize = getHostSizeForZoom(nextZoom);
+    const hostWidth = nextHostSize?.width || 0;
+    const hostHeight = nextHostSize?.height || 0;
+    if (!viewportWidth || !viewportHeight || !hostWidth || !hostHeight) {
+      return null;
+    }
+    return {
+      maxPanX: Math.max(0, (hostWidth - viewportWidth) / 2),
+      maxPanY: Math.max(0, (hostHeight - viewportHeight) / 2),
+    };
+  }
+
+  function getMediaIntrinsicSize() {
+    if (!mediaEl) {
+      return null;
+    }
+    if (mediaEl instanceof HTMLImageElement) {
+      return {
+        width: Number(mediaEl.naturalWidth) || Number(mediaEl.clientWidth) || 0,
+        height: Number(mediaEl.naturalHeight) || Number(mediaEl.clientHeight) || 0,
+      };
+    }
+    if (mediaEl instanceof HTMLVideoElement) {
+      return {
+        width: Number(mediaEl.videoWidth) || Number(mediaEl.clientWidth) || 0,
+        height: Number(mediaEl.videoHeight) || Number(mediaEl.clientHeight) || 0,
+      };
+    }
+    return {
+      width: Number(mediaEl.clientWidth) || 0,
+      height: Number(mediaEl.clientHeight) || 0,
+    };
+  }
+
+  function syncMediaHostLayout() {
+    if (!mediaHost) {
+      return;
+    }
+    const hostSize = getHostSizeForZoom(zoom);
+    if (!hostSize) {
+      mediaHost.style.width = "100%";
+      mediaHost.style.height = "100%";
+      return;
+    }
+    mediaHost.style.width = `${hostSize.width}px`;
+    mediaHost.style.height = `${hostSize.height}px`;
+  }
+
+  function getHostSizeForZoom(nextZoom = zoom) {
+    const viewportWidth = Number(viewport?.clientWidth) || 0;
+    const viewportHeight = Number(viewport?.clientHeight) || 0;
+    const mediaSize = getMediaIntrinsicSize();
+    if (!viewportWidth || !viewportHeight || !mediaSize || !mediaSize.width || !mediaSize.height) {
+      return null;
+    }
+    const baseScale = getFitBaseScale(
+      viewportWidth,
+      viewportHeight,
+      mediaSize.width,
+      mediaSize.height,
+      fit
+    );
+    return {
+      width: Math.max(1, mediaSize.width * baseScale * nextZoom),
+      height: Math.max(1, mediaSize.height * baseScale * nextZoom),
+    };
+  }
+
+  function scalePanForViewportCenter(currentPan, previousSize, nextSize) {
+    if (!previousSize || !nextSize) {
+      return currentPan;
+    }
+    return currentPan * (nextSize / previousSize);
   }
 
   function resetView({ emit = true } = {}) {
@@ -629,8 +739,10 @@ export function createMediaViewer(container, options = {}) {
     dialog = null;
     titleEl = null;
     counterEl = null;
+    bodyEl = null;
     viewport = null;
     transformLayer = null;
+    panLayer = null;
     mediaHost = null;
     panSurface = null;
     toolbar = null;
@@ -663,6 +775,88 @@ export function createMediaViewer(container, options = {}) {
     };
   }
 
+  function getDebugState() {
+    const viewportWidth = Number(viewport?.clientWidth) || 0;
+    const viewportHeight = Number(viewport?.clientHeight) || 0;
+    const hostWidth = parseFloat(mediaHost?.style.width || "") || Number(mediaHost?.offsetWidth) || 0;
+    const hostHeight = parseFloat(mediaHost?.style.height || "") || Number(mediaHost?.offsetHeight) || 0;
+    const mediaSize = getMediaIntrinsicSize();
+    const panLimits = getPanLimits(zoom);
+    const viewportRect = viewport?.getBoundingClientRect?.();
+    const panLayerRect = panLayer?.getBoundingClientRect?.();
+    const hostRect = mediaHost?.getBoundingClientRect?.();
+    const mediaRect = mediaEl?.getBoundingClientRect?.();
+    const mediaStyle = mediaEl ? window.getComputedStyle(mediaEl) : null;
+    const panLayerStyle = panLayer ? window.getComputedStyle(panLayer) : null;
+    return {
+      open: isOpen,
+      fit,
+      zoom,
+      panX,
+      panY,
+      viewport: {
+        width: viewportWidth,
+        height: viewportHeight,
+      },
+      host: {
+        width: hostWidth,
+        height: hostHeight,
+      },
+      intrinsic: mediaSize ? {
+        width: mediaSize.width,
+        height: mediaSize.height,
+      } : null,
+      rects: {
+        viewport: viewportRect ? {
+          left: viewportRect.left,
+          top: viewportRect.top,
+          width: viewportRect.width,
+          height: viewportRect.height,
+          right: viewportRect.right,
+          bottom: viewportRect.bottom,
+        } : null,
+        panLayer: panLayerRect ? {
+          left: panLayerRect.left,
+          top: panLayerRect.top,
+          width: panLayerRect.width,
+          height: panLayerRect.height,
+          right: panLayerRect.right,
+          bottom: panLayerRect.bottom,
+        } : null,
+        host: hostRect ? {
+          left: hostRect.left,
+          top: hostRect.top,
+          width: hostRect.width,
+          height: hostRect.height,
+          right: hostRect.right,
+          bottom: hostRect.bottom,
+        } : null,
+        media: mediaRect ? {
+          left: mediaRect.left,
+          top: mediaRect.top,
+          width: mediaRect.width,
+          height: mediaRect.height,
+          right: mediaRect.right,
+          bottom: mediaRect.bottom,
+        } : null,
+      },
+      mediaStyle: mediaStyle ? {
+        objectFit: mediaStyle.objectFit,
+        objectPosition: mediaStyle.objectPosition,
+        position: mediaStyle.position,
+      } : null,
+      panLayerStyle: panLayerStyle ? {
+        transform: panLayerStyle.transform,
+        position: panLayerStyle.position,
+      } : null,
+      panLimits: panLimits ? {
+        maxPanX: panLimits.maxPanX,
+        maxPanY: panLimits.maxPanY,
+      } : null,
+      mediaType: mediaEl instanceof HTMLVideoElement ? "video" : mediaEl instanceof HTMLImageElement ? "image" : null,
+    };
+  }
+
   render();
   if (isOpen && currentItems.length) {
     open(activeIndex);
@@ -680,6 +874,7 @@ export function createMediaViewer(container, options = {}) {
     setFit,
     update,
     getState,
+    getDebugState,
     destroy,
   };
 }
@@ -729,6 +924,21 @@ function normalizeFit(value) {
     return fit;
   }
   return "contain";
+}
+
+function getFitBaseScale(viewportWidth, viewportHeight, mediaWidth, mediaHeight, fit) {
+  if (!viewportWidth || !viewportHeight || !mediaWidth || !mediaHeight) {
+    return 1;
+  }
+  if (fit === "original") {
+    return 1;
+  }
+  const widthScale = viewportWidth / mediaWidth;
+  const heightScale = viewportHeight / mediaHeight;
+  if (fit === "cover") {
+    return Math.max(widthScale, heightScale);
+  }
+  return Math.min(widthScale, heightScale);
 }
 
 function prettifyKey(value) {

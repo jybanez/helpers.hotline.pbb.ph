@@ -370,7 +370,22 @@ If changing callback signatures or removing methods, plan a major version.
   - `linear`, `striped`, `gradient`, `segmented`, `steps`, `radial`, `ring`, `indeterminate`
 - Keep this component domain-agnostic; incident/business state mapping remains in caller adapters.
 
-### 11.3 Grid Virtualization (`ui.grid`)
+### 11.3 Window Foundation (`ui.window`)
+
+- `createWindowManager(options)` is the shared direction for desktop-like floating tools:
+  - stacked non-modal windows
+  - drag / resize
+  - minimize / maximize / restore
+  - manager-owned taskbar recovery
+- Use `ui.window` instead of app-local draggable/resizable panels when the interaction is actually window-like.
+- Keep V1 narrow:
+  - no docking
+  - no snapping
+  - no tiled layout manager
+  - no saved workspace persistence
+- If repeated product work needs those behaviors, submit a proposal first instead of widening `ui.window` ad hoc from app code.
+
+### 11.4 Grid Virtualization (`ui.grid`)
 
 - Virtualization is optional and controlled by options:
   - `enableVirtualization`

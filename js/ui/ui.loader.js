@@ -45,6 +45,12 @@ export const DEFAULT_COMPONENT_REGISTRY = {
     deps: [],
     export: "createBottomDrawer",
   },
+  "ui.window": {
+    js: "./ui.window.js",
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.window.css"],
+    deps: [],
+    export: "createWindowManager",
+  },
   "ui.modal": {
     js: "./ui.modal.js",
     css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.modal.css"],
@@ -415,6 +421,7 @@ export const DEFAULT_COMPONENT_GROUPS = {
     "ui.events",
     "ui.search",
     "ui.drawer",
+    "ui.window",
     "ui.modal",
     "ui.action.modal",
     "ui.dialog",
@@ -867,3 +874,4 @@ function cssEscape(value) {
 function isPlainObject(value) {
   return value != null && typeof value === "object" && !Array.isArray(value);
 }
+

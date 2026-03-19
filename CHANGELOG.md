@@ -4,12 +4,13 @@ All notable changes to `helpers.pbb.ph` are documented here.
 
 ## Versioning
 
-- Current stable line: `v0.20.x`
-- Latest documented release: `v0.20.7`
-- Next planned line: `v0.21.x`
+- Current stable line: `v0.21.x`
+- Latest documented release: `v0.21.1`
+- Next planned line: `v0.22.x`
 
 ## Release Line Index
 
+- `v0.21.x`: shared window manager and dedicated window demo
 - `v0.20.x`: schema form modal helper and modal-form demos
 - `v0.19.x`: hierarchy map, real Cebu hierarchy sample generator, hierarchy demo
 - `v0.18.x`: media viewer, modal action consistency, tree-grid search, regression harnesses
@@ -32,6 +33,35 @@ All notable changes to `helpers.pbb.ph` are documented here.
 - `v0.1.x`: initial public prototype
 
 ## Release Notes
+### v0.21.1
+
+- Reworked `demos/demo.window.html` so the page now proves `ui.window` through actual wrapper-style workspaces instead of a generic pane-only shell:
+  - incident review workspace over `ui.window` + `ui.data.inspector`
+  - media review workspace over `ui.window` + `ui.media.viewer` + `ui.data.inspector`
+- Added the next bounded follow-on proposal for the subsystem:
+  - `docs/ui-window-taskbar-improvement-proposal.md`
+- Updated `docs/ui-window-proposal.md` to point future taskbar expansion at the dedicated follow-on proposal before any docking or snapping discussion.
+
+### v0.21.0
+
+- Added `ui.window` with `createWindowManager(options)` and managed `createWindow(options)` instances for desktop-style non-modal tools:
+  - drag by title bar
+  - edge/corner resize
+  - active-window stacking
+  - minimize/maximize/restore
+  - manager-owned taskbar recovery
+- Added dedicated documentation for the window subsystem:
+  - `docs/ui-window-proposal.md`
+  - `docs/ui-window-v1-spec.md`
+  - `docs/ui-window-v1-checklist.md`
+- Added dedicated demo coverage:
+  - `demos/demo.window.html`
+  - shared navigation entry under `Utilities`
+  - demo-catalog card on `demos/index.html`
+- Added targeted browser regression coverage:
+  - `tests/window.regression.html`
+  - `tests/window.regression.mjs`
+
 ### v0.20.7
 
 - Extended `ui.form.modal` for real acceptance-proof coverage of the approved improvement stage:
