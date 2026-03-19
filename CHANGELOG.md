@@ -5,7 +5,7 @@ All notable changes to `helpers.pbb.ph` are documented here.
 ## Versioning
 
 - Current stable line: `v0.21.x`
-- Latest documented release: `v0.21.1`
+- Latest documented release: `v0.21.2`
 - Next planned line: `v0.22.x`
 
 ## Release Line Index
@@ -33,6 +33,19 @@ All notable changes to `helpers.pbb.ph` are documented here.
 - `v0.1.x`: initial public prototype
 
 ## Release Notes
+### v0.21.2
+
+- Hardened `ui.media.viewer` against several real integration and demo-surface issues:
+  - fixed the single-item no-navigation layout bug where one image/video could render near-empty while repeated items worked
+  - fixed tall-media fit behavior so `contain` and `cover` now diverge correctly on portrait/tall assets
+  - fixed pan geometry so the viewer moves the rendered content box rather than a viewport-sized wrapper
+  - fixed drag vibration by disabling transform easing during active pan
+  - fixed wheel-zoom feel so zoom now stays anchored to the viewport center instead of appearing to drift/pan unpredictably
+- Added a dedicated portrait/tall repro asset and focused repro actions in `demos/demo.media.viewer.html`
+- Added dedicated browser regression coverage:
+  - `tests/media.viewer.regression.html`
+  - `tests/media.viewer.regression.mjs`
+
 ### v0.21.1
 
 - Reworked `demos/demo.window.html` so the page now proves `ui.window` through actual wrapper-style workspaces instead of a generic pane-only shell:
