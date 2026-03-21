@@ -12,6 +12,8 @@ const DEFAULT_OPTIONS = {
   rows: [],
   initialValues: null,
   mode: "",
+  extraActions: [],
+  extraActionsPlacement: "end",
   submitLabel: "Submit",
   cancelLabel: "Cancel",
   submitVariant: "primary",
@@ -674,18 +676,46 @@ export function createFormModal(options = {}) {
     };
   }
 
+  function createActionContext(action, event) {
+    return {
+      ...createContext(null),
+      action,
+      actionId: action?.id || "",
+      event: event || null,
+      getValues,
+      setValues,
+      getState,
+    };
+  }
+
   function setErrors(fieldErrors = {}) {
     clearErrors();
     applyErrors(fieldErrors);
   }
 
   function buildModalConfig() {
+    const extraActions = currentOptions.extraActions.map((action, index, list) => {
+      const isSplitStart = currentOptions.extraActionsPlacement === "start" && index === list.length - 1;
+      return {
+        ...action,
+        className: [action.className || "", isSplitStart ? "is-footer-split-start" : ""].filter(Boolean).join(" "),
+        closeOnClick: action.closeOnClick === true,
+        async onClick(eventContext) {
+          if (typeof action.onClick !== "function") {
+            return false;
+          }
+          return action.onClick(getValues(), createActionContext(action, eventContext?.event));
+        },
+      };
+    });
+
     return {
       ...currentOptions,
       className: ["ui-form-modal-shell", currentOptions.className || ""].filter(Boolean).join(" "),
       content: refs.shell,
       autoBusy: false,
       actions: [
+        ...extraActions,
         {
           id: "cancel",
           label: currentOptions.cancelLabel,
@@ -801,11 +831,55 @@ function normalizeOptions(options = {}) {
     initialValues: options.initialValues && typeof options.initialValues === "object" ? { ...options.initialValues } : null,
     context: options.context ?? null,
     mode: String(options.mode || "").trim(),
+    extraActions: normalizeExtraActions(options.extraActions),
+    extraActionsPlacement: normalizeExtraActionsPlacement(options.extraActionsPlacement),
     submitLabel: String(options.submitLabel || DEFAULT_OPTIONS.submitLabel),
     cancelLabel: String(options.cancelLabel || DEFAULT_OPTIONS.cancelLabel),
     submitVariant: normalizeSubmitVariant(options.submitVariant),
     busyMessage: String(options.busyMessage || DEFAULT_OPTIONS.busyMessage),
   };
+}
+
+function normalizeExtraActions(actions) {
+  if (!Array.isArray(actions)) {
+    return [];
+  }
+  return actions
+    .map((action, index) => {
+      if (!action || typeof action !== "object") {
+        return null;
+      }
+      const label = String(action.label ?? "").trim();
+      if (!label) {
+        return null;
+      }
+      const id = String(action.id ?? `extra-action-${index}`);
+      if (id === "cancel" || id === "submit") {
+        console.warn(`[createFormModal] extraActions does not allow reserved id "${id}". Use helper-owned cancel/submit options instead.`);
+        return null;
+      }
+      return {
+        id,
+        label,
+        variant: String(action.variant || "default"),
+        className: String(action.className || "").trim(),
+        icon: action.icon ? String(action.icon) : "",
+        iconPosition: String(action.iconPosition || "start").toLowerCase() === "end" ? "end" : "start",
+        iconOnly: Boolean(action.iconOnly),
+        ariaLabel: String(action.ariaLabel || "").trim(),
+        busyMessage: String(action.busyMessage || "").trim(),
+        onClick: typeof action.onClick === "function" ? action.onClick : null,
+        closeOnClick: action.closeOnClick === true,
+        disabled: Boolean(action.disabled),
+        autoFocus: Boolean(action.autoFocus),
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeExtraActionsPlacement(value) {
+  const normalized = String(value || DEFAULT_OPTIONS.extraActionsPlacement).trim().toLowerCase();
+  return normalized === "start" ? "start" : "end";
 }
 
 function normalizeRows(rows) {

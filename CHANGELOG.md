@@ -5,7 +5,7 @@ All notable changes to `helpers.pbb.ph` are documented here.
 ## Versioning
 
 - Current stable line: `v0.21.x`
-- Latest documented release: `v0.21.3`
+- Latest documented release: `v0.21.4`
 - Next planned line: `v0.22.x`
 
 ## Release Line Index
@@ -33,6 +33,27 @@ All notable changes to `helpers.pbb.ph` are documented here.
 - `v0.1.x`: initial public prototype
 
 ## Release Notes
+### v0.21.4
+
+- Added additive `extraActions` support to `createFormModal(...)` so teams can extend the helper-owned footer without replacing the standard cancel/submit contract.
+- Footer ordering is now:
+  - extra actions in provided order
+  - helper-owned `Cancel`
+  - helper-owned `Submit`
+- Added `extraActionsPlacement` to `createFormModal(...)` with:
+  - `"end"` for the existing shared end cluster
+  - `"start"` to visually split extra actions to the start side of the footer
+- Extra footer actions now receive current form values plus helper-owned context in `onClick(values, ctx)` and default to non-closing behavior unless `closeOnClick: true` is explicitly provided.
+- Added an HQ-style account footer-actions acceptance example to:
+  - `demos/demo.form.modal.html`
+- Added browser regression coverage for:
+  - extra-action render order
+  - callback execution
+  - default non-closing behavior
+  - busy-state disable behavior
+  - `tests/form.modal.regression.html`
+  - `tests/form.modal.regression.mjs`
+
 ### v0.21.3
 
 - Added `ui.password` with `createPasswordField(container, options)` as a narrow reusable password-entry primitive:

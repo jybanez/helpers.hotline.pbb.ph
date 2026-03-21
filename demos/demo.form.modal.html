@@ -296,6 +296,44 @@
           <div class="demo-stack__row demo-stack__row--live">
             <div class="demo-stack__header">
               <div>
+                <h2>Account Footer Actions</h2>
+                <p>Additive footer composition for cases such as the HQ account modal where a helper-owned form still needs a third footer action.</p>
+              </div>
+              <button id="accountActionsDemoBtn" class="ui-button" type="button">Open Account Footer Actions</button>
+            </div>
+            <div class="demo-stack__meta">
+              <span class="demo-chip">extraActions</span>
+              <span class="demo-chip">account acceptance target</span>
+              <span class="demo-chip">default footer preserved</span>
+            </div>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-code">const accountModal = createFormModal({
+  title: "Account",
+  submitLabel: "Save",
+  extraActionsPlacement: "start",
+  extraActions: [
+    {
+      id: "change-password",
+      label: "Change Password",
+      variant: "ghost",
+      onClick(values, ctx) {
+        openChangePasswordModal(values.email);
+        return false;
+      },
+    },
+  ],
+});</pre>
+          </div>
+          <div class="demo-stack__row">
+            <pre class="demo-log" data-log-prefix="formModal.account">No footer-action events yet.</pre>
+          </div>
+        </article>
+
+        <article class="demo-stack">
+          <div class="demo-stack__row demo-stack__row--live">
+            <div class="demo-stack__header">
+              <div>
                 <h2>Hub Add/Edit Acceptance Proof</h2>
                 <p>Faithful PBB HQ mappings for geodata-driven add flow and <code>other</code>-deployment edit flow using <code>mode</code>, <code>context</code>, <code>hidden</code>, <code>display</code>, and <code>span</code>.</p>
               </div>
@@ -466,6 +504,8 @@ const payload = {
               <tr><td><code>context</code></td><td><code>null</code></td><td>Narrow top strip for acceptance-proof flows such as geodata hub add.</td></tr>
               <tr><td><code>rows</code></td><td><code>[]</code></td><td>Row-based field schema. One or two items per row; hidden-only rows do not render visible gaps.</td></tr>
               <tr><td><code>initialValues</code></td><td><code>{}</code></td><td>Initial payload values, including hidden fields.</td></tr>
+              <tr><td><code>extraActions</code></td><td><code>[]</code></td><td>Additive footer actions rendered before helper-owned <code>Cancel</code> and <code>Submit</code>. Reserved IDs: <code>cancel</code>, <code>submit</code>.</td></tr>
+              <tr><td><code>extraActionsPlacement</code></td><td><code>"end"</code></td><td>Placement for additive footer actions. Allowed values: <code>start</code>, <code>end</code>. Use <code>start</code> to split extra actions away from helper-owned <code>Cancel</code> and <code>Submit</code>.</td></tr>
               <tr><td><code>submitLabel</code></td><td><code>"Submit"</code></td><td>Primary action label.</td></tr>
               <tr><td><code>busyMessage</code></td><td><code>"Working..."</code></td><td>Busy overlay message while async submit is pending.</td></tr>
               <tr><td><code>onSubmit(values, ctx)</code></td><td><code>null</code></td><td>Submit hook. Return truthy to close, falsy to keep the modal open.</td></tr>
@@ -489,6 +529,7 @@ const payload = {
             </thead>
             <tbody>
               <tr><td><code>onSubmit(values, ctx)</code></td><td><code>values</code>, helper-owned <code>ctx</code></td><td>Truthy closes the modal. Falsy or rejected promise keeps it open.</td></tr>
+              <tr><td><code>extraActions[].onClick(values, ctx)</code></td><td><code>values</code>, helper-owned <code>ctx</code>, current <code>actionId</code></td><td>Default does not close the form modal. Return truthy only when you intentionally want the extra action to close.</td></tr>
               <tr><td><code>onClose(meta)</code></td><td>Close metadata</td><td>No return effect.</td></tr>
             </tbody>
           </table>
@@ -581,6 +622,76 @@ const payload = {
         },
       });
       formModal.open();
+      writeLog(`${source}.open`, { ok: true });
+    }
+
+    function openAccountFooterActionsModal(source = "formModal.account") {
+      function openChangePasswordModal(email) {
+        const passwordModal = createFormModal({
+          title: "Change Password",
+          size: "sm",
+          submitLabel: "Update Password",
+          busyMessage: "Updating password...",
+          rows: [
+            [{ type: "text", content: `Current account: ${email}` }],
+            [{ type: "input", input: "password", name: "current_password", label: "Current Password", required: true }],
+            [{ type: "input", input: "password", name: "new_password", label: "New Password", required: true }],
+          ],
+          async onSubmit(values, ctx) {
+            writeLog(`${source}.changePassword.submit.begin`, { email });
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            if (!values.new_password || values.new_password.length < 12) {
+              ctx.setErrors({ new_password: "Use at least 12 characters." });
+              writeLog(`${source}.changePassword.submit.reject`, { reason: "too-short" });
+              return false;
+            }
+            writeLog(`${source}.changePassword.submit.success`, { email });
+            return true;
+          },
+          onClose(meta) {
+            writeLog(`${source}.changePassword.close`, meta || {});
+          },
+        });
+        passwordModal.open();
+      }
+
+      const accountModal = createFormModal({
+        title: "Account",
+        size: "md",
+        submitLabel: "Save",
+        extraActionsPlacement: "start",
+        busyMessage: "Saving account...",
+        rows: [
+          [{ type: "input", input: "email", name: "email", label: "Email", value: "operator@pbb.ph", required: true }],
+          [{ type: "input", input: "text", name: "display_name", label: "Display Name", value: "Operator One", required: true }],
+        ],
+        extraActions: [
+          {
+            id: "change-password",
+            label: "Change Password",
+            variant: "ghost",
+            onClick(values, ctx) {
+              writeLog(`${source}.extraAction.changePassword`, {
+                email: values.email,
+                actionId: ctx.actionId,
+              });
+              openChangePasswordModal(values.email);
+              return false;
+            },
+          },
+        ],
+        async onSubmit(values) {
+          writeLog(`${source}.submit.begin`, values);
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          writeLog(`${source}.submit.success`, values);
+          return true;
+        },
+        onClose(meta) {
+          writeLog(`${source}.close`, meta || {});
+        },
+      });
+
+      accountModal.open();
       writeLog(`${source}.open`, { ok: true });
     }
 
@@ -914,7 +1025,9 @@ const payload = {
       writeLog(`${source}.open`, { ok: true });
     }
 
-    document.getElementById("loginDemoBtn").addEventListener("click", () => openLoginFormModal());    document.getElementById("hubCreateDemoBtn").addEventListener("click", () => openHubFormModal("geo-create", "formModal.hub.geoCreate"));
+    document.getElementById("loginDemoBtn").addEventListener("click", () => openLoginFormModal());
+    document.getElementById("accountActionsDemoBtn").addEventListener("click", () => openAccountFooterActionsModal());
+    document.getElementById("hubCreateDemoBtn").addEventListener("click", () => openHubFormModal("geo-create", "formModal.hub.geoCreate"));
     document.getElementById("hubEditDemoBtn").addEventListener("click", () => openHubFormModal("other-edit", "formModal.hub.otherEdit"));
     document.getElementById("apiErrorsDemoBtn").addEventListener("click", () => openApiErrorMappingModal());
     document.getElementById("uplinkDemoBtn").addEventListener("click", () => openAddUplinkStyleModal());

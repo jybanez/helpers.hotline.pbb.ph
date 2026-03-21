@@ -193,6 +193,17 @@
   gap: var(--ui-space-2, 8px);
 }
 
+.ui-dialog-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2, 8px);
+  width: 100%;
+}
+
+.ui-action-modal-button.is-footer-split-start {
+  margin-inline-end: auto;
+}
+
 .ui-modal-busy {
   position: absolute;
   inset: 0;

@@ -32,7 +32,7 @@ const { stdout, stderr } = await execFileAsync(browserPath, [
   "--headless=new",
   "--disable-gpu",
   "--allow-file-access-from-files",
-  "--virtual-time-budget=4000",
+  "--virtual-time-budget=7000",
   "--dump-dom",
   htmlUrl,
 ], { maxBuffer: 1024 * 1024 * 4 });

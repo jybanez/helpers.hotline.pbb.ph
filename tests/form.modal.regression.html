@@ -140,6 +140,100 @@
 
     assert(document.querySelector(".ui-modal-root") === null, "truthy submit should close and remove modal root");
 
+    let changePasswordClicks = 0;
+    let busyExtraClicks = 0;
+
+    const accountModal = createFormModal({
+      title: "Account",
+      submitLabel: "Save",
+      extraActionsPlacement: "start",
+      rows: [
+        [{ type: "input", input: "text", name: "display_name", label: "Display Name", value: "Operator One", required: true }],
+      ],
+      extraActions: [
+        {
+          id: "change-password",
+          label: "Change Password",
+          variant: "ghost",
+          onClick(values, ctx) {
+            changePasswordClicks += 1;
+            assert(values.display_name === "Operator One", "extraActions should receive current form values");
+            assert(ctx.actionId === "change-password", "extraActions context should expose actionId");
+            return false;
+          },
+        },
+      ],
+      async onSubmit() {
+        await wait(50);
+        return false;
+      },
+    });
+
+    accountModal.open();
+    await wait(80);
+
+    const getFooterLabels = () => Array.from(document.querySelectorAll(".ui-modal-footer .ui-button .ui-action-modal-button-label")).map((node) => node.textContent.trim());
+    const findFooterButton = (label) => Array.from(document.querySelectorAll(".ui-modal-footer .ui-button")).find((button) => button.textContent.includes(label));
+
+    assert(
+      JSON.stringify(getFooterLabels()) === JSON.stringify(["Change Password", "Cancel", "Save"]),
+      "extraActions should render before helper-owned Cancel and Submit actions",
+    );
+    assert(
+      findFooterButton("Change Password")?.classList.contains("is-footer-split-start"),
+      "extraActionsPlacement: start should split extra actions from helper-owned Cancel and Submit buttons",
+    );
+
+    findFooterButton("Change Password").click();
+    await wait(100);
+
+    assert(changePasswordClicks === 1, "extraActions onClick should run");
+    assert(accountModal.getState().open === true, "extraActions should not close by default");
+
+    accountModal.destroy();
+    await wait(80);
+    assert(document.querySelector(".ui-modal-root") === null, "destroy should remove extra-actions modal from DOM");
+
+    const busyExtraModal = createFormModal({
+      title: "Busy Extra Actions",
+      submitLabel: "Save",
+      rows: [
+        [{ type: "input", input: "text", name: "name", label: "Name", value: "Operator One", required: true }],
+      ],
+      extraActions: [
+        {
+          id: "change-password",
+          label: "Change Password",
+          variant: "ghost",
+          onClick() {
+            busyExtraClicks += 1;
+            return false;
+          },
+        },
+      ],
+      async onSubmit() {
+        await wait(600);
+        return true;
+      },
+    });
+
+    busyExtraModal.open();
+    await wait(80);
+    findFooterButton("Save").click();
+    await wait(120);
+
+    const busyExtraButton = findFooterButton("Change Password");
+    assert(busyExtraModal.isBusy() === true, "submit should place form modal into busy state");
+    assert(busyExtraButton?.hasAttribute("disabled"), "extraActions should disable during helper-owned busy state");
+
+    busyExtraButton?.click();
+    await wait(80);
+    assert(busyExtraClicks === 0, "disabled extraActions should not run during busy state");
+
+    await wait(900);
+    assert(busyExtraModal.getState().open === false, "truthy busy submit should close the busy extra-actions modal");
+    assert(document.querySelector(".ui-modal-root") === null, "truthy busy submit should close and remove modal root");
+
     const keyboardSubmitModal = createFormModal({
       title: "Keyboard Submit",
       busyMessage: "Signing in...",

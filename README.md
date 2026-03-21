@@ -1838,7 +1838,7 @@ Architecture:
 
 - Composes over `createActionModal(...)`
 - Reuses helper-owned modal busy-state, close, and focus behavior
-- Keeps the public action contract narrow to standard cancel/submit flows in V1
+- Keeps the public action contract narrow to helper-owned cancel/submit flows with additive `extraActions` support in V1
 
 Factory:
 
@@ -1857,6 +1857,8 @@ Options:
 | `initialValues` | `object` | `{}` | no | Initial field values keyed by field name. |
 | `context` | `{ badge?, summary?, kind? }` | `null` | no | Narrow top-level context strip for acceptance-target flows such as geodata-driven hub editing. |
 | `mode` | `string` | `""` | no | Declarative form mode used by first-pass rule evaluation. |
+| `extraActions` | `Array<FormModalExtraAction>` | `[]` | no | Additive footer actions rendered before helper-owned `Cancel` and `Submit`. Reserved IDs: `cancel`, `submit`. |
+| `extraActionsPlacement` | `"start" \| "end"` | `"end"` | no | Places additive footer actions either in the same end cluster or split to the start side of the footer. |
 | `submitLabel` | `string` | `"Submit"` | no | Submit action label. |
 | `cancelLabel` | `string` | `"Cancel"` | no | Cancel action label. |
 | `submitVariant` | `string` | `"primary"` | no | Submit button variant. |
@@ -1942,6 +1944,7 @@ Events / callbacks:
 | Callback | Payload | Returns | Description |
 |---|---|---|---|
 | `onSubmit` | `values, ctx` | `any \| Promise<any>` | Submit handler. Truthy result closes by default. |
+| `extraActions[].onClick` | `values, ctx` | `any \| Promise<any>` | Additive footer action callback. Defaults to non-closing behavior unless `closeOnClick: true` is explicitly provided. |
 | `onChange` | `values, ctx` | `void` | Fires on field changes. |
 
 Returned API:
@@ -1975,6 +1978,8 @@ Validation and submit behavior:
 - first invalid field receives focus on helper validation failure
 - truthy async submit result closes by default
 - falsy or rejected submit keeps the modal open
+- `extraActions` render before helper-owned `Cancel` and `Submit`, stay additive, and disable together with the rest of the footer during helper-owned busy state
+- `extraActionsPlacement: "start"` visually splits the last extra action away from the helper-owned `Cancel` and `Submit` cluster
 - `requiredOn`, `hiddenOn`, and `readonlyOn` are first-pass declarative mode rules
 - `context` is intentionally narrow and exists to cover real acceptance-target header/context needs without reopening a larger form-builder surface
 - `display` is visual-only and does not participate in payload output
@@ -3603,7 +3608,7 @@ Recommended integration flow:
 
 ### Current Stable Line: `v0.21.x`
 
-- Latest documented release: `v0.21.3`
+- Latest documented release: `v0.21.4`
 - All library modules now follow monotonic SemVer in release notes:
   - breaking API changes -> `major`
   - new components/features -> `minor`

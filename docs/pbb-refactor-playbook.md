@@ -103,6 +103,7 @@ Session and re-auth rule:
   - on successful re-auth, retry or resume the blocked action if the project flow supports it
 - Do not embed timeout polling or session-watch logic inside the helper wrapper itself.
 - For password entry outside those wrappers, prefer the shared `createPasswordField(...)` primitive so teams reuse the same show/hide behavior instead of building project-local toggles.
+- When a form modal needs a third footer action such as `Change Password`, prefer the helper-owned `extraActions` option on `createFormModal(...)` instead of trying to replace the full footer action set from app code.
 
 ## 5.1) Helper-First And Proposal-First Rules
 
