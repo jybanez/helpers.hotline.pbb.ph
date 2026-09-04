@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Timeline Virtualization Regression</title>
+  <link rel="stylesheet" href="../css/ui/ui.tokens.css">
+  <link rel="stylesheet" href="../css/ui/ui.components.css">
+  <link rel="stylesheet" href="../css/ui/ui.timeline.css">
+  <style>
+    #host { width: 620px; height: 320px; }
+    .is-selected .ui-timeline-body { border-color: #7bb5ff; }
+    .custom-block { height: 96px; }
+  </style>
+</head>
+<body data-status="pending">
+  <div id="host"></div>
+  <pre id="results">pending</pre>
+  <script>
+    window.addEventListener("error", (event) => fail(event.message || "window error"));
+    window.addEventListener("unhandledrejection", (event) => fail(String(event.reason?.message || event.reason || "unhandled rejection")));
+    function fail(message) {
+      document.body.dataset.status = "failed";
+      document.getElementById("results").textContent = message;
+    }
+  </script>
+  <script type="module">
+    import { createTimeline } from "../js/ui/ui.timeline.js";
+
+    const host = document.getElementById("host");
+    const results = document.getElementById("results");
+    const failures = [];
+    const ranges = [];
+    const reachCalls = [];
+    const lifecycle = [];
+    let itemClicks = 0;
+
+    const assert = (condition, message) => { if (!condition) failures.push(message); };
+    const frames = (count = 3) => new Promise((resolve) => setTimeout(resolve, count * 30));
+    const makeItem = (index, base = Date.UTC(2026, 8, 5, 12, 0, 0)) => ({
+      id: `item-${index}`,
+      contentKey: index === 0 ? "custom-a" : "",
+      hasCustomContent: index === 0,
+      className: index === 1 ? "is-selected app-owned-class" : "",
+      title: `Timeline item ${index}`,
+      subtitle: index % 3 === 0 ? "Variable-height subtitle" : "",
+      description: index % 4 === 0
+        ? "A deliberately long timeline description that wraps across multiple lines to verify measured-height windowing instead of fixed-row assumptions. ".repeat(2)
+        : `Short description ${index}`,
+      timestamp: new Date(base - (Number.isFinite(Number(index)) ? Number(index) : 0) * 60 * 60 * 1000).toISOString(),
+      status: index % 2 ? "accepted" : "completed",
+    });
+    const items = Array.from({ length: 80 }, (_, index) => makeItem(index));
+
+    const timeline = createTimeline(host, items, {
+      enableVirtualization: true,
+      virtualThreshold: 20,
+      virtualOverscan: 120,
+      endThreshold: 24,
+      topAnchorThreshold: 24,
+      groupByDate: true,
+      onRangeChange(range) { ranges.push(range); },
+      onReachEnd(meta) { reachCalls.push(meta); },
+      onItemClick() { itemClicks += 1; },
+      mountItemContent(slot, item) {
+        if (item.id !== "item-0") return null;
+        lifecycle.push(`mount:${item.contentKey}`);
+        const block = document.createElement("button");
+        block.type = "button";
+        block.className = "custom-block";
+        block.textContent = "Nested control";
+        slot.appendChild(block);
+        return { destroy() { lifecycle.push(`destroy:${item.contentKey}`); } };
+      },
+    });
+
+    await frames(5);
+    document.body.dataset.phase = "initial";
+    const viewport = host.querySelector(".ui-timeline-viewport");
+    assert(viewport, "virtual timeline should own a scroll viewport");
+    assert(timeline.getState().virtualization.enabled, "virtualization state should be enabled");
+    assert(host.querySelectorAll(".ui-timeline-item").length < items.length, "virtualization should bound rendered DOM rows");
+    assert(host.querySelector(".ui-timeline-group-label"), "virtualization should preserve date grouping");
+    assert(host.querySelector(".app-owned-class.is-selected"), "virtualization should preserve app-owned item classes");
+    assert(timeline.getState().virtualization.measuredCount > 0, "virtualization should measure rendered units");
+    assert(ranges.length > 0 && ranges[0].startId, "range changes should expose indexes and item ids");
+
+    host.querySelector(".app-owned-class")?.click();
+    assert(itemClicks === 1, "virtualized item clicks should preserve onItemClick");
+    host.querySelector(".custom-block")?.click();
+    assert(itemClicks === 1, "custom controls should not activate their timeline item");
+
+    viewport.scrollTop = Math.round(viewport.scrollHeight * 0.45);
+    viewport.dispatchEvent(new Event("scroll"));
+    await frames(5);
+    document.body.dataset.phase = "scrolled";
+    const beforeAppend = firstVisibleAnchor(viewport);
+    assert(beforeAppend?.id, "mid-list viewport should expose an anchor item");
+    assert(lifecycle.includes("destroy:custom-a"), "offscreen custom content should be destroyed");
+
+    timeline.append(Array.from({ length: 20 }, (_, offset) => makeItem(80 + offset)));
+    await frames(6);
+    document.body.dataset.phase = "appended";
+    const afterAppend = firstVisibleAnchor(viewport);
+    assert(afterAppend?.id === beforeAppend?.id, `append should preserve the old/new page boundary anchor id (${beforeAppend?.id} -> ${afterAppend?.id})`);
+    assert(Math.abs((afterAppend?.offset || 0) - (beforeAppend?.offset || 0)) <= 3, `append should preserve the anchor pixel offset (${beforeAppend?.offset} -> ${afterAppend?.offset})`);
+
+    const beforePrepend = firstVisibleAnchor(viewport);
+    const newerBase = Date.UTC(2026, 8, 6, 12, 0, 0);
+    timeline.prepend(Array.from({ length: 5 }, (_, offset) => makeItem(`new-${offset}`, newerBase - offset * 60 * 1000)));
+    await frames(6);
+    document.body.dataset.phase = "prepended";
+    const afterPrepend = firstVisibleAnchor(viewport);
+    assert(afterPrepend?.id === beforePrepend?.id, `prepend away from top should preserve the reader anchor id (${beforePrepend?.id} -> ${afterPrepend?.id})`);
+    assert(Math.abs((afterPrepend?.offset || 0) - (beforePrepend?.offset || 0)) <= 3, `prepend away from top should preserve the anchor pixel offset (${beforePrepend?.offset} -> ${afterPrepend?.offset})`);
+
+    viewport.scrollTop = 360;
+    viewport.dispatchEvent(new Event("scroll"));
+    await frames(4);
+    assert(lifecycle.filter((entry) => entry === "mount:custom-a").length >= 2, `custom content should remount when it re-enters the virtual range (${lifecycle.join(", ")})`);
+    viewport.scrollTop = 0;
+    viewport.dispatchEvent(new Event("scroll"));
+    await frames(4);
+    timeline.prepend([makeItem("latest", Date.UTC(2026, 8, 7, 12, 0, 0))]);
+    await frames(5);
+    document.body.dataset.phase = "top-prepended";
+    assert(viewport.scrollTop <= 2, "prepend near the top should keep the reader at the top");
+    assert(host.querySelector('[data-item-id="item-latest"]'), "reader at top should see the prepended item");
+
+    viewport.scrollTop = viewport.scrollHeight;
+    viewport.dispatchEvent(new Event("scroll"));
+    await frames(5);
+    document.body.dataset.phase = "end";
+    assert(reachCalls.length === 1, `reaching the end should fire once for the current boundary (calls ${reachCalls.length}, top ${viewport.scrollTop}, height ${viewport.scrollHeight}, client ${viewport.clientHeight})`);
+    viewport.dispatchEvent(new Event("scroll"));
+    await frames(3);
+    assert(reachCalls.length === 1, `repeated end scrolls should be de-duplicated (calls ${reachCalls.length})`);
+    timeline.update(timeline.getState().items, { isLoading: true });
+    timeline.resetReachEnd();
+    assert(reachCalls.length === 1, "end callback should remain suppressed while the consumer reports loading");
+    timeline.update(timeline.getState().items, { isLoading: false });
+    await frames(3);
+    assert(reachCalls.length === 2, `explicit reset should allow a failed page load to retry after loading clears (calls ${reachCalls.length})`);
+    assert(reachCalls.length >= 2 && reachCalls[0].boundaryId === reachCalls[1].boundaryId, "retry should retain the same boundary identity");
+
+    timeline.destroy();
+    assert(host.childNodes.length === 0, "destroy should clear the virtual timeline");
+
+    const horizontalHost = document.createElement("div");
+    document.body.appendChild(horizontalHost);
+    const horizontal = createTimeline(horizontalHost, [{ title: "No explicit id" }], {
+      orientation: "horizontal",
+      enableVirtualization: true,
+      virtualThreshold: 0,
+    });
+    assert(!horizontal.getState().virtualization.enabled, "horizontal timelines should retain non-virtual behavior");
+    horizontal.destroy();
+    horizontalHost.remove();
+
+    const invalidHost = document.createElement("div");
+    document.body.appendChild(invalidHost);
+    let identityError = "";
+    try {
+      createTimeline(invalidHost, [{ title: "Missing id" }], { enableVirtualization: true, virtualThreshold: 0 });
+    } catch (error) {
+      identityError = error.message;
+    }
+    assert(identityError.includes("explicit stable id"), "virtual timelines should reject generated item ids");
+    invalidHost.remove();
+
+    if (failures.length) {
+      document.body.dataset.status = "failed";
+      results.textContent = failures.join("\n");
+    } else {
+      document.body.dataset.status = "pass";
+      results.textContent = "PASS";
+    }
+
+    function firstVisibleAnchor(scrollViewport) {
+      const viewportRect = scrollViewport.getBoundingClientRect();
+      const nodes = Array.from(scrollViewport.querySelectorAll(".ui-timeline-virtual-unit[data-item-id]"));
+      const node = nodes.find((candidate) => candidate.getBoundingClientRect().bottom > viewportRect.top + 2);
+      return node ? { id: node.dataset.itemId, offset: node.getBoundingClientRect().top - viewportRect.top } : null;
+    }
+  </script>
+</body>
+</html>

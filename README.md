@@ -4861,7 +4861,7 @@ Options:
 
 | Option | Type | Default | Required | Description |
 |---|---|---:|---|---|
-| `ariaLabel` | `string` | `""` | no | Accessible label for the timeline. |
+| `ariaLabel` | `string` | `"Timeline"` | no | Accessible label for the timeline. |
 | `orientation` | `"vertical" \| "horizontal"` | `"vertical"` | no | Timeline orientation. |
 | `density` | `"compact" \| "comfortable"` | `"comfortable"` | no | Item density preset. |
 | `groupByDate` | `boolean` | `false` | no | Groups vertical timeline items by date. |
@@ -4875,6 +4875,15 @@ Options:
 | `onItemClick` | `(item) => void` | `null` | no | Fires when an item is clicked. |
 | `onActionClick` | `(action, item) => void` | `null` | no | Fires when an item action is clicked. |
 | `mountItemContent` | `(host, item, context) => Function \| { update?, destroy? } \| null` | `null` | no | Mounts lifecycle-managed app/helper content inside a timeline item. |
+| `enableVirtualization` | `boolean` | `false` | no | Enables measured-height windowing for large vertical timelines. |
+| `virtualThreshold` | `number` | `120` | no | Minimum visible item count before virtualization activates. |
+| `virtualOverscan` | `number` | `480` | no | Extra pixels rendered above and below the viewport. |
+| `endThreshold` | `number` | `320` | no | Distance in pixels from the end that triggers `onReachEnd`. |
+| `topAnchorThreshold` | `number` | `48` | no | Distance from the top where prepend remains pinned to the top. |
+| `isLoading` | `boolean` | `false` | no | Suppresses end callbacks while the app is loading. |
+| `hasMore` | `boolean` | `true` | no | Disables end callbacks when there is no additional page. |
+| `onRangeChange` | `(range, state) => void` | `null` | no | Reports the rendered virtual range. |
+| `onReachEnd` | `(boundary, state) => void` | `null` | no | Requests another page once per terminal boundary. |
 
 Returned API:
 
@@ -4884,6 +4893,7 @@ Returned API:
 | `append` | `items` | `void` | Appends items to the end of the timeline. |
 | `prepend` | `items` | `void` | Prepends items to the start of the timeline. |
 | `setLinkedRange` | `range \| null` | `void` | Applies or clears linked range filtering. |
+| `resetReachEnd` | `{ check?: boolean }` | `void` | Clears the end-boundary latch and optionally checks the current position immediately. |
 | `getState` | none | `object` | Returns timeline state, including visible items. |
 | `destroy` | none | `void` | Removes DOM and listeners. |
 
@@ -4898,6 +4908,14 @@ Custom content notes:
 - Return a cleanup function or an object with `update(nextItem, context)` and/or `destroy()`.
 - Changing `contentKey`, removing an item, filtering it out of view, or destroying the timeline calls cleanup.
 - Interactive controls inside custom content are guarded so they do not trigger timeline item activation.
+
+Virtualization notes:
+
+- Virtualization is opt-in and applies only to vertical timelines at or above `virtualThreshold`; horizontal timelines retain standard rendering.
+- Every virtualized item must have a unique, explicit `id`. Heights are measured from rendered content and cached by `id` plus `contentKey`.
+- The timeline host must have a fixed or otherwise constrained height. The timeline's `.ui-timeline-viewport` owns scrolling.
+- `append(...)` preserves the visible boundary, while `prepend(...)` preserves the first visible item and pixel offset unless the viewport is within `topAnchorThreshold` of the top.
+- `onReachEnd` is deduplicated for the current last-item boundary and respects `isLoading` and `hasMore`. Call `resetReachEnd()` after a failed request to retry the same boundary.
 
 Example:
 
