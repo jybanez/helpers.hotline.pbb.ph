@@ -113,18 +113,29 @@
     assert(afterPrepend?.id === beforePrepend?.id, `prepend away from top should preserve the reader anchor id (${beforePrepend?.id} -> ${afterPrepend?.id})`);
     assert(Math.abs((afterPrepend?.offset || 0) - (beforePrepend?.offset || 0)) <= 3, `prepend away from top should preserve the anchor pixel offset (${beforePrepend?.offset} -> ${afterPrepend?.offset})`);
 
-    viewport.scrollTop = 360;
-    viewport.dispatchEvent(new Event("scroll"));
-    await frames(4);
-    assert(lifecycle.filter((entry) => entry === "mount:custom-a").length >= 2, `custom content should remount when it re-enters the virtual range (${lifecycle.join(", ")})`);
     viewport.scrollTop = 0;
     viewport.dispatchEvent(new Event("scroll"));
     await frames(4);
+    assert(lifecycle.filter((entry) => entry === "mount:custom-a").length >= 2, `custom content should remount when it re-enters the virtual range (${lifecycle.join(", ")})`);
     timeline.prepend([makeItem("latest", Date.UTC(2026, 8, 7, 12, 0, 0))]);
     await frames(5);
     document.body.dataset.phase = "top-prepended";
     assert(viewport.scrollTop <= 2, "prepend near the top should keep the reader at the top");
     assert(host.querySelector('[data-item-id="item-latest"]'), "reader at top should see the prepended item");
+
+    viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight - 80;
+    viewport.dispatchEvent(new Event("scroll"));
+    await frames(8);
+    const stoppedScrollTop = viewport.scrollHeight - viewport.clientHeight - 12;
+    viewport.scrollTop = stoppedScrollTop;
+    viewport.dispatchEvent(new Event("scroll"));
+    await frames(8);
+    assert(
+      Math.abs(viewport.scrollTop - stoppedScrollTop) <= 3,
+      `stopping near the end should not pull the viewport to the bottom (${stoppedScrollTop} -> ${viewport.scrollTop})`,
+    );
+    reachCalls.length = 0;
+    timeline.resetReachEnd({ check: false });
 
     viewport.scrollTop = viewport.scrollHeight;
     viewport.dispatchEvent(new Event("scroll"));

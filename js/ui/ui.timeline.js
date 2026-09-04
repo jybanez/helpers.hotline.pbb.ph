@@ -139,7 +139,6 @@ export function createTimeline(container, items = [], options = {}) {
     updateVirtualRange(windowRange);
     measureRenderedUnits(units);
     queueExactAnchorRestore(restoreSnapshot);
-    queueEndPin(restoreSnapshot);
     checkReachEnd(reason);
   }
 
@@ -199,10 +198,9 @@ export function createTimeline(container, items = [], options = {}) {
       }
     }
     if (scrollFrame) return;
-    const pinEnd = virtualViewport.scrollHeight - virtualViewport.clientHeight - virtualViewport.scrollTop <= currentOptions.endThreshold;
     scrollFrame = setTimeout(() => {
       scrollFrame = 0;
-      renderVirtual("scroll", pinEnd ? { pinEnd: true } : null);
+      renderVirtual("scroll");
     }, 0);
   }
 
@@ -250,7 +248,6 @@ export function createTimeline(container, items = [], options = {}) {
 
   function applyEstimatedAnchor(snapshot) {
     if (!virtualViewport || !snapshot) return;
-    if (snapshot.pinEnd) return;
     if (snapshot.reason === "prepend" && snapshot.nearTop) {
       setVirtualScrollTop(0);
       return;
@@ -266,7 +263,7 @@ export function createTimeline(container, items = [], options = {}) {
   }
 
   function queueExactAnchorRestore(snapshot) {
-    if (!virtualViewport || !snapshot || snapshot.pinEnd || (snapshot.reason === "prepend" && snapshot.nearTop)) return;
+    if (!virtualViewport || !snapshot || (snapshot.reason === "prepend" && snapshot.nearTop)) return;
     const token = anchorRestoreToken + 1;
     anchorRestoreToken = token;
     requestAnimationFrame(() => {
@@ -288,15 +285,6 @@ export function createTimeline(container, items = [], options = {}) {
     virtualViewport.scrollTop = Math.max(0, value);
     requestAnimationFrame(() => {
       if (scrollWriteToken === token) programmaticScroll = false;
-    });
-  }
-
-  function queueEndPin(snapshot) {
-    if (!virtualViewport || !snapshot?.pinEnd) return;
-    requestAnimationFrame(() => {
-      if (!virtualViewport) return;
-      setVirtualScrollTop(virtualViewport.scrollHeight);
-      checkReachEnd("scroll");
     });
   }
 
