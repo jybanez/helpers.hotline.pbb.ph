@@ -40,7 +40,8 @@
     }
     #timelineHostVertical,
     #timelineHostHorizontal,
-    #timelineHostCustom {
+    #timelineHostCustom,
+    #timelineHostVirtual {
       border: 1px solid var(--demo-border, var(--ui-border, #2b3750));
       border-radius: 8px;
       padding: 10px;
@@ -48,6 +49,10 @@
       min-width: 0;
       max-width: 100%;
       overflow: hidden;
+    }
+    #timelineHostVirtual {
+      height: 480px;
+      padding: 0;
     }
     .log {
       margin: 0;
@@ -95,7 +100,7 @@
   <script>
     window.demoMeta = {
       title: "Timeline",
-      overview: "Timeline helper for event chronology, horizontal milestones, grouped logs, and lifecycle-managed custom item content.",
+      overview: "Timeline helper for event chronology, horizontal milestones, grouped logs, lifecycle-managed custom item content, and measured-height virtual feeds.",
       useWhen: [
         "Use <code>createTimeline(...)</code> for ordered event history.",
         "Use custom content slots when a timeline row needs to host a nested Helper or app component."
@@ -104,9 +109,10 @@
         "Do not use it for full calendar scheduling; use <code>createScheduler(...)</code>.",
         "Do not use it for playback-range controls; use the dedicated Timeline Scrubber demo."
       ],
-      description: "The timeline helper is meant for chronology, not generic record listing. This page focuses on event rendering, item actions, horizontal/vertical presentation, and custom row content lifecycle.",
+      description: "The timeline helper is meant for chronology, not generic record listing. This page covers event rendering, item actions, horizontal/vertical presentation, custom row content lifecycle, and opt-in variable-height virtualization for large vertical feeds.",
       sectionSamples: {
         "vertical (grouped)": `createTimeline(host, items, {\n  orientation: "vertical",\n  groupByDate: true,\n});`,
+        "virtualized feed": `const timeline = createTimeline(host, items, {\n  enableVirtualization: true,\n  virtualThreshold: 100,\n  virtualOverscan: 480,\n  onRangeChange(range) {\n    console.log(range.startId, range.endId);\n  },\n  onReachEnd(boundary) {\n    loadOlder(boundary.boundaryId);\n  },\n});`,
         "horizontal": `createTimeline(host, items, {\n  orientation: "horizontal",\n});`,
         "custom content": `const timeline = createTimeline(host, items, {\n  mountItemContent(slot, item, context) {\n    if (item.type !== "call_session") return null;\n    const card = document.createElement("div");\n    slot.appendChild(card);\n    renderCallCard(card, item);\n    return {\n      update(nextItem) { renderCallCard(card, nextItem); },\n      destroy() { stopNestedPlayback(item.id); },\n    };\n  },\n});`
       },
@@ -121,6 +127,13 @@
         { option: "<code>linkedRange</code>", default: "<code>null</code>", description: "Filters visible items by relative timestamp range using <code>{ startMs, endMs, anchorMs? }</code>." },
         { option: "<code>includeUndatedInRange</code>", default: "<code>false</code>", description: "Keeps undated items visible while a linked range is active." },
         { option: "<code>mountItemContent</code>", default: "<code>null</code>", description: "Optional lifecycle hook for mounting app/helper content inside an item slot." },
+        { option: "<code>enableVirtualization</code>", default: "<code>false</code>", description: "Enables measured-height windowing for large vertical timelines. Horizontal timelines keep their standard rendering." },
+        { option: "<code>virtualThreshold</code>", default: "<code>120</code>", description: "Minimum visible item count before opt-in virtualization activates." },
+        { option: "<code>virtualOverscan</code>", default: "<code>480</code>", description: "Extra pixels rendered above and below the viewport." },
+        { option: "<code>endThreshold</code>", default: "<code>320</code>", description: "Distance in pixels from the end that triggers <code>onReachEnd</code>." },
+        { option: "<code>topAnchorThreshold</code>", default: "<code>48</code>", description: "Distance from the top where prepending keeps the viewport pinned to the top." },
+        { option: "<code>isLoading</code>", default: "<code>false</code>", description: "Suppresses end callbacks while the app is already loading." },
+        { option: "<code>hasMore</code>", default: "<code>true</code>", description: "Disables end callbacks when no additional page exists." },
         { option: "<code>onItemClick</code>", default: "<code>null</code>", description: "Called when a timeline item is activated outside nested custom content." },
         { option: "<code>onActionClick</code>", default: "<code>null</code>", description: "Called when an item action button is clicked." },
         { option: "<code>ariaLabel</code>", default: "<code>\"Timeline\"</code>", description: "Accessible label for the timeline region." }
@@ -130,11 +143,14 @@
         { property: "<code>item.id</code>", type: "<code>string | number</code>", description: "Stable item identity; required for reliable custom-content lifecycle preservation." },
         { property: "<code>item.contentKey</code>", type: "<code>string</code>", description: "Optional custom-content identity paired with <code>id</code>; changing it destroys and remounts the slot." },
         { property: "<code>item.actions</code>", type: "<code>Array&lt;{ id, label, className? }&gt;</code>", description: "Helper-rendered item action buttons that call <code>onActionClick</code>." },
+        { property: "<code>state.virtualization</code>", type: "<code>{ enabled, range, measuredCount, reachedBoundaryId }</code>", description: "Virtual-window diagnostics returned by <code>getState()</code>." },
         { property: "<code>custom lifecycle handle</code>", type: "<code>Function | { update?, destroy? }</code>", description: "Return value from <code>mountItemContent</code>. Functions are treated as destroy callbacks; objects can update preserved content and clean up on removal." }
       ],
       events: [
         { event: "<code>onItemClick</code>", arguments: "<code>item</code>", returns: "App-owned selection/navigation behavior." },
         { event: "<code>onActionClick</code>", arguments: "<code>action, item</code>", returns: "App-owned action handling for helper-rendered item buttons." },
+        { event: "<code>onRangeChange</code>", arguments: "<code>{ start, end, startId, endId }, state</code>", returns: "Reports the currently rendered virtual window." },
+        { event: "<code>onReachEnd</code>", arguments: "<code>{ boundaryId, count, distance, reason }, state</code>", returns: "Requests the next page once per boundary while near the end." },
         { event: "<code>mountItemContent</code>", arguments: "<code>host, item, context</code>", returns: "Mounts nested content; may return a disposer or lifecycle handle." },
         { event: "<code>customHandle.update</code>", arguments: "<code>nextItem, context</code>", returns: "Called when the same <code>id/contentKey</code> remains present across timeline updates." },
         { event: "<code>customHandle.destroy</code>", arguments: "none", returns: "Called when an item is removed, filtered out, remounted by <code>contentKey</code>, or the timeline is destroyed." }
@@ -144,6 +160,7 @@
         { method: "<code>append(items)</code>", arguments: "items to add after the current list", returns: "<code>void</code>" },
         { method: "<code>prepend(items)</code>", arguments: "items to add before the current list", returns: "<code>void</code>" },
         { method: "<code>setLinkedRange(range)</code>", arguments: "<code>{ startMs, endMs, anchorMs? } | null</code>", returns: "<code>void</code>" },
+        { method: "<code>resetReachEnd(options?)</code>", arguments: "<code>{ check?: boolean }</code>", returns: "Clears the current end boundary latch so a failed page can be retried." },
         { method: "<code>getState()</code>", arguments: "none", returns: "Normalized options, all items, and currently visible items" },
         { method: "<code>destroy()</code>", arguments: "none", returns: "<code>void</code>" }
       ]
@@ -165,6 +182,17 @@
     <section class="panel">
       <h2 class="ui-title">Vertical (Grouped)</h2>
       <div id="timelineHostVertical"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="ui-title">Virtualized Feed</h2>
+      <p>Measured-height windowing keeps the DOM bounded while preserving the visible anchor as pages are appended or prepended.</p>
+      <div class="row">
+        <button id="timelineVirtualPrependBtn" class="ui-button" type="button">Prepend Newer</button>
+        <button id="timelineVirtualAppendBtn" class="ui-button ui-button-ghost" type="button">Append Older</button>
+        <button id="timelineVirtualRetryBtn" class="ui-button ui-button-borderless" type="button">Retry End</button>
+      </div>
+      <div id="timelineHostVirtual"></div>
     </section>
 
     <section class="panel">
@@ -196,6 +224,7 @@
     const page = document.querySelector("main.page");
     const log = document.getElementById("log");
     const verticalHost = document.getElementById("timelineHostVertical");
+    const virtualHost = document.getElementById("timelineHostVirtual");
     const horizontalHost = document.getElementById("timelineHostHorizontal");
     const customHost = document.getElementById("timelineHostCustom");
 
@@ -263,6 +292,57 @@
       onActionClick(action, item) {
         writeLog("timeline.vertical.action.click", { actionId: action.id, itemId: item.id });
       },
+    });
+
+    let virtualNewest = 0;
+    let virtualOldest = 159;
+    let virtualItems = Array.from({ length: 160 }, (_, index) => buildVirtualItem(index));
+
+    function buildVirtualItem(index) {
+      const timestamp = new Date(Date.UTC(2026, 2, 9, 8, 30) - index * 7 * 60 * 1000);
+      return {
+        id: `feed-${index}`,
+        className: index % 11 === 0 ? "is-active" : "",
+        timestamp,
+        title: `Feed event ${index}`,
+        subtitle: index % 4 === 0 ? "Variable-height operational note" : "Status update",
+        description: index % 5 === 0
+          ? "This deliberately longer description demonstrates measured rows without assuming a fixed item height. It can wrap over several lines as the demo width changes."
+          : "Short timeline detail.",
+        status: index % 3 === 0 ? "completed" : "accepted",
+        meta: index % 6 === 0 ? ["Virtual", "Measured"] : ["Virtual"],
+      };
+    }
+
+    const virtualTimeline = createTimeline(virtualHost, virtualItems, {
+      ariaLabel: "Virtualized incident feed",
+      orientation: "vertical",
+      groupByDate: true,
+      enableVirtualization: true,
+      virtualThreshold: 100,
+      onRangeChange(range) {
+        writeLog("timeline.virtual.range", range);
+      },
+      onReachEnd(boundary) {
+        writeLog("timeline.virtual.reach-end", boundary);
+      },
+      onItemClick(item) {
+        writeLog("timeline.virtual.item.click", { id: item.id });
+      },
+    });
+
+    document.getElementById("timelineVirtualPrependBtn").addEventListener("click", () => {
+      const incoming = Array.from({ length: 8 }, () => buildVirtualItem(--virtualNewest));
+      virtualItems = incoming.concat(virtualItems);
+      virtualTimeline.prepend(incoming);
+    });
+    document.getElementById("timelineVirtualAppendBtn").addEventListener("click", () => {
+      const incoming = Array.from({ length: 12 }, () => buildVirtualItem(++virtualOldest));
+      virtualItems = virtualItems.concat(incoming);
+      virtualTimeline.append(incoming);
+    });
+    document.getElementById("timelineVirtualRetryBtn").addEventListener("click", () => {
+      virtualTimeline.resetReachEnd();
     });
 
     const horizontal = createTimeline(horizontalHost, timelineItems, {
@@ -365,7 +445,7 @@
     });
 
     // keep refs alive for debugging in console
-    window.timelineDemo = { vertical, horizontal, customTimeline };
+    window.timelineDemo = { vertical, virtualTimeline, horizontal, customTimeline };
   </script>
 </body>
 </html>

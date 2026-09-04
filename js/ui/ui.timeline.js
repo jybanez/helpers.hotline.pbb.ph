@@ -1,6 +1,10 @@
 import { createElement, clearNode } from "./ui.dom.js";
 import { createEventBag } from "./ui.events.js";
 
+const GENERATED_ITEM_ID = Symbol("generatedTimelineItemId");
+const DEFAULT_ITEM_HEIGHT = 64;
+const DEFAULT_GROUP_LABEL_HEIGHT = 32;
+
 const DEFAULT_OPTIONS = {
   className: "",
   ariaLabel: "Timeline",
@@ -16,6 +20,15 @@ const DEFAULT_OPTIONS = {
   onItemClick: null,
   onActionClick: null,
   mountItemContent: null,
+  enableVirtualization: false,
+  virtualThreshold: 120,
+  virtualOverscan: 480,
+  endThreshold: 320,
+  topAnchorThreshold: 48,
+  isLoading: false,
+  hasMore: true,
+  onRangeChange: null,
+  onReachEnd: null,
 };
 
 export function createTimeline(container, items = [], options = {}) {
@@ -26,23 +39,38 @@ export function createTimeline(container, items = [], options = {}) {
   let visibleItems = [];
   let root = null;
   let api = null;
+  let virtualViewport = null;
+  let virtualTopSpacer = null;
+  let virtualSlice = null;
+  let virtualBottomSpacer = null;
+  let virtualRange = { start: 0, end: -1, startId: null, endId: null };
+  let lastEmittedRangeKey = "";
+  let reachedBoundaryId = null;
+  let scrollFrame = 0;
+  let measureFrame = 0;
+  let anchorRestoreToken = 0;
+  let scrollWriteToken = 0;
+  let programmaticScroll = false;
+  let resizeObserver = null;
+  const measuredHeights = new Map();
 
-  function render() {
+  function render(reason = "replace", restoreSnapshot = null) {
     if (!container || container.nodeType !== 1) {
       return;
     }
     visibleItems = applyLinkedRange(currentItems, currentOptions);
+    if (shouldVirtualize(visibleItems, currentOptions)) {
+      assertVirtualItemIdentities(visibleItems);
+      renderVirtual(reason, restoreSnapshot);
+      return;
+    }
+    teardownVirtualRoot();
     reconcileCustomMounts(visibleItems);
     events.clear();
     clearNode(container);
 
     root = createElement("section", {
-      className: [
-        "ui-timeline",
-        `ui-timeline--${currentOptions.orientation}`,
-        `ui-timeline--density-${currentOptions.density}`,
-        currentOptions.className || "",
-      ].filter(Boolean).join(" "),
+      className: buildRootClassName(currentOptions, false),
       attrs: {
         role: "region",
         "aria-label": currentOptions.ariaLabel,
@@ -65,6 +93,224 @@ export function createTimeline(container, items = [], options = {}) {
     }
 
     container.appendChild(root);
+  }
+
+  function renderVirtual(reason = "replace", restoreSnapshot = null) {
+    ensureVirtualRoot();
+    applyEstimatedAnchor(restoreSnapshot);
+
+    const units = buildVirtualUnits(visibleItems, currentOptions);
+    const windowRange = computeMeasuredWindow(
+      units,
+      measuredHeights,
+      virtualViewport.scrollTop,
+      virtualViewport.clientHeight || container.clientHeight || 1,
+      currentOptions.virtualOverscan,
+    );
+    const renderedItems = visibleItems.slice(windowRange.start, windowRange.end);
+    reconcileCustomMounts(renderedItems);
+    events.clear();
+    resizeObserver?.disconnect();
+    clearNode(virtualSlice);
+    virtualTopSpacer.style.height = `${windowRange.topSpacerHeight}px`;
+    virtualBottomSpacer.style.height = `${windowRange.bottomSpacerHeight}px`;
+
+    for (let index = windowRange.start; index < windowRange.end; index += 1) {
+      const unit = units[index];
+      const unitNode = createElement("div", {
+        className: `ui-timeline-virtual-unit${unit.startsGroup ? " starts-group" : ""}`,
+        attrs: {
+          "data-virtual-index": String(index),
+          "data-item-id": String(unit.item.id),
+          "data-measure-key": unit.key,
+        },
+      });
+      if (unit.groupLabel) {
+        unitNode.appendChild(createElement("p", {
+          className: "ui-timeline-group-label",
+          text: unit.groupLabel,
+        }));
+      }
+      unitNode.appendChild(renderItem(unit.item, index, visibleItems.length));
+      virtualSlice.appendChild(unitNode);
+      resizeObserver?.observe(unitNode);
+    }
+
+    updateVirtualRange(windowRange);
+    measureRenderedUnits(units);
+    queueExactAnchorRestore(restoreSnapshot);
+    checkReachEnd(reason);
+  }
+
+  function ensureVirtualRoot() {
+    if (virtualViewport && root?.isConnected) {
+      root.className = buildRootClassName(currentOptions, true);
+      root.setAttribute("aria-label", currentOptions.ariaLabel);
+      return;
+    }
+    teardownVirtualRoot();
+    clearNode(container);
+    root = createElement("section", {
+      className: buildRootClassName(currentOptions, true),
+      attrs: { role: "region", "aria-label": currentOptions.ariaLabel },
+    });
+    virtualViewport = createElement("div", {
+      className: "ui-timeline-viewport",
+      attrs: { tabindex: "0" },
+    });
+    const scroller = createElement("div", { className: "ui-timeline-virtual-scroller" });
+    virtualTopSpacer = createElement("div", { className: "ui-timeline-virtual-spacer", attrs: { "aria-hidden": "true" } });
+    virtualSlice = createElement("div", { className: "ui-timeline-list ui-timeline-virtual-slice", attrs: { role: "list" } });
+    virtualBottomSpacer = createElement("div", { className: "ui-timeline-virtual-spacer", attrs: { "aria-hidden": "true" } });
+    scroller.append(virtualTopSpacer, virtualSlice, virtualBottomSpacer);
+    virtualViewport.appendChild(scroller);
+    root.appendChild(virtualViewport);
+    container.appendChild(root);
+    virtualViewport.addEventListener("scroll", onVirtualScroll, { passive: true });
+    if (typeof ResizeObserver === "function") {
+      resizeObserver = new ResizeObserver(onVirtualResize);
+    }
+  }
+
+  function teardownVirtualRoot() {
+    if (scrollFrame) clearTimeout(scrollFrame);
+    if (measureFrame) cancelAnimationFrame(measureFrame);
+    scrollFrame = 0;
+    measureFrame = 0;
+    resizeObserver?.disconnect();
+    resizeObserver = null;
+    virtualViewport?.removeEventListener("scroll", onVirtualScroll);
+    virtualViewport = null;
+    virtualTopSpacer = null;
+    virtualSlice = null;
+    virtualBottomSpacer = null;
+    virtualRange = { start: 0, end: -1, startId: null, endId: null };
+    lastEmittedRangeKey = "";
+  }
+
+  function onVirtualScroll() {
+    checkReachEnd("scroll");
+    if (!programmaticScroll) {
+      anchorRestoreToken += 1;
+      if (measureFrame) {
+        cancelAnimationFrame(measureFrame);
+        measureFrame = 0;
+      }
+    }
+    if (scrollFrame) return;
+    scrollFrame = setTimeout(() => {
+      scrollFrame = 0;
+      renderVirtual("scroll");
+    }, 0);
+  }
+
+  function onVirtualResize(entries) {
+    let changed = false;
+    for (const entry of entries || []) {
+      const measureKey = entry.target?.dataset?.measureKey;
+      if (!measureKey) continue;
+      const height = Math.max(1, Math.ceil(entry.target.getBoundingClientRect().height));
+      if (measuredHeights.get(measureKey) !== height) {
+        measuredHeights.set(measureKey, height);
+        changed = true;
+      }
+    }
+    if (!changed || measureFrame) return;
+    const snapshot = captureVirtualSnapshot();
+    measureFrame = requestAnimationFrame(() => {
+      measureFrame = 0;
+      renderVirtual("measure", snapshot);
+    });
+  }
+
+  function measureRenderedUnits(units) {
+    Array.from(virtualSlice?.children || []).forEach((node) => {
+      const index = Number(node.dataset.virtualIndex);
+      const unit = units[index];
+      if (!unit) return;
+      const height = Math.max(1, Math.ceil(node.getBoundingClientRect().height));
+      if (measuredHeights.get(unit.key) !== height) {
+        measuredHeights.set(unit.key, height);
+      }
+    });
+  }
+
+  function captureVirtualSnapshot() {
+    if (!virtualViewport || !shouldVirtualize(visibleItems, currentOptions)) return null;
+    const anchor = getFirstVisibleVirtualItem(virtualViewport);
+    return {
+      anchorId: anchor?.id || null,
+      anchorOffset: anchor?.offset || 0,
+      scrollTop: virtualViewport.scrollTop,
+      nearTop: virtualViewport.scrollTop <= currentOptions.topAnchorThreshold,
+    };
+  }
+
+  function applyEstimatedAnchor(snapshot) {
+    if (!virtualViewport || !snapshot) return;
+    if (snapshot.reason === "prepend" && snapshot.nearTop) {
+      setVirtualScrollTop(0);
+      return;
+    }
+    if (!snapshot.anchorId) {
+      setVirtualScrollTop(snapshot.scrollTop || 0);
+      return;
+    }
+    const units = buildVirtualUnits(visibleItems, currentOptions);
+    const anchorIndex = units.findIndex((unit) => String(unit.item.id) === String(snapshot.anchorId));
+    if (anchorIndex < 0) return;
+    setVirtualScrollTop(Math.max(0, estimateOffset(units, measuredHeights, anchorIndex) - snapshot.anchorOffset));
+  }
+
+  function queueExactAnchorRestore(snapshot) {
+    if (!virtualViewport || !snapshot || (snapshot.reason === "prepend" && snapshot.nearTop)) return;
+    const token = anchorRestoreToken + 1;
+    anchorRestoreToken = token;
+    requestAnimationFrame(() => {
+      if (!virtualViewport || !snapshot.anchorId || anchorRestoreToken !== token) return;
+      const anchor = findVirtualItemNode(virtualViewport, snapshot.anchorId);
+      if (!anchor) return;
+      const viewportRect = virtualViewport.getBoundingClientRect();
+      const delta = (anchor.getBoundingClientRect().top - viewportRect.top) - snapshot.anchorOffset;
+      if (Math.abs(delta) > 1) setVirtualScrollTop(virtualViewport.scrollTop + delta);
+      checkReachEnd("anchor");
+    });
+  }
+
+  function setVirtualScrollTop(value) {
+    if (!virtualViewport) return;
+    const token = scrollWriteToken + 1;
+    scrollWriteToken = token;
+    programmaticScroll = true;
+    virtualViewport.scrollTop = Math.max(0, value);
+    requestAnimationFrame(() => {
+      if (scrollWriteToken === token) programmaticScroll = false;
+    });
+  }
+
+  function updateVirtualRange(windowRange) {
+    const startItem = visibleItems[windowRange.start] || null;
+    const endItem = visibleItems[windowRange.end - 1] || null;
+    virtualRange = {
+      start: windowRange.start,
+      end: endItem ? windowRange.end - 1 : -1,
+      startId: startItem?.id ?? null,
+      endId: endItem?.id ?? null,
+    };
+    const key = `${virtualRange.start}:${virtualRange.end}:${String(virtualRange.startId)}:${String(virtualRange.endId)}`;
+    if (key === lastEmittedRangeKey) return;
+    lastEmittedRangeKey = key;
+    currentOptions.onRangeChange?.({ ...virtualRange }, getState());
+  }
+
+  function checkReachEnd(reason) {
+    if (!virtualViewport || !visibleItems.length || currentOptions.isLoading || !currentOptions.hasMore || typeof currentOptions.onReachEnd !== "function") return;
+    const distance = Math.max(0, virtualViewport.scrollHeight - virtualViewport.clientHeight - virtualViewport.scrollTop);
+    if (distance > currentOptions.endThreshold) return;
+    const boundaryId = String(visibleItems[visibleItems.length - 1].id);
+    if (reachedBoundaryId === boundaryId) return;
+    reachedBoundaryId = boundaryId;
+    currentOptions.onReachEnd({ boundaryId, count: visibleItems.length, distance, reason }, getState());
   }
 
   function renderVerticalGrouped(host, itemsToRender) {
@@ -99,7 +345,7 @@ export function createTimeline(container, items = [], options = {}) {
 
   function renderItem(item, index, total) {
     const row = createElement("article", {
-      className: "ui-timeline-item",
+      className: ["ui-timeline-item", item.className || ""].filter(Boolean).join(" "),
       attrs: {
         "data-item-id": String(item.id),
         role: "listitem",
@@ -314,34 +560,46 @@ export function createTimeline(container, items = [], options = {}) {
   }
 
   function update(nextItems = currentItems, nextOptions = {}) {
+    const snapshot = captureVirtualSnapshot();
     currentItems = normalizeItems(nextItems);
     currentOptions = normalizeOptions({ ...currentOptions, ...(nextOptions || {}) });
-    render();
+    render("replace", snapshot);
   }
 
   function append(nextItems = []) {
+    const snapshot = captureVirtualSnapshot();
+    if (snapshot) snapshot.reason = "append";
     const incoming = normalizeItems(nextItems);
     currentItems = currentItems.concat(incoming);
-    render();
+    render("append", snapshot);
   }
 
   function prepend(nextItems = []) {
+    const snapshot = captureVirtualSnapshot();
+    if (snapshot) snapshot.reason = "prepend";
     const incoming = normalizeItems(nextItems);
     currentItems = incoming.concat(currentItems);
-    render();
+    render("prepend", snapshot);
   }
 
   function setLinkedRange(range) {
+    const snapshot = captureVirtualSnapshot();
     currentOptions = normalizeOptions({
       ...currentOptions,
       linkedRange: range ?? null,
     });
-    render();
+    render("replace", snapshot);
+  }
+
+  function resetReachEnd(options = {}) {
+    reachedBoundaryId = null;
+    if (options?.check !== false) checkReachEnd("reset");
   }
 
   function destroy() {
     events.clear();
     destroyAllCustomMounts();
+    teardownVirtualRoot();
     clearNode(container);
     root = null;
   }
@@ -351,6 +609,12 @@ export function createTimeline(container, items = [], options = {}) {
       options: { ...currentOptions },
       items: currentItems.map((item) => ({ ...item })),
       visibleItems: visibleItems.map((item) => ({ ...item })),
+      virtualization: {
+        enabled: shouldVirtualize(visibleItems, currentOptions),
+        range: { ...virtualRange },
+        measuredCount: measuredHeights.size,
+        reachedBoundaryId,
+      },
     };
   }
 
@@ -359,6 +623,7 @@ export function createTimeline(container, items = [], options = {}) {
     append,
     prepend,
     setLinkedRange,
+    resetReachEnd,
     destroy,
     getState,
   };
@@ -384,6 +649,15 @@ function normalizeOptions(options) {
   }
   next.includeUndatedInRange = Boolean(next.includeUndatedInRange);
   next.mountItemContent = typeof next.mountItemContent === "function" ? next.mountItemContent : null;
+  next.enableVirtualization = Boolean(next.enableVirtualization);
+  next.virtualThreshold = normalizeNonNegativeNumber(next.virtualThreshold, 120);
+  next.virtualOverscan = normalizeNonNegativeNumber(next.virtualOverscan, 480);
+  next.endThreshold = normalizeNonNegativeNumber(next.endThreshold, 320);
+  next.topAnchorThreshold = normalizeNonNegativeNumber(next.topAnchorThreshold, 48);
+  next.isLoading = Boolean(next.isLoading);
+  next.hasMore = next.hasMore !== false;
+  next.onRangeChange = typeof next.onRangeChange === "function" ? next.onRangeChange : null;
+  next.onReachEnd = typeof next.onReachEnd === "function" ? next.onReachEnd : null;
   return next;
 }
 
@@ -397,7 +671,7 @@ function normalizeItems(items) {
         return null;
       }
       const ts = item.timestamp ? new Date(item.timestamp) : null;
-      return {
+      const normalized = {
         ...item,
         id: item.id ?? index + 1,
         title: String(item.title ?? "Untitled Event"),
@@ -411,6 +685,11 @@ function normalizeItems(items) {
         contentKey: item.contentKey == null ? "" : String(item.contentKey),
         hasCustomContent: item.hasCustomContent === false ? false : item.hasCustomContent,
       };
+      Object.defineProperty(normalized, GENERATED_ITEM_ID, {
+        value: item.id == null,
+        enumerable: false,
+      });
+      return normalized;
     })
     .filter(Boolean)
     .sort((a, b) => {
@@ -418,6 +697,136 @@ function normalizeItems(items) {
       const y = b.timestamp ? new Date(b.timestamp).getTime() : 0;
       return y - x;
     });
+}
+
+function buildRootClassName(options, virtualized) {
+  return [
+    "ui-timeline",
+    `ui-timeline--${options.orientation}`,
+    `ui-timeline--density-${options.density}`,
+    virtualized ? "is-virtualized" : "",
+    options.className || "",
+  ].filter(Boolean).join(" ");
+}
+
+function shouldVirtualize(items, options) {
+  return Boolean(
+    options?.enableVirtualization
+    && options.orientation === "vertical"
+    && items.length > 0
+    && items.length >= options.virtualThreshold
+  );
+}
+
+function assertVirtualItemIdentities(items) {
+  const seen = new Set();
+  for (const item of items) {
+    if (item[GENERATED_ITEM_ID]) {
+      throw new Error("ui.timeline virtualization requires every item to have an explicit stable id.");
+    }
+    const id = String(item.id);
+    if (seen.has(id)) {
+      throw new Error(`ui.timeline virtualization requires unique item ids; duplicate \"${id}\".`);
+    }
+    seen.add(id);
+  }
+}
+
+function buildVirtualUnits(items, options) {
+  let previousDayKey = null;
+  return items.map((item) => {
+    const dayKey = options.groupByDate ? getItemDayKey(item, options.timeZone) : null;
+    const startsGroup = Boolean(options.groupByDate && dayKey !== previousDayKey);
+    previousDayKey = dayKey;
+    return {
+      item,
+      key: getVirtualMeasureKey(item),
+      startsGroup,
+      groupLabel: startsGroup ? (dayKey === "unknown" ? "Undated" : formatGroupLabel(dayKey, options.locale)) : "",
+      estimatedHeight: estimateTimelineItemHeight(item, startsGroup),
+    };
+  });
+}
+
+function computeMeasuredWindow(units, measuredHeights, scrollTop, viewportHeight, overscan) {
+  const startPixel = Math.max(0, scrollTop - overscan);
+  const endPixel = scrollTop + Math.max(1, viewportHeight) + overscan;
+  const offsets = new Array(units.length);
+  let totalHeight = 0;
+  let start = 0;
+  let end = 0;
+
+  for (let index = 0; index < units.length; index += 1) {
+    offsets[index] = totalHeight;
+    const height = measuredHeights.get(units[index].key) || units[index].estimatedHeight;
+    totalHeight += height;
+    if (totalHeight < startPixel) start = index + 1;
+    if (offsets[index] <= endPixel) end = index + 1;
+  }
+
+  start = Math.min(start, Math.max(0, units.length - 1));
+  end = Math.max(start + 1, Math.min(units.length, end));
+  const topSpacerHeight = offsets[start] || 0;
+  const bottomStart = end < units.length ? offsets[end] : totalHeight;
+  return {
+    start,
+    end,
+    topSpacerHeight,
+    bottomSpacerHeight: Math.max(0, totalHeight - bottomStart),
+    totalHeight,
+  };
+}
+
+function estimateOffset(units, measuredHeights, endIndex) {
+  let offset = 0;
+  for (let index = 0; index < endIndex; index += 1) {
+    offset += measuredHeights.get(units[index].key) || units[index].estimatedHeight;
+  }
+  return offset;
+}
+
+function estimateTimelineItemHeight(item, startsGroup) {
+  let height = DEFAULT_ITEM_HEIGHT + (startsGroup ? DEFAULT_GROUP_LABEL_HEIGHT : 0);
+  height += Math.min(72, Math.ceil(String(item.description || "").length / 72) * 18);
+  if (item.subtitle) height += 18;
+  if (item.meta?.length) height += 28;
+  if (item.actions?.length) height += 38;
+  if (item.hasCustomContent !== false && item.contentKey) height += 80;
+  return height;
+}
+
+function getVirtualMeasureKey(item) {
+  return `${String(item.id)}::${String(item.contentKey ?? "")}`;
+}
+
+function getItemDayKey(item, timeZone) {
+  if (!item.timestamp) return "unknown";
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone,
+  }).format(new Date(item.timestamp));
+}
+
+function getFirstVisibleVirtualItem(viewport) {
+  const viewportRect = viewport.getBoundingClientRect();
+  const nodes = Array.from(viewport.querySelectorAll(".ui-timeline-virtual-unit[data-item-id]"));
+  const node = nodes.find((candidate) => candidate.getBoundingClientRect().bottom > viewportRect.top + 2);
+  return node ? {
+    id: node.dataset.itemId || null,
+    offset: node.getBoundingClientRect().top - viewportRect.top,
+  } : null;
+}
+
+function findVirtualItemNode(viewport, id) {
+  return Array.from(viewport.querySelectorAll(".ui-timeline-virtual-unit[data-item-id]"))
+    .find((node) => node.dataset.itemId === String(id)) || null;
+}
+
+function normalizeNonNegativeNumber(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, number) : fallback;
 }
 
 function normalizeActions(actions) {
